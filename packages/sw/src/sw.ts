@@ -34,7 +34,7 @@ globalThis.addEventListener('fetch', ev => {
 	if (!isHTMLRequest) return;
 	ev.respondWith(
 		fetch(ev.request)
-			.catch(() => new Response(`Offline. Service Worker @${_VERSION_}`, { status: 200 })),
+			.catch(() => new Response(`Offline. Service Worker @${_VERSION_} <a onclick="window.location.reload(true);">Reload</a>`, { status: 200 })),
 	);
 });
 
