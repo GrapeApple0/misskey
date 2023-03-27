@@ -25,6 +25,7 @@
 					<MkInput v-model="objectStorageEndpoint">
 						<template #label>{{ i18n.ts.objectStorageEndpoint }}</template>
 						<template #caption>{{ i18n.ts.objectStorageEndpointDesc }}</template>
+						<template #prefix>https:// </template>
 					</MkInput>
 
 					<MkInput v-model="objectStorageRegion">
