@@ -351,19 +351,16 @@ export class UserEntityService implements OnModuleInit {
 				if (i == null || i.name == null || i.softwareName == null || i.softwareVersion == null || i.iconUrl == null || i.faviconUrl == null || i.themeColor == null) {
 					const instance = await this.instancesRepository.findOneBy({ host: user.host });
 					return instance;
+				} else {
+					return i ? {
+						name: i.name,
+						softwareName: i.softwareName,
+						softwareVersion: i.softwareVersion,
+						iconUrl: i.iconUrl,
+						faviconUrl: i.faviconUrl,
+						themeColor: i.themeColor,
+					} : undefined;
 				}
-				// if (instance) {
-				// 	this.federatedInstanceService.updateCachePartial(user.host, instance);
-				// 	this.federatedInstanceService.federatedInstanceCache.set(user.host, instance);
-				// }
-				return i ? {
-					name: i.name,
-					softwareName: i.softwareName,
-					softwareVersion: i.softwareVersion,
-					iconUrl: i.iconUrl,
-					faviconUrl: i.faviconUrl,
-					themeColor: i.themeColor,
-				} : undefined;
 			}) : undefined,
 			emojis: this.customEmojiService.populateEmojis(user.emojis, user.host),
 			onlineStatus: this.getOnlineStatus(user),
