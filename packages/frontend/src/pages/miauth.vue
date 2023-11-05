@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <MkStickyContainer>
 	<template #header><MkPageHeader :actions="headerActions" :tabs="headerTabs"/></template>
-	<MkSpacer :contentMax="800">
+	<MkSpacer :contentMax="600">
 		<div v-if="$i">
 			<div v-if="state == 'waiting'">
 				<MkLoading/>
@@ -20,17 +20,23 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 			<div v-else>
 				<div v-if="_permissions.length > 0">
-					<p v-if="name">{{ i18n.t('_auth.permission', { name }) }}</p>
-					<p v-else>{{ i18n.ts._auth.permissionAsk }}</p>
-					<ul>
-						<li v-for="p in _permissions" :key="p">{{ i18n.t(`_permissions.${p}`) }}</li>
-					</ul>
+					<div :class="$style.container">
+						<img :class="$style.icon" :src="icon ?? '/static-assets/mi-white.png'" />
+						<div v-if="name">
+							<b>{{ name }}</b>
+							<p>{{ i18n.t('_auth.permission', { name }) }}</p>
+						</div>
+						<p v-else>{{ i18n.ts._auth.permissionAsk }}</p>
+						<ul :class="$style.permissions">
+							<li v-for="p in _permissions" :key="p">{{ i18n.t(`_permissions.${p}`) }}</li>
+						</ul>
+						<div v-if="name">{{ i18n.t('_auth.shareAccess', { name }) }}</div>
+						<div v-else>{{ i18n.ts._auth.shareAccessAsk }}</div>
+					</div>
 				</div>
-				<div v-if="name">{{ i18n.t('_auth.shareAccess', { name }) }}</div>
-				<div v-else>{{ i18n.ts._auth.shareAccessAsk }}</div>
 				<div :class="$style.buttons">
-					<MkButton inline @click="deny">{{ i18n.ts.cancel }}</MkButton>
 					<MkButton inline primary @click="accept">{{ i18n.ts.accept }}</MkButton>
+					<MkButton inline @click="deny">{{ i18n.ts.cancel }}</MkButton>
 				</div>
 			</div>
 		</div>
@@ -102,13 +108,27 @@ definePageMetadata({
 <style lang="scss" module>
 .buttons {
 	margin-top: 16px;
-	display: flex;
+	display: grid;
 	gap: 8px;
-	flex-wrap: wrap;
 }
 
 .loginMessage {
 	text-align: center;
 	margin: 8px 0 24px;
+}
+
+.permissions {
+	display: inline-block;
+  text-align: left;
+}
+
+.container {
+	text-align: center;
+}
+
+.icon {
+	width: 72px;
+	height: 72px;
+	border-radius: 100%;
 }
 </style>
