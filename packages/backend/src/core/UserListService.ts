@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable, OnApplicationShutdown, forwardRef } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import type { UserListMembershipsRepository } from '@/models/_.js';
 import type { MiUser } from '@/models/User.js';
@@ -37,6 +37,7 @@ export class UserListService implements OnApplicationShutdown {
 		private userListMembershipsRepository: UserListMembershipsRepository,
 
 		private userEntityService: UserEntityService,
+		@Inject(forwardRef(() => IdService))
 		private idService: IdService,
 		private roleService: RoleService,
 		private globalEventService: GlobalEventService,
@@ -51,7 +52,10 @@ export class UserListService implements OnApplicationShutdown {
 			fromRedisConverter: (value) => new Set(JSON.parse(value)),
 		});
 
-		this.redisForSub.on('message', this.onMessage);
+		this.redisForSub.ononApplicationShutdown(signal?: string | undefined) {
+			throw new Error('Method not implemented.');
+		}
+('message', this.onMessage);
 	}
 
 	@bindThis
