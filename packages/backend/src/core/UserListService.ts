@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable, OnApplicationShutdown, forwardRef } from '@nestjs/common';
+import { Inject, Injectable, OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
 import * as Redis from 'ioredis';
+import { ModuleRef } from '@nestjs/core';
 import type { UserListMembershipsRepository } from '@/models/_.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiUserList } from '@/models/UserList.js';
@@ -21,12 +22,15 @@ import { RedisKVCache } from '@/misc/cache.js';
 import { RoleService } from '@/core/RoleService.js';
 
 @Injectable()
-export class UserListService implements OnApplicationShutdown {
+export class UserListService implements OnApplicationShutdown, OnModuleInit {
 	public static TooManyUsersError = class extends Error {};
 
 	public membersCache: RedisKVCache<Set<string>>;
+	private roleService: RoleService;
 
 	constructor(
+		private moduleRef: ModuleRef,
+
 		@Inject(DI.redis)
 		private redisClient: Redis.Redis,
 
@@ -39,7 +43,6 @@ export class UserListService implements OnApplicationShutdown {
 		private userEntityService: UserEntityService,
 		@Inject(forwardRef(() => IdService))
 		private idService: IdService,
-		private roleService: RoleService,
 		private globalEventService: GlobalEventService,
 		private proxyAccountService: ProxyAccountService,
 		private queueService: QueueService,
@@ -56,6 +59,10 @@ export class UserListService implements OnApplicationShutdown {
 			throw new Error('Method not implemented.');
 		}
 ('message', this.onMessage);
+	}
+
+	async onModuleInit() {
+		this.roleService = this.moduleRef.get(RoleService.name);
 	}
 
 	@bindThis
