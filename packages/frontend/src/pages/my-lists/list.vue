@@ -88,7 +88,7 @@ const membershipsPagination = {
 	params: computed(() => ({
 		listId: props.listId,
 	})),
-} satisfies Paging;
+} as Paging;
 
 function fetchList() {
 	os.api('users/lists/show', {

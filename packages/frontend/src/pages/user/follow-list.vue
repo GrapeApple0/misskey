@@ -30,7 +30,7 @@ const followingPagination = {
 	params: computed(() => ({
 		userId: props.user.id,
 	})),
-} satisfies Paging;
+} as Paging;
 
 const followersPagination = {
 	endpoint: 'users/followers' as const,
@@ -38,7 +38,7 @@ const followersPagination = {
 	params: computed(() => ({
 		userId: props.user.id,
 	})),
-} satisfies Paging;
+} as Paging;
 </script>
 
 <style lang="scss" module>

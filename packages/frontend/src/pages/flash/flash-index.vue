@@ -53,15 +53,15 @@ const tab = ref('featured');
 const featuredFlashsPagination = {
 	endpoint: 'flash/featured' as const,
 	noPaging: true,
-} satisfies Paging;
+} as Paging;
 const myFlashsPagination = {
 	endpoint: 'flash/my' as const,
 	limit: 5,
-} satisfies Paging;
+} as Paging;
 const likedFlashsPagination = {
 	endpoint: 'flash/my-likes' as const,
 	limit: 5,
-} satisfies Paging;
+} as Paging;
 
 function create() {
 	router.push('/play/new');

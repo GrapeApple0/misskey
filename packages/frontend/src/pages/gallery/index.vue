@@ -68,19 +68,19 @@ const tagsRef = ref();
 const recentPostsPagination = {
 	endpoint: 'gallery/posts' as const,
 	limit: 6,
-} satisfies Paging;
+} as Paging;
 const popularPostsPagination = {
 	endpoint: 'gallery/featured' as const,
 	noPaging: true,
-} satisfies Paging;
+} as Paging;
 const myPostsPagination = {
 	endpoint: 'i/gallery/posts' as const,
 	limit: 5,
-} satisfies Paging;
+} as Paging;
 const likedPostsPagination = {
 	endpoint: 'i/gallery/likes' as const,
 	limit: 5,
-} satisfies Paging;
+} as Paging;
 
 const tagUsersPagination = computed(() => ({
 	endpoint: 'hashtags/users' as const,
@@ -90,7 +90,7 @@ const tagUsersPagination = computed(() => ({
 		origin: 'combined',
 		sort: '+follower',
 	},
-} satisfies Paging));
+} as Paging));
 
 watch(() => props.tag, () => {
 	if (tagsRef.value) tagsRef.value.tags.toggleContent(props.tag == null);

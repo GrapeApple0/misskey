@@ -87,7 +87,7 @@ const pagination = {
 		hostname: searchHost.value,
 	})),
 	offsetMode: true,
-} satisfies Paging;
+} as Paging;
 
 function searchUser() {
 	os.selectUser().then(user => {

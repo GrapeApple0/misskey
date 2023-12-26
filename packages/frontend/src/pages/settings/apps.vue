@@ -63,7 +63,7 @@ const pagination = {
 	params: {
 		sort: '+lastUsedAt',
 	},
-} satisfies Paging;
+} as Paging;
 
 function revoke(token) {
 	os.api('i/revoke-token', { tokenId: token.id }).then(() => {

@@ -100,7 +100,7 @@ const pagination = {
 	params: computed(() => ({
 		query: (query.value && query.value !== '') ? query.value : null,
 	})),
-} satisfies Paging;
+} as Paging;
 
 const remotePagination = {
 	endpoint: 'admin/emoji/list-remote' as const,
@@ -109,7 +109,7 @@ const remotePagination = {
 		query: (queryRemote.value && queryRemote.value !== '') ? queryRemote.value : null,
 		host: (host.value && host.value !== '') ? host.value : null,
 	})),
-} satisfies Paging;
+} as Paging;
 
 const selectAll = () => {
 	if (selectedEmojis.value.length > 0) {

@@ -160,7 +160,7 @@ const usersPagination = {
 		hostname: props.host,
 	},
 	offsetMode: true,
-} satisfies Paging;
+} as Paging;
 
 async function fetch(): Promise<void> {
 	if (iAmAdmin) {

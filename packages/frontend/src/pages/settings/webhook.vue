@@ -44,7 +44,7 @@ const pagination = {
 	endpoint: 'i/webhooks/list' as const,
 	limit: 100,
 	noPaging: true,
-} satisfies Paging;
+} as Paging;
 
 const headerActions = computed(() => []);
 

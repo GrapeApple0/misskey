@@ -307,7 +307,7 @@ const renotesPagination = computed(() => ({
 	params: {
 		noteId: appearNote.value.id,
 	},
-} satisfies Paging));
+} as Paging));
 
 const reactionsPagination = computed(() => ({
 	endpoint: 'notes/reactions',
@@ -316,7 +316,7 @@ const reactionsPagination = computed(() => ({
 		noteId: appearNote.value.id,
 		type: reactionTabType.value,
 	},
-} satisfies Paging));
+} as Paging));
 
 useNoteCapture({
 	rootEl: el,

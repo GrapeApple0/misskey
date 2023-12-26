@@ -88,7 +88,7 @@ const usersPagination = {
 	params: computed(() => ({
 		roleId: props.id,
 	})),
-} satisfies Paging;
+} as Paging;
 
 const expandedItems = ref([]);
 

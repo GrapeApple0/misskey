@@ -142,17 +142,17 @@ import MkFolder from '@/components/MkFolder.vue';
 const renoteMutingPagination = {
 	endpoint: 'renote-mute/list' as const,
 	limit: 10,
-} satisfies Paging;
+} as Paging;
 
 const mutingPagination = {
 	endpoint: 'mute/list' as const,
 	limit: 10,
-} satisfies Paging;
+} as Paging;
 
 const blockingPagination = {
 	endpoint: 'blocking/list' as const,
 	limit: 10,
-} satisfies Paging;
+} as Paging;
 
 const expandedRenoteMuteItems = ref([]);
 const expandedMuteItems = ref([]);

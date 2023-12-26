@@ -55,7 +55,7 @@ const paginationCurrent = {
 	params: {
 		isActive: true,
 	},
-} satisfies Paging;
+} as Paging;
 
 const paginationPast = {
 	endpoint: 'announcements' as const,
@@ -63,7 +63,7 @@ const paginationPast = {
 	params: {
 		isActive: false,
 	},
-} satisfies Paging;
+} as Paging;
 
 const paginationEl = ref<InstanceType<typeof MkPagination>>();
 

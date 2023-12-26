@@ -93,7 +93,7 @@ const otherPostsPagination = {
 	params: computed(() => ({
 		userId: post.value.user.id,
 	})),
-} satisfies Paging;
+} as Paging;
 
 function fetchPost() {
 	post.value = null;

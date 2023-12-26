@@ -36,7 +36,7 @@ import { infoImageUrl } from '@/instance.js';
 const pagination = {
 	endpoint: 'i/favorites' as const,
 	limit: 10,
-} satisfies Paging;
+} as Paging;
 
 definePageMetadata({
 	title: i18n.ts.favorites,
