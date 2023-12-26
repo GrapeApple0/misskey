@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <div
-	v-if="!hardMuted && !muted"
+	v-if="appearNote && note && !hardMuted && !muted"
 	v-show="!isDeleted"
 	ref="el"
 	v-hotkey="keymap"
@@ -50,7 +50,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkAvatar :class="$style.avatar" :user="appearNote.user" :link="!mock" :preview="!mock"/>
 		<div :class="$style.main">
 			<MkNoteHeader :note="appearNote" :mini="true"/>
-			<MkInstanceTicker v-if="showTicker" :instance="appearNote.user.instance"/>
+			<MkInstanceTicker v-if="showTicker" :instance="appearNote.user.instance ?? null"/>
 			<div style="container-type: inline-size;">
 				<p v-if="appearNote.cw != null" :class="$style.cw">
 					<Mfm v-if="appearNote.cw != ''" style="margin-right: 8px;" :text="appearNote.cw" :author="appearNote.user" :nyaize="'respect'"/>
@@ -133,7 +133,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</div>
 	</article>
 </div>
-<div v-else-if="!hardMuted" :class="$style.muted" @click="muted = false">
+<div v-else-if="appearNote && !hardMuted" :class="$style.muted" @click="muted = false">
 	<I18n :src="i18n.ts.userSaysSomething" tag="small">
 		<template #name>
 			<MkA v-user-preview="appearNote.userId" :to="userPage(appearNote.user)">
@@ -205,7 +205,7 @@ const emit = defineEmits<{
 const inChannel = inject('inChannel', null);
 const currentClip = inject<Ref<Misskey.entities.Clip> | null>('currentClip', null);
 
-const note = ref(deepClone(props.note));
+const note = ref<Misskey.entities.Note | null>(deepClone(props.note));
 
 // plugin
 if (noteViewInterruptors.length > 0) {
@@ -213,7 +213,7 @@ if (noteViewInterruptors.length > 0) {
 		let result: Misskey.entities.Note | null = deepClone(note.value);
 		for (const interruptor of noteViewInterruptors) {
 			try {
-				result = await interruptor.handler(result);
+				result = result ? await interruptor.handler(result) as Misskey.entities.Note : null;
 				if (result === null) {
 					isDeleted.value = true;
 					return;
@@ -227,10 +227,11 @@ if (noteViewInterruptors.length > 0) {
 }
 
 const isRenote = (
+	note.value != null &&
 	note.value.renote != null &&
 	note.value.text == null &&
 	note.value.cw == null &&
-	note.value.fileIds.length === 0 &&
+	note.value.fileIds?.length === 0 &&
 	note.value.poll == null
 );
 
@@ -240,28 +241,28 @@ const renoteButton = shallowRef<HTMLElement>();
 const renoteTime = shallowRef<HTMLElement>();
 const reactButton = shallowRef<HTMLElement>();
 const clipButton = shallowRef<HTMLElement>();
-const appearNote = computed(() => isRenote ? note.value.renote as Misskey.entities.Note : note.value);
-const isMyRenote = $i && ($i.id === note.value.userId);
+const appearNote = computed(() => isRenote ? note.value?.renote as Misskey.entities.Note : note.value);
+const isMyRenote = $i && ($i.id === note.value?.userId);
 const showContent = ref(false);
-const parsed = computed(() => appearNote.value.text ? mfm.parse(appearNote.value.text) : null);
+const parsed = computed(() => appearNote.value?.text ? mfm.parse(appearNote.value.text) : null);
 const urls = computed(() => parsed.value ? extractUrlFromMfm(parsed.value) : null);
-const isLong = shouldCollapsed(appearNote.value, urls.value ?? []);
-const collapsed = ref(appearNote.value.cw == null && isLong);
+const isLong = appearNote.value ? shouldCollapsed(appearNote.value, urls.value ?? []) : false;
+const collapsed = ref(appearNote.value?.cw == null && isLong);
 const isDeleted = ref(false);
-const muted = ref(checkMute(appearNote.value, $i?.mutedWords));
-const hardMuted = ref(props.withHardMute && checkMute(appearNote.value, $i?.hardMutedWords));
+const muted = appearNote.value ? ref(checkMute(appearNote.value, $i?.mutedWords)) : false;
+const hardMuted = appearNote.value ? ref(props.withHardMute && checkMute(appearNote.value, $i?.hardMutedWords)) : false;
 const translation = ref<Misskey.entities.NotesTranslateResponse | null>(null);
 const translating = ref(false);
-const showTicker = (defaultStore.state.instanceTicker === 'always') || (defaultStore.state.instanceTicker === 'remote' && appearNote.value.user.instance);
-const canRenote = computed(() => ['public', 'home'].includes(appearNote.value.visibility) || (appearNote.value.visibility === 'followers' && appearNote.value.userId === $i.id));
-const renoteCollapsed = ref(defaultStore.state.collapseRenotes && isRenote && (($i && ($i.id === note.value.userId || $i.id === appearNote.value.userId)) || (appearNote.value.myReaction != null)));
+const showTicker = (defaultStore.state.instanceTicker === 'always') || (defaultStore.state.instanceTicker === 'remote' && appearNote.value?.user.instance);
+const canRenote = computed(() => ['public', 'home'].includes(appearNote.value?.visibility ?? '') || (appearNote.value?.visibility === 'followers' && appearNote.value.userId === $i.id));
+const renoteCollapsed = ref(defaultStore.state.collapseRenotes && isRenote && (($i && ($i.id === note.value?.userId || $i.id === appearNote.value?.userId)) ?? (appearNote.value?.myReaction != null)));
 
-function checkMute(note: Misskey.entities.Note, mutedWords: Array<string | string[]> | undefined | null): boolean {
+function checkMute(targetNote: Misskey.entities.Note, mutedWords: Array<string | string[]> | undefined | null): boolean {
 	if (mutedWords == null) return false;
 
 	if (checkWordMute(note, $i, mutedWords)) return true;
-	if (note.reply && checkWordMute(note.reply, $i, mutedWords)) return true;
-	if (note.renote && checkWordMute(note.renote, $i, mutedWords)) return true;
+	if (targetNote.reply && checkWordMute(targetNote.reply, $i, mutedWords)) return true;
+	if (targetNote.renote && checkWordMute(targetNote.renote, $i, mutedWords)) return true;
 	return false;
 }
 
