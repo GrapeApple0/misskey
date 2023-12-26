@@ -162,6 +162,10 @@ export const packedNoteSchema = {
 			type: 'object',
 			optional: false, nullable: false,
 		},
+		reactionEmojis: {
+			type: 'object',
+			optional: false, nullable: false,
+		},
 		renoteCount: {
 			type: 'number',
 			optional: false, nullable: false,
@@ -190,7 +194,10 @@ export const packedNoteSchema = {
 			type: 'number',
 			optional: true, nullable: false,
 		},
-
+		emojis: {
+			type: 'object',
+			optional: true, nullable: true,
+		},
 		myReaction: {
 			type: 'object',
 			optional: true, nullable: true,
