@@ -91,7 +91,7 @@ export async function getNoteClipMenu(props: {
 			claimAchievement('noteClipped1');
 			os.apiWithDialog('clips/add-note', { clipId: clip.id, noteId: appearNote.id });
 		},
-	}];
+	}] as MenuItem[];
 }
 
 export function getAbuseNoteMenu(note: Misskey.entities.Note, text: string): MenuItem {
@@ -389,7 +389,7 @@ export function getNoteMenu(props: {
 	}
 
 	if (noteActions.length > 0) {
-		menu = menu.concat([{ type: "divider" }, ...noteActions.map(action => ({
+		menu = menu.concat([{ type: 'divider' }, ...noteActions.map(action => ({
 			icon: 'ti ti-plug',
 			text: action.title,
 			action: () => {
@@ -399,7 +399,7 @@ export function getNoteMenu(props: {
 	}
 
 	if (defaultStore.state.devMode) {
-		menu = menu.concat([{ type: "divider" }, {
+		menu = menu.concat([{ type: 'divider' }, {
 			icon: 'ti ti-id',
 			text: i18n.ts.copyNoteId,
 			action: () => {
