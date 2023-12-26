@@ -16,9 +16,9 @@ import MkButton from '@/components/MkButton.vue';
 
 const props = defineProps<{
 	modelValue: boolean;
-	text: string | null;
-	renote: Misskey.entities.Note | null;
-	files: Misskey.entities.DriveFile[];
+	text?: string | null;
+	renote?: Misskey.entities.Note | null;
+	files?: Misskey.entities.DriveFile[] | null;
 	poll?: {
 		expiresAt: string | null;
 		multiple: boolean;
@@ -30,9 +30,9 @@ const props = defineProps<{
 	} | {
 		choices: string[];
 		multiple: boolean;
-		expiresAt: string | null;
-		expiredAfter: string | null;
-	};
+		expiresAt?: string | null;
+		expiredAfter?: string | null;
+	} | Record<string, unknown> | null;
 }>();
 
 const emit = defineEmits<{
@@ -43,7 +43,7 @@ const label = computed(() => {
 	return concat([
 		props.text ? [i18n.t('_cw.chars', { count: props.text.length })] : [],
 		props.renote ? [i18n.ts.quote] : [],
-		props.files.length !== 0 ? [i18n.t('_cw.files', { count: props.files.length })] : [],
+		props.files && props.files.length !== 0 ? [i18n.t('_cw.files', { count: props.files.length })] : [],
 		props.poll != null ? [i18n.ts.poll] : [],
 	] as string[][]).join(' / ');
 });

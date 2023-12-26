@@ -50,11 +50,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkAvatar :class="$style.avatar" :user="appearNote.user" :link="!mock" :preview="!mock"/>
 		<div :class="$style.main">
 			<MkNoteHeader :note="appearNote" :mini="true"/>
-			<MkInstanceTicker v-if="showTicker" :instance="appearNote.user.instance ?? null"/>
+			<MkInstanceTicker v-if="showTicker" :instance="instance"/>
 			<div style="container-type: inline-size;">
 				<p v-if="appearNote.cw != null" :class="$style.cw">
 					<Mfm v-if="appearNote.cw != ''" style="margin-right: 8px;" :text="appearNote.cw" :author="appearNote.user" :nyaize="'respect'"/>
-					<MkCwButton v-model="showContent" :text="appearNote.text" :renote="appearNote.renote" :files="appearNote.files" :poll="appearNote.poll" style="margin: 4px 0;"/>
+					<MkCwButton v-model="showContent" :text="appearNote.text" :renote="appearNote.renote ?? null" :files="appearNote.files" :poll="appearNote.poll" style="margin: 4px 0;"/>
 				</p>
 				<div v-show="appearNote.cw == null || showContent" :class="[{ [$style.contentCollapsed]: collapsed }]">
 					<div :class="$style.text">
@@ -73,12 +73,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<div v-if="translating || translation" :class="$style.translation">
 							<MkLoading v-if="translating" mini/>
 							<div v-else>
-								<b>{{ i18n.t('translatedFrom', { x: translation.sourceLang }) }}: </b>
-								<Mfm :text="translation.text" :author="appearNote.user" :nyaize="'respect'" :emojiUrls="appearNote.emojis"/>
+								<b>{{ i18n.t('translatedFrom', { x: translation?.sourceLang ?? "" }) }}: </b>
+								<Mfm :text="translation?.text ?? ''" :author="appearNote.user" :nyaize="'respect'" :emojiUrls="appearNote.emojis"/>
 							</div>
 						</div>
 					</div>
-					<div v-if="appearNote.files.length > 0">
+					<div v-if="appearNote.files && appearNote.files.length > 0">
 						<MkMediaList :mediaList="appearNote.files"/>
 					</div>
 					<MkPoll v-if="appearNote.poll" :note="appearNote" :class="$style.poll"/>
@@ -151,7 +151,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, onMounted, ref, shallowRef, Ref, watch, provide } from 'vue';
+import { computed, inject, onMounted, ref, shallowRef, Ref, watch, provide, ShallowRef } from 'vue';
 import * as mfm from 'mfm-js';
 import * as Misskey from 'misskey-js';
 import MkNoteSub from '@/components/MkNoteSub.vue';
@@ -235,12 +235,12 @@ const isRenote = (
 	note.value.poll == null
 );
 
-const el = shallowRef<HTMLElement>();
-const menuButton = shallowRef<HTMLElement>();
-const renoteButton = shallowRef<HTMLElement>();
-const renoteTime = shallowRef<HTMLElement>();
-const reactButton = shallowRef<HTMLElement>();
-const clipButton = shallowRef<HTMLElement>();
+const el = shallowRef<HTMLElement | null>(null);
+const menuButton = shallowRef<HTMLElement | null>(null);
+const renoteButton = shallowRef<HTMLElement | null>(null);
+const renoteTime = shallowRef<HTMLElement | null>(null);
+const reactButton = shallowRef<HTMLElement | null>(null);
+const clipButton = shallowRef<HTMLElement | null>(null);
 const appearNote = computed(() => isRenote ? note.value?.renote as Misskey.entities.Note : note.value);
 const isMyRenote = $i && ($i.id === note.value?.userId);
 const showContent = ref(false);
@@ -254,8 +254,15 @@ const hardMuted = appearNote.value ? ref(props.withHardMute && checkMute(appearN
 const translation = ref<Misskey.entities.NotesTranslateResponse | null>(null);
 const translating = ref(false);
 const showTicker = (defaultStore.state.instanceTicker === 'always') || (defaultStore.state.instanceTicker === 'remote' && appearNote.value?.user.instance);
-const canRenote = computed(() => ['public', 'home'].includes(appearNote.value?.visibility ?? '') || (appearNote.value?.visibility === 'followers' && appearNote.value.userId === $i.id));
+const canRenote = computed(() => ['public', 'home'].includes(appearNote.value?.visibility ?? '') || (appearNote.value?.visibility === 'followers' && appearNote.value.userId === $i?.id));
 const renoteCollapsed = ref(defaultStore.state.collapseRenotes && isRenote && (($i && ($i.id === note.value?.userId || $i.id === appearNote.value?.userId)) ?? (appearNote.value?.myReaction != null)));
+const instance = computed(() => {
+	return appearNote.value?.user.instance ? {
+		faviconUrl: appearNote.value.user.instance.faviconUrl ?? undefined,
+		name: appearNote.value.user.instance.name ?? '',
+		themeColor: appearNote.value.user.instance.themeColor ?? undefined,
+	} : undefined;
+});
 
 function checkMute(targetNote: Misskey.entities.Note, mutedWords: Array<string | string[]> | undefined | null): boolean {
 	if (mutedWords == null) return false;
@@ -269,7 +276,7 @@ function checkMute(targetNote: Misskey.entities.Note, mutedWords: Array<string |
 const keymap = {
 	'r': () => reply(true),
 	'e|a|plus': () => react(true),
-	'q': () => renoteButton.value.renote(true),
+	'q': () => renote(true),
 	'up|k|shift+tab': focusBefore,
 	'down|j|tab': focusAfter,
 	'esc': blur,
@@ -278,10 +285,12 @@ const keymap = {
 };
 
 provide('react', (reaction: string) => {
-	os.api('notes/reactions/create', {
-		noteId: appearNote.value.id,
-		reaction: reaction,
-	});
+	if (appearNote.value?.id) {
+		os.api('notes/reactions/create', {
+			noteId: appearNote.value.id,
+			reaction: reaction,
+		});
+	}
 });
 
 if (props.mock) {
@@ -289,16 +298,21 @@ if (props.mock) {
 		note.value = deepClone(to);
 	}, { deep: true });
 } else {
-	useNoteCapture({
-		rootEl: el,
-		note: appearNote,
-		pureNote: note,
-		isDeletedRef: isDeleted,
-	});
+	if (el.value && appearNote.value && note.value) {
+		useNoteCapture({
+			rootEl: el as ShallowRef<HTMLElement>,
+			note: appearNote as ShallowRef<Misskey.entities.Note>,
+			pureNote: note as Ref<Misskey.entities.Note>,
+			isDeletedRef: isDeleted,
+		});
+	}
 }
 
 if (!props.mock) {
 	useTooltip(renoteButton, async (showing) => {
+		if (!appearNote.value?.id) {
+			return;
+		}
 		const renotes = await os.api('notes/renotes', {
 			noteId: appearNote.value.id,
 			limit: 11,
@@ -320,11 +334,12 @@ if (!props.mock) {
 function renote(viaKeyboard = false) {
 	pleaseLogin();
 	showMovedDialog();
-
-	const { menu } = getRenoteMenu({ note: note.value, renoteButton, mock: props.mock });
-	os.popupMenu(menu, renoteButton.value, {
-		viaKeyboard,
-	});
+	if (note.value && renoteButton.value) {
+		const { menu: renoteMenu } = getRenoteMenu({ note: note.value as Misskey.entities.Note, renoteButton: renoteButton as ShallowRef<HTMLElement>, mock: props.mock });
+		os.popupMenu(renoteMenu as MenuItem[], renoteButton.value, {
+			viaKeyboard,
+		});
+	}
 }
 
 function reply(viaKeyboard = false): void {
@@ -334,16 +349,17 @@ function reply(viaKeyboard = false): void {
 	}
 	os.post({
 		reply: appearNote.value,
-		channel: appearNote.value.channel,
+		channel: appearNote.value?.channel,
 		animation: !viaKeyboard,
-	}, () => {
-		focus();
 	});
 }
 
 function react(viaKeyboard = false): void {
 	pleaseLogin();
 	showMovedDialog();
+	if (!appearNote.value || !reactButton.value) {
+		return;
+	}
 	if (appearNote.value.reactionAcceptance === 'likeOnly') {
 		sound.play('reaction');
 
@@ -355,11 +371,11 @@ function react(viaKeyboard = false): void {
 			noteId: appearNote.value.id,
 			reaction: '❤️',
 		});
-		const el = reactButton.value as HTMLElement | null | undefined;
-		if (el) {
-			const rect = el.getBoundingClientRect();
-			const x = rect.left + (el.offsetWidth / 2);
-			const y = rect.top + (el.offsetHeight / 2);
+		const reactButtonElement = reactButton.value as HTMLElement | null | undefined;
+		if (reactButtonElement) {
+			const rect = reactButtonElement.getBoundingClientRect();
+			const x = rect.left + (reactButtonElement.offsetWidth / 2);
+			const y = rect.top + (reactButtonElement.offsetHeight / 2);
 			os.popup(MkRippleEffect, { x, y }, {}, 'end');
 		}
 	} else {
@@ -369,6 +385,10 @@ function react(viaKeyboard = false): void {
 
 			if (props.mock) {
 				emit('reaction', reaction);
+				return;
+			}
+
+			if (!appearNote.value?.id) {
 				return;
 			}
 
@@ -404,23 +424,26 @@ function onContextmenu(ev: MouseEvent): void {
 		return;
 	}
 
-	const isLink = (el: HTMLElement) => {
-		if (el.tagName === 'A') return true;
+	const isLink = (htmlEl: HTMLElement) => {
+		if (htmlEl.tagName === 'A') return true;
 		// 再生速度の選択などのために、Audio要素のコンテキストメニューはブラウザデフォルトとする。
-		if (el.tagName === 'AUDIO') return true;
-		if (el.parentElement) {
-			return isLink(el.parentElement);
+		if (htmlEl.tagName === 'AUDIO') return true;
+		if (htmlEl.parentElement) {
+			return isLink(htmlEl.parentElement);
 		}
 	};
-	if (isLink(ev.target)) return;
-	if (window.getSelection().toString() !== '') return;
+	if (isLink(ev.target as HTMLElement)) return;
+	const selection = window.getSelection();
+	if (selection && selection.toString() !== '') return;
 
 	if (defaultStore.state.useReactionPickerForContextMenu) {
 		ev.preventDefault();
 		react();
 	} else {
-		const { menu, cleanup } = getNoteMenu({ note: note.value, translating, translation, menuButton, isDeleted, currentClip: currentClip?.value });
-		os.contextMenu(menu, ev).then(focus).finally(cleanup);
+		if (note.value && menuButton.value) {
+			const { menu: noteMenu, cleanup } = getNoteMenu({ note: note.value, translating, translation, menuButton: menuButton as ShallowRef<HTMLElement>, isDeleted, currentClip: currentClip?.value });
+			os.contextMenu(noteMenu, ev).then(focus).finally(cleanup);
+		}
 	}
 }
 
@@ -429,10 +452,12 @@ function menu(viaKeyboard = false): void {
 		return;
 	}
 
-	const { menu, cleanup } = getNoteMenu({ note: note.value, translating, translation, menuButton, isDeleted, currentClip: currentClip?.value });
-	os.popupMenu(menu, menuButton.value, {
-		viaKeyboard,
-	}).then(focus).finally(cleanup);
+	if (note.value && menuButton.value) {
+		const { menu: noteMenu, cleanup } = getNoteMenu({ note: note.value, translating, translation, menuButton: menuButton as ShallowRef<HTMLElement>, isDeleted, currentClip: currentClip?.value });
+		os.popupMenu(noteMenu, menuButton.value, {
+			viaKeyboard,
+		}).then(focus).finally(cleanup);
+	}
 }
 
 async function clip() {
@@ -440,7 +465,9 @@ async function clip() {
 		return;
 	}
 
-	os.popupMenu(await getNoteClipMenu({ note: note.value, isDeleted, currentClip: currentClip?.value }), clipButton.value).then(focus);
+	if (note.value) {
+		os.popupMenu(await getNoteClipMenu({ note: note.value, isDeleted, currentClip: currentClip?.value }), clipButton.value).then(focus);
+	}
 }
 
 function showRenoteMenu(viaKeyboard = false): void {
@@ -454,41 +481,47 @@ function showRenoteMenu(viaKeyboard = false): void {
 			icon: 'ti ti-trash',
 			danger: true,
 			action: () => {
-				os.api('notes/delete', {
-					noteId: note.value.id,
-				});
-				isDeleted.value = true;
+				if (note.value && note.value.id) {
+					os.api('notes/delete', {
+						noteId: note.value.id,
+					});
+					isDeleted.value = true;
+				}
 			},
 		};
 	}
 
 	if (isMyRenote) {
 		pleaseLogin();
-		os.popupMenu([
-			getCopyNoteLinkMenu(note.value, i18n.ts.copyLinkRenote),
-			{ type: 'divider' },
-			getUnrenote(),
-		], renoteTime.value, {
-			viaKeyboard: viaKeyboard,
-		});
+		if (note.value) {
+			os.popupMenu([
+				getCopyNoteLinkMenu(note.value, i18n.ts.copyLinkRenote),
+				{ type: 'divider' },
+				getUnrenote(),
+			], renoteTime.value, {
+				viaKeyboard: viaKeyboard,
+			});
+		}
 	} else {
-		os.popupMenu([
-			getCopyNoteLinkMenu(note.value, i18n.ts.copyLinkRenote),
-			{ type: 'divider' },
-			getAbuseNoteMenu(note.value, i18n.ts.reportAbuseRenote),
-			$i.isModerator || $i.isAdmin ? getUnrenote() : undefined,
-		], renoteTime.value, {
-			viaKeyboard: viaKeyboard,
-		});
+		if (note.value) {
+			os.popupMenu([
+				getCopyNoteLinkMenu(note.value, i18n.ts.copyLinkRenote),
+				{ type: 'divider' },
+				getAbuseNoteMenu(note.value, i18n.ts.reportAbuseRenote),
+				$i?.isModerator || $i?.isAdmin ? getUnrenote() : undefined,
+			], renoteTime.value, {
+				viaKeyboard: viaKeyboard,
+			});
+		}
 	}
 }
 
 function focus() {
-	el.value.focus();
+	el.value?.focus();
 }
 
 function blur() {
-	el.value.blur();
+	el.value?.blur();
 }
 
 function focusBefore() {
@@ -500,10 +533,12 @@ function focusAfter() {
 }
 
 function readPromo() {
-	os.api('promo/read', {
-		noteId: appearNote.value.id,
-	});
-	isDeleted.value = true;
+	if (appearNote.value?.id) {
+		os.api('promo/read', {
+			noteId: appearNote.value.id,
+		});
+		isDeleted.value = true;
+	}
 }
 
 function emitUpdReaction(emoji: string, delta: number) {
