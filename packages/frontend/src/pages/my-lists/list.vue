@@ -58,7 +58,7 @@ import * as Misskey from 'misskey-js';
 import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
-import { mainRouter } from '@/router.js';
+import { mainRouter } from '@/global/router/main.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { i18n } from '@/i18n.js';
 import { userPage } from '@/filters/user.js';

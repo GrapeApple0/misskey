@@ -13,7 +13,7 @@ import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { defaultStore, userActions } from '@/store.js';
 import { $i, iAmModerator } from '@/account.js';
-import { mainRouter } from '@/router.js';
+import { mainRouter } from '@/global/router/main.js';
 import { Router } from '@/nirax.js';
 import { antennasCache, rolesCache, userListsCache } from '@/cache.js';
 

@@ -605,7 +605,7 @@ import { ROLE_POLICIES } from '@/const.js';
 import { instance } from '@/instance.js';
 import { deepClone } from '@/scripts/clone.js';
 import { rolesCache } from '@/cache.js';
-import { useRouter } from '@/router.js';
+import { useRouter } from '@/global/router/supplier.js';
 
 const router = useRouter();
 

@@ -34,7 +34,7 @@ import MkSuperMenu from '@/components/MkSuperMenu.vue';
 import { signout, $i } from '@/account.js';
 import { clearCache } from '@/scripts/clear-cache.js';
 import { instance } from '@/instance.js';
-import { useRouter } from '@/router.js';
+import { useRouter } from '@/global/router/supplier.js';
 import { PageMetadata, definePageMetadata, provideMetadataReceiver } from '@/scripts/page-metadata.js';
 import * as os from '@/os.js';
 
