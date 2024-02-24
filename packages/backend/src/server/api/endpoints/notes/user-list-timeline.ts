@@ -37,10 +37,10 @@ export const paramDef = {
 	properties: {
 		listId: { type: 'string', format: 'misskey:id' },
 		limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
-		sinceId: { type: 'string', format: 'misskey:id' },
-		untilId: { type: 'string', format: 'misskey:id' },
-		sinceDate: { type: 'integer' },
-		untilDate: { type: 'integer' },
+		sinceId: { type: 'string', format: 'misskey:id', nullable: true },
+		untilId: { type: 'string', format: 'misskey:id', nullable: true },
+		sinceDate: { type: 'integer', nullable: true },
+		untilDate: { type: 'integer', nullable: true },
 		includeMyRenotes: { type: 'boolean', default: true },
 		includeRenotedMyNotes: { type: 'boolean', default: true },
 		includeLocalRenotes: { type: 'boolean', default: true },
@@ -81,7 +81,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			}
 
 			//#region Construct query
-			const query = this.queryService.makePaginationQuery(this.notesRepository.createQueryBuilder('note'), ps.sinceId, ps.untilId)
+			const query = this.queryService.makePaginationQuery(this.notesRepository.createQueryBuilder('note'), ps.sinceId ?? undefined, ps.untilId ?? undefined)
 				.innerJoin(this.userListJoiningsRepository.metadata.targetName, 'userListJoining', 'userListJoining.userId = note.userId')
 				.innerJoinAndSelect('note.user', 'user')
 				.leftJoinAndSelect('user.avatar', 'avatar')

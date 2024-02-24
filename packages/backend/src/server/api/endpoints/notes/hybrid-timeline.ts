@@ -39,10 +39,10 @@ export const paramDef = {
 	type: 'object',
 	properties: {
 		limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
-		sinceId: { type: 'string', format: 'misskey:id' },
-		untilId: { type: 'string', format: 'misskey:id' },
-		sinceDate: { type: 'integer' },
-		untilDate: { type: 'integer' },
+		sinceId: { type: 'string', format: 'misskey:id', nullable: true },
+		untilId: { type: 'string', format: 'misskey:id', nullable: true },
+		sinceDate: { type: 'integer', nullable: true },
+		untilDate: { type: 'integer', nullable: true },
 		includeMyRenotes: { type: 'boolean', default: true },
 		includeRenotedMyNotes: { type: 'boolean', default: true },
 		includeLocalRenotes: { type: 'boolean', default: true },
@@ -84,7 +84,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				.where('following.followerId = :followerId', { followerId: me.id });
 
 			const query = this.queryService.makePaginationQuery(this.notesRepository.createQueryBuilder('note'),
-				ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate)
+				ps.sinceId ?? undefined, ps.untilId ?? undefined, ps.sinceDate ?? undefined, ps.untilDate ?? undefined)
 				.andWhere('note.id > :minId', { minId: this.idService.genId(new Date(Date.now() - (1000 * 60 * 60 * 24 * 10))) }) // 10日前まで
 				.andWhere(new Brackets(qb => {
 					qb.where(`((note.userId IN (${ followingQuery.getQuery() })) OR (note.userId = :meId))`, { meId: me.id })
