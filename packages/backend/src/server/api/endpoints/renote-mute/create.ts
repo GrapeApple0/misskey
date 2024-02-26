@@ -1,10 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Inject, Injectable } from '@nestjs/common';
 import ms from 'ms';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { IdService } from '@/core/IdService.js';
-import type { RenoteMutingsRepository } from '@/models/index.js';
-import type { RenoteMuting } from '@/models/entities/RenoteMuting.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
+import type { RenoteMutingsRepository } from '@/models/_.js';
+import type { MiRenoteMuting } from '@/models/RenoteMuting.js';
 import { DI } from '@/di-symbols.js';
 import { GetterService } from '@/server/api/GetterService.js';
 import { ApiError } from '../../error.js';
@@ -13,6 +17,7 @@ export const meta = {
 	tags: ['account'],
 
 	requireCredential: true,
+	prohibitMoved: true,
 
 	kind: 'write:mutes',
 
@@ -50,14 +55,12 @@ export const paramDef = {
 	required: ['userId'],
 } as const;
 
-// eslint-disable-next-line import/no-default-export
 @Injectable()
-export default class extends Endpoint<typeof meta, typeof paramDef> {
+export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
 		@Inject(DI.renoteMutingsRepository)
 		private renoteMutingsRepository: RenoteMutingsRepository,
 
-		private globalEventService: GlobalEventService,
 		private getterService: GetterService,
 		private idService: IdService,
 	) {
@@ -70,7 +73,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			}
 
 			// Get mutee
-			const mutee = await getterService.getUser(ps.userId).catch(err => {
+			const mutee = await this.getterService.getUser(ps.userId).catch(err => {
 				if (err.id === '15348ddd-432d-49c2-8a5a-8069753becff') throw new ApiError(meta.errors.noSuchUser);
 				throw err;
 			});
@@ -87,13 +90,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 			// Create mute
 			await this.renoteMutingsRepository.insert({
-				id: this.idService.genId(),
-				createdAt: new Date(),
+				id: this.idService.gen(),
 				muterId: muter.id,
 				muteeId: mutee.id,
-			} as RenoteMuting);
-
-		// publishUserEvent(user.id, 'mute', mutee);
+			} as MiRenoteMuting);
 		});
 	}
 }

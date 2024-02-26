@@ -1,12 +1,16 @@
-import { shallowRef, computed, markRaw } from 'vue';
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+import { shallowRef, computed, markRaw, watch } from 'vue';
 import * as Misskey from 'misskey-js';
-import { api, apiGet } from './os';
-import { miLocalStorage } from './local-storage';
-import { stream } from '@/stream';
-import { get, set } from '@/scripts/idb-proxy';
+import { misskeyApi, misskeyApiGet } from '@/scripts/misskey-api.js';
+import { useStream } from '@/stream.js';
+import { get, set } from '@/scripts/idb-proxy.js';
 
 const storageCache = await get('emojis');
-export const customEmojis = shallowRef<Misskey.entities.CustomEmoji[]>(Array.isArray(storageCache) ? storageCache : []);
+export const customEmojis = shallowRef<Misskey.entities.EmojiSimple[]>(Array.isArray(storageCache) ? storageCache : []);
 export const customEmojiCategories = computed<[ ...string[], null ]>(() => {
 	const categories = new Set<string>();
 	for (const emoji of customEmojis.value) {
@@ -17,13 +21,24 @@ export const customEmojiCategories = computed<[ ...string[], null ]>(() => {
 	return markRaw([...Array.from(categories), null]);
 });
 
+export const customEmojisMap = new Map<string, Misskey.entities.EmojiSimple>();
+watch(customEmojis, emojis => {
+	customEmojisMap.clear();
+	for (const emoji of emojis) {
+		customEmojisMap.set(emoji.name, emoji);
+	}
+}, { immediate: true });
+
+// TODO: ここら辺副作用なのでいい感じにする
+const stream = useStream();
+
 stream.on('emojiAdded', emojiData => {
 	customEmojis.value = [emojiData.emoji, ...customEmojis.value];
 	set('emojis', customEmojis.value);
 });
 
 stream.on('emojiUpdated', emojiData => {
-	customEmojis.value = customEmojis.value.map(item => emojiData.emojis.find(search => search.name === item.name) as Misskey.entities.CustomEmoji ?? item);
+	customEmojis.value = customEmojis.value.map(item => emojiData.emojis.find(search => search.name === item.name) as Misskey.entities.EmojiSimple ?? item);
 	set('emojis', customEmojis.value);
 });
 
@@ -34,24 +49,19 @@ stream.on('emojiDeleted', emojiData => {
 
 export async function fetchCustomEmojis(force = false) {
 	const now = Date.now();
-	const needsMigration = miLocalStorage.getItem('emojis') != null;
 
 	let res;
-	if (force || needsMigration) {
-		res = await api('emojis', {});
+	if (force) {
+		res = await misskeyApi('emojis', {});
 	} else {
 		const lastFetchedAt = await get('lastEmojisFetchedAt');
 		if (lastFetchedAt && (now - lastFetchedAt) < 1000 * 60 * 60) return;
-		res = await apiGet('emojis', {});
+		res = await misskeyApiGet('emojis', {});
 	}
 
 	customEmojis.value = res.emojis;
 	set('emojis', res.emojis);
 	set('lastEmojisFetchedAt', now);
-	if (needsMigration) {
-		miLocalStorage.removeItem('emojis');
-		miLocalStorage.removeItem('lastEmojisFetchedAt');
-	}
 }
 
 let cachedTags;

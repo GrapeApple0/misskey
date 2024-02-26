@@ -1,8 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Injectable } from '@nestjs/common';
 import si from 'systeminformation';
 import Xev from 'xev';
 import * as osUtils from 'os-utils';
 import { bindThis } from '@/decorators.js';
+import { MetaService } from '@/core/MetaService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 const ev = new Xev();
@@ -14,9 +20,10 @@ const round = (num: number) => Math.round(num * 10) / 10;
 
 @Injectable()
 export class ServerStatsService implements OnApplicationShutdown {
-	private intervalId: NodeJS.Timer;
+	private intervalId: NodeJS.Timeout | null = null;
 
 	constructor(
+		private metaService: MetaService,
 	) {
 	}
 
@@ -24,11 +31,13 @@ export class ServerStatsService implements OnApplicationShutdown {
 	 * Report server stats regularly
 	 */
 	@bindThis
-	public start(): void {
+	public async start(): Promise<void> {
+		if (!(await this.metaService.fetch(true)).enableServerMachineStats) return;
+
 		const log = [] as any[];
 
 		ev.on('requestServerStatsLog', x => {
-			ev.emit(`serverStatsLog:${x.id}`, log.slice(0, x.length ?? 50));
+			ev.emit(`serverStatsLog:${x.id}`, log.slice(0, x.length));
 		});
 
 		const tick = async () => {
@@ -40,7 +49,7 @@ export class ServerStatsService implements OnApplicationShutdown {
 			const stats = {
 				cpu: roundCpu(cpu),
 				mem: {
-					used: round(memStats.used - memStats.buffers - memStats.cached),
+					used: round(memStats.total - memStats.available),
 					active: round(memStats.active),
 				},
 				net: {
@@ -63,8 +72,15 @@ export class ServerStatsService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	public onApplicationShutdown(signal?: string | undefined) {
-		clearInterval(this.intervalId);
+	public dispose(): void {
+		if (this.intervalId) {
+			clearInterval(this.intervalId);
+		}
+	}
+
+	@bindThis
+	public onApplicationShutdown(signal?: string | undefined): void {
+		this.dispose();
 	}
 }
 
@@ -92,6 +108,5 @@ async function net() {
 
 // FS STAT
 async function fs() {
-	const data = await si.disksIO().catch(() => ({ rIO_sec: 0, wIO_sec: 0 }));
-	return data ?? { rIO_sec: 0, wIO_sec: 0 };
+	return await si.disksIO().catch(() => ({ rIO_sec: 0, wIO_sec: 0 }));
 }

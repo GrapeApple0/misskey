@@ -1,40 +1,48 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
-<XColumn v-if="deckStore.state.alwaysShowMainColumn || mainRouter.currentRoute.value.name !== 'index'" :column="column" :is-stacked="isStacked" @parent-focus="$event => emit('parent-focus', $event)">
+<XColumn v-if="deckStore.state.alwaysShowMainColumn || mainRouter.currentRoute.value.name !== 'index'" :column="column" :isStacked="isStacked">
 	<template #header>
-		<template v-if="pageMetadata?.value">
-			<i :class="pageMetadata?.value.icon"></i>
-			{{ pageMetadata?.value.title }}
+		<template v-if="pageMetadata">
+			<i :class="pageMetadata.icon"></i>
+			{{ pageMetadata.title }}
 		</template>
 	</template>
 
-	<RouterView @contextmenu.stop="onContextmenu"/>
+	<div ref="contents">
+		<RouterView @contextmenu.stop="onContextmenu"/>
+	</div>
 </XColumn>
 </template>
 
 <script lang="ts" setup>
-import { ComputedRef, provide } from 'vue';
+import { provide, shallowRef, ref } from 'vue';
 import XColumn from './column.vue';
-import { deckStore, Column } from '@/ui/deck/deck-store';
-import * as os from '@/os';
-import { i18n } from '@/i18n';
-import { mainRouter } from '@/router';
-import { PageMetadata, provideMetadataReceiver } from '@/scripts/page-metadata';
+import { deckStore, Column } from '@/ui/deck/deck-store.js';
+import * as os from '@/os.js';
+import { i18n } from '@/i18n.js';
+import { PageMetadata, provideMetadataReceiver, provideReactiveMetadata } from '@/scripts/page-metadata.js';
+import { useScrollPositionManager } from '@/nirax.js';
+import { getScrollContainer } from '@/scripts/scroll.js';
+import { mainRouter } from '@/router/main.js';
 
 defineProps<{
 	column: Column;
 	isStacked: boolean;
 }>();
 
-const emit = defineEmits<{
-	(ev: 'parent-focus', direction: 'up' | 'down' | 'left' | 'right'): void;
-}>();
-
-let pageMetadata = $ref<null | ComputedRef<PageMetadata>>();
+const contents = shallowRef<HTMLElement>();
+const pageMetadata = ref<null | PageMetadata>(null);
 
 provide('router', mainRouter);
-provideMetadataReceiver((info) => {
-	pageMetadata = info;
+provideMetadataReceiver((metadataGetter) => {
+	const info = metadataGetter();
+	pageMetadata.value = info;
 });
+provideReactiveMetadata(pageMetadata);
 
 /*
 function back() {
@@ -65,4 +73,6 @@ function onContextmenu(ev: MouseEvent) {
 		},
 	}], ev);
 }
+
+useScrollPositionManager(() => getScrollContainer(contents.value), mainRouter);
 </script>

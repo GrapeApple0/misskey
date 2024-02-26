@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class perNoteReactionAcceptance1678164627293 {
     name = 'perNoteReactionAcceptance1678164627293'
 

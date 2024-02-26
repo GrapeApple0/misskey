@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <template v-if="player.url && playerEnabled">
 	<div
@@ -8,7 +13,7 @@
 			v-if="player.url.startsWith('http://') || player.url.startsWith('https://')"
 			sandbox="allow-popups allow-scripts allow-storage-access-by-user-activation allow-same-origin"
 			scrolling="no"
-			:allow="player.allow.join(';')"
+			:allow="player.allow == null ? 'autoplay;encrypted-media;fullscreen' : player.allow.filter(x => ['autoplay', 'clipboard-write', 'fullscreen', 'encrypted-media', 'picture-in-picture', 'web-share'].includes(x)).join(';')"
 			:class="$style.playerIframe"
 			:src="player.url + (player.url.match(/\?/) ? '&autoplay=1&auto_play=1' : '?autoplay=1&auto_play=1')"
 			:style="{ border: 0 }"
@@ -22,8 +27,15 @@
 	</div>
 </template>
 <template v-else-if="tweetId && tweetExpanded">
-	<div ref="twitter" :class="$style.twitter">
-		<iframe ref="tweet" scrolling="no" frameborder="no" :style="{ position: 'relative', width: '100%', height: `${tweetHeight}px` }" :src="`https://platform.twitter.com/embed/index.html?embedId=${embedId}&amp;hideCard=false&amp;hideThread=false&amp;lang=en&amp;theme=${$store.state.darkMode ? 'dark' : 'light'}&amp;id=${tweetId}`"></iframe>
+	<div ref="twitter">
+		<iframe
+			ref="tweet"
+			allow="fullscreen;web-share"
+			sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin"
+			scrolling="no"
+			:style="{ position: 'relative', width: '100%', height: `${tweetHeight}px`, border: 0 }"
+			:src="`https://platform.twitter.com/embed/index.html?embedId=${embedId}&amp;hideCard=false&amp;hideThread=false&amp;lang=en&amp;theme=${defaultStore.state.darkMode ? 'dark' : 'light'}&amp;id=${tweetId}`"
+		></iframe>
 	</div>
 	<div :class="$style.action">
 		<MkButton :small="true" inline @click="tweetExpanded = false">
@@ -31,9 +43,9 @@
 		</MkButton>
 	</div>
 </template>
-<div v-else :class="$style.urlPreview">
-	<component :is="self ? 'MkA' : 'a'" :class="[$style.link, { [$style.compact]: compact }]" :[attr]="self ? url.substr(local.length) : url" rel="nofollow noopener" :target="target" :title="url">
-		<div v-if="thumbnail" :class="$style.thumbnail" :style="`background-image: url('${thumbnail}')`">
+<div v-else>
+	<component :is="self ? 'MkA' : 'a'" :class="[$style.link, { [$style.compact]: compact }]" :[attr]="self ? url.substring(local.length) : url" rel="nofollow noopener" :target="target" :title="url">
+		<div v-if="thumbnail && !sensitive" :class="$style.thumbnail" :style="defaultStore.state.dataSaver.urlPreview ? '' : `background-image: url('${thumbnail}')`">
 		</div>
 		<article :class="$style.body">
 			<header :class="$style.header">
@@ -41,42 +53,45 @@
 				<h1 v-else-if="fetching" :class="$style.title"><MkEllipsis/></h1>
 				<h1 v-else :class="$style.title" :title="title ?? undefined">{{ title }}</h1>
 			</header>
-			<p v-if="unknownUrl" :class="$style.text">{{ i18n.ts.cannotLoad }}</p>
+			<p v-if="unknownUrl" :class="$style.text">{{ i18n.ts.failedToPreviewUrl }}</p>
 			<p v-else-if="fetching" :class="$style.text"><MkEllipsis/></p>
 			<p v-else-if="description" :class="$style.text" :title="description">{{ description.length > 85 ? description.slice(0, 85) + '…' : description }}</p>
 			<footer :class="$style.footer">
 				<img v-if="icon" :class="$style.siteIcon" :src="icon"/>
-				<p v-if="unknownUrl" :class="$style.siteName">?</p>
+				<p v-if="unknownUrl" :class="$style.siteName">{{ requestUrl.host }}</p>
 				<p v-else-if="fetching" :class="$style.siteName"><MkEllipsis/></p>
-				<p v-else :class="$style.siteName" :title="sitename ?? undefined">{{ sitename }}</p>
+				<p v-else :class="$style.siteName" :title="sitename ?? requestUrl.host">{{ sitename ?? requestUrl.host }}</p>
 			</footer>
 		</article>
 	</component>
-	<div v-if="tweetId" :class="$style.action">
-		<MkButton :small="true" inline @click="tweetExpanded = true">
-			<i class="ti ti-brand-twitter"></i> {{ i18n.ts.expandTweet }}
-		</MkButton>
-	</div>
-	<div v-if="!playerEnabled && player.url" :class="$style.action">
-		<MkButton :small="true" inline @click="playerEnabled = true">
-			<i class="ti ti-player-play"></i> {{ i18n.ts.enablePlayer }}
-		</MkButton>
-		<MkButton v-if="!isMobile" :small="true" inline @click="openPlayer()">
-			<i class="ti ti-picture-in-picture"></i> {{ i18n.ts.openInWindow }}
-		</MkButton>
-	</div>
+	<template v-if="showActions">
+		<div v-if="tweetId" :class="$style.action">
+			<MkButton :small="true" inline @click="tweetExpanded = true">
+				<i class="ti ti-brand-x"></i> {{ i18n.ts.expandTweet }}
+			</MkButton>
+		</div>
+		<div v-if="!playerEnabled && player.url" :class="$style.action">
+			<MkButton :small="true" inline @click="playerEnabled = true">
+				<i class="ti ti-player-play"></i> {{ i18n.ts.enablePlayer }}
+			</MkButton>
+			<MkButton v-if="!isMobile" :small="true" inline @click="openPlayer()">
+				<i class="ti ti-picture-in-picture"></i> {{ i18n.ts.openInWindow }}
+			</MkButton>
+		</div>
+	</template>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, onUnmounted } from 'vue';
-import type { summaly } from 'summaly';
-import { url as local } from '@/config';
-import { i18n } from '@/i18n';
-import * as os from '@/os';
-import { deviceKind } from '@/scripts/device-kind';
+import { defineAsyncComponent, onDeactivated, onUnmounted, ref } from 'vue';
+import type { summaly } from '@misskey-dev/summaly';
+import { url as local } from '@/config.js';
+import { i18n } from '@/i18n.js';
+import * as os from '@/os.js';
+import { deviceKind } from '@/scripts/device-kind.js';
 import MkButton from '@/components/MkButton.vue';
-import { versatileLang } from '@/scripts/intl-const';
+import { versatileLang } from '@/scripts/intl-const.js';
+import { defaultStore } from '@/store.js';
 
 type SummalyResult = Awaited<ReturnType<typeof summaly>>;
 
@@ -84,41 +99,48 @@ const props = withDefaults(defineProps<{
 	url: string;
 	detail?: boolean;
 	compact?: boolean;
+	showActions?: boolean;
 }>(), {
 	detail: false,
 	compact: false,
+	showActions: true,
 });
 
 const MOBILE_THRESHOLD = 500;
-const isMobile = $ref(deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD);
+const isMobile = ref(deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD);
 
 const self = props.url.startsWith(local);
 const attr = self ? 'to' : 'href';
 const target = self ? null : '_blank';
-let fetching = $ref(true);
-let title = $ref<string | null>(null);
-let description = $ref<string | null>(null);
-let thumbnail = $ref<string | null>(null);
-let icon = $ref<string | null>(null);
-let sitename = $ref<string | null>(null);
-let player = $ref({
+const fetching = ref(true);
+const title = ref<string | null>(null);
+const description = ref<string | null>(null);
+const thumbnail = ref<string | null>(null);
+const icon = ref<string | null>(null);
+const sitename = ref<string | null>(null);
+const sensitive = ref<boolean>(false);
+const player = ref({
 	url: null,
 	width: null,
 	height: null,
 } as SummalyResult['player']);
-let playerEnabled = $ref(false);
-let tweetId = $ref<string | null>(null);
-let tweetExpanded = $ref(props.detail);
+const playerEnabled = ref(false);
+const tweetId = ref<string | null>(null);
+const tweetExpanded = ref(props.detail);
 const embedId = `embed${Math.random().toString().replace(/\D/, '')}`;
-let tweetHeight = $ref(150);
-let unknownUrl = $ref(false);
+const tweetHeight = ref(150);
+const unknownUrl = ref(false);
+
+onDeactivated(() => {
+	playerEnabled.value = false;
+});
 
 const requestUrl = new URL(props.url);
 if (!['http:', 'https:'].includes(requestUrl.protocol)) throw new Error('invalid url');
 
-if (requestUrl.hostname === 'twitter.com' || requestUrl.hostname === 'mobile.twitter.com') {
+if (requestUrl.hostname === 'twitter.com' || requestUrl.hostname === 'mobile.twitter.com' || requestUrl.hostname === 'x.com' || requestUrl.hostname === 'mobile.x.com') {
 	const m = requestUrl.pathname.match(/^\/.+\/status(?:es)?\/(\d+)/);
-	if (m) tweetId = m[1];
+	if (m) tweetId.value = m[1];
 }
 
 if (requestUrl.hostname === 'music.youtube.com' && requestUrl.pathname.match('^/(?:watch|channel)')) {
@@ -127,17 +149,34 @@ if (requestUrl.hostname === 'music.youtube.com' && requestUrl.pathname.match('^/
 
 requestUrl.hash = '';
 
-window.fetch(`/url?url=${encodeURIComponent(requestUrl.href)}&lang=${versatileLang}`).then(res => {
-	res.json().then((info: SummalyResult) => {
-		title = info.title;
-		description = info.description;
-		thumbnail = info.thumbnail;
-		icon = info.icon;
-		sitename = info.sitename;
-		fetching = false;
-		player = info.player;
+window.fetch(`/url?url=${encodeURIComponent(requestUrl.href)}&lang=${versatileLang}`)
+	.then(res => {
+		if (!res.ok) {
+			fetching.value = false;
+			unknownUrl.value = true;
+			return;
+		}
+
+		return res.json();
+	})
+	.then((info: SummalyResult) => {
+		if (info.url == null) {
+			fetching.value = false;
+			unknownUrl.value = true;
+			return;
+		}
+
+		fetching.value = false;
+		unknownUrl.value = false;
+
+		title.value = info.title;
+		description.value = info.description;
+		thumbnail.value = info.thumbnail;
+		icon.value = info.icon;
+		sitename.value = info.sitename;
+		player.value = info.player;
+		sensitive.value = info.sensitive ?? false;
 	});
-});
 
 function adjustTweetHeight(message: any) {
 	if (message.origin !== 'https://platform.twitter.com') return;
@@ -145,11 +184,11 @@ function adjustTweetHeight(message: any) {
 	if (embed?.method !== 'twttr.private.resize') return;
 	if (embed?.id !== embedId) return;
 	const height = embed?.params[0]?.height;
-	if (height) tweetHeight = height;
+	if (height) tweetHeight.value = height;
 }
 
 const openPlayer = (): void => {
-	os.popup(defineAsyncComponent(() => import('@/components/MkYoutubePlayer.vue')), {
+	os.popup(defineAsyncComponent(() => import('@/components/MkYouTubePlayer.vue')), {
 		url: requestUrl.href,
 	});
 };
@@ -193,13 +232,6 @@ onUnmounted(() => {
 	width: 100%;
 }
 
-.twitter {
-
-}
-
-.urlPreview {
-}
-
 .link {
 	position: relative;
 	display: block;
@@ -234,6 +266,7 @@ onUnmounted(() => {
 	height: 100%;
 	background-position: center;
 	background-size: cover;
+	background-color: var(--bg);
 	display: flex;
 	justify-content: center;
 	align-items: center;

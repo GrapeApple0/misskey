@@ -1,8 +1,13 @@
-import { query } from '@/scripts/url';
-import { url } from '@/config';
-import { instance } from '@/instance';
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
 
-export function getProxiedImageUrl(imageUrl: string, type?: 'preview', mustOrigin: boolean = false): string {
+import { query } from '@/scripts/url.js';
+import { url } from '@/config.js';
+import { instance } from '@/instance.js';
+
+export function getProxiedImageUrl(imageUrl: string, type?: 'preview' | 'emoji' | 'avatar', mustOrigin = false, noFallback = false): string {
 	const localProxy = `${url}/proxy`;
 
 	if (imageUrl.startsWith(instance.mediaProxy + '/') || imageUrl.startsWith('/proxy/') || imageUrl.startsWith(localProxy + '/')) {
@@ -15,7 +20,7 @@ export function getProxiedImageUrl(imageUrl: string, type?: 'preview', mustOrigi
 		: 'image.webp'
 	}?${query({
 		url: imageUrl,
-		fallback: '1',
+		...(!noFallback ? { 'fallback': '1' } : {}),
 		...(type ? { [type]: '1' } : {}),
 		...(mustOrigin ? { origin: '1' } : {}),
 	})}`;

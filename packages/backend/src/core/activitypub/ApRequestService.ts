@@ -1,14 +1,20 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import * as crypto from 'node:crypto';
 import { URL } from 'node:url';
 import { Inject, Injectable } from '@nestjs/common';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
-import type { User } from '@/models/entities/User.js';
-import { UserKeypairStoreService } from '@/core/UserKeypairStoreService.js';
+import type { MiUser } from '@/models/User.js';
+import { UserKeypairService } from '@/core/UserKeypairService.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import { bindThis } from '@/decorators.js';
 import type Logger from '@/logger.js';
+import { validateContentTypeSetAsActivityPub } from '@/core/activitypub/misc/validator.js';
 
 type Request = {
 	url: string;
@@ -29,9 +35,9 @@ type PrivateKey = {
 };
 
 export class ApRequestCreator {
-	static createSignedPost(args: { key: PrivateKey, url: string, body: string, additionalHeaders: Record<string, string> }): Signed {
+	static createSignedPost(args: { key: PrivateKey, url: string, body: string, digest?: string, additionalHeaders: Record<string, string> }): Signed {
 		const u = new URL(args.url);
-		const digestHeader = `SHA-256=${crypto.createHash('sha256').update(args.body).digest('base64')}`;
+		const digestHeader = args.digest ?? this.createDigest(args.body);
 
 		const request: Request = {
 			url: u.href,
@@ -54,6 +60,10 @@ export class ApRequestCreator {
 		};
 	}
 
+	static createDigest(body: string) {
+		return `SHA-256=${crypto.createHash('sha256').update(body).digest('base64')}`;
+	}
+
 	static createSignedGet(args: { key: PrivateKey, url: string, additionalHeaders: Record<string, string> }): Signed {
 		const u = new URL(args.url);
 
@@ -61,7 +71,7 @@ export class ApRequestCreator {
 			url: u.href,
 			method: 'GET',
 			headers: this.#objectAssignWithLcKey({
-				'Accept': 'application/activity+json, application/ld+json',
+				'Accept': 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
 				'Date': new Date().toUTCString(),
 				'Host': new URL(args.url).host,
 			}, args.additionalHeaders),
@@ -131,7 +141,7 @@ export class ApRequestService {
 		@Inject(DI.config)
 		private config: Config,
 
-		private userKeypairStoreService: UserKeypairStoreService,
+		private userKeypairService: UserKeypairService,
 		private httpRequestService: HttpRequestService,
 		private loggerService: LoggerService,
 	) {
@@ -140,10 +150,10 @@ export class ApRequestService {
 	}
 
 	@bindThis
-	public async signedPost(user: { id: User['id'] }, url: string, object: any) {
-		const body = JSON.stringify(object);
+	public async signedPost(user: { id: MiUser['id'] }, url: string, object: unknown, digest?: string): Promise<void> {
+		const body = typeof object === 'string' ? object : JSON.stringify(object);
 
-		const keypair = await this.userKeypairStoreService.getUserKeypair(user.id);
+		const keypair = await this.userKeypairService.getUserKeypair(user.id);
 
 		const req = ApRequestCreator.createSignedPost({
 			key: {
@@ -152,6 +162,7 @@ export class ApRequestService {
 			},
 			url,
 			body,
+			digest,
 			additionalHeaders: {
 			},
 		});
@@ -169,8 +180,8 @@ export class ApRequestService {
 	 * @param url URL to fetch
 	 */
 	@bindThis
-	public async signedGet(url: string, user: { id: User['id'] }) {
-		const keypair = await this.userKeypairStoreService.getUserKeypair(user.id);
+	public async signedGet(url: string, user: { id: MiUser['id'] }): Promise<unknown> {
+		const keypair = await this.userKeypairService.getUserKeypair(user.id);
 
 		const req = ApRequestCreator.createSignedGet({
 			key: {
@@ -185,6 +196,9 @@ export class ApRequestService {
 		const res = await this.httpRequestService.send(url, {
 			method: req.request.method,
 			headers: req.request.headers,
+		}, {
+			throwErrorWhenResponseNotOk: true,
+			validators: [validateContentTypeSetAsActivityPub],
 		});
 
 		return await res.json();

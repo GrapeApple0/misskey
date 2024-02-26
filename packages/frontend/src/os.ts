@@ -1,23 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 // TODO: なんでもかんでもos.tsに突っ込むのやめたいのでよしなに分割する
 
-import { pendingApiRequestsCount, api, apiGet } from '@/scripts/api';
-export { pendingApiRequestsCount, api, apiGet };
 import { Component, markRaw, Ref, ref, defineAsyncComponent } from 'vue';
 import { EventEmitter } from 'eventemitter3';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import * as Misskey from 'misskey-js';
-import { i18n } from './i18n';
+import type { ComponentProps } from 'vue-component-type-helpers';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { i18n } from '@/i18n.js';
 import MkPostFormDialog from '@/components/MkPostFormDialog.vue';
 import MkWaitingDialog from '@/components/MkWaitingDialog.vue';
 import MkPageWindow from '@/components/MkPageWindow.vue';
 import MkToast from '@/components/MkToast.vue';
 import MkDialog from '@/components/MkDialog.vue';
+import MkPasswordDialog from '@/components/MkPasswordDialog.vue';
 import MkEmojiPickerDialog from '@/components/MkEmojiPickerDialog.vue';
 import MkEmojiPickerWindow from '@/components/MkEmojiPickerWindow.vue';
 import MkPopupMenu from '@/components/MkPopupMenu.vue';
 import MkContextMenu from '@/components/MkContextMenu.vue';
-import { MenuItem } from '@/types/menu';
-import copyToClipboard from './scripts/copy-to-clipboard';
+import { MenuItem } from '@/types/menu.js';
+import copyToClipboard from '@/scripts/copy-to-clipboard.js';
+import { showMovedDialog } from '@/scripts/show-moved-dialog.js';
 
 export const openingWindowsCount = ref(0);
 
@@ -26,7 +33,7 @@ export const apiWithDialog = ((
 	data: Record<string, any> = {},
 	token?: string | null | undefined,
 ) => {
-	const promise = api(endpoint, data, token);
+	const promise = misskeyApi(endpoint, data, token);
 	promiseDialog(promise, null, async (err) => {
 		let title = null;
 		let text = err.message + '\n' + (err as any).id;
@@ -55,6 +62,12 @@ export const apiWithDialog = ((
 		} else if (err.code === 'RATE_LIMIT_EXCEEDED') {
 			title = i18n.ts.cannotPerformTemporary;
 			text = i18n.ts.cannotPerformTemporaryDescription;
+		} else if (err.code === 'INVALID_PARAM') {
+			title = i18n.ts.invalidParamError;
+			text = i18n.ts.invalidParamErrorDescription;
+		} else if (err.code === 'ROLE_PERMISSION_DENIED') {
+			title = i18n.ts.permissionDeniedError;
+			text = i18n.ts.permissionDeniedErrorDescription;
 		} else if (err.code.startsWith('TOO_MANY')) {
 			title = i18n.ts.youCannotCreateAnymore;
 			text = `${i18n.ts.error}: ${err.id}`;
@@ -70,7 +83,7 @@ export const apiWithDialog = ((
 	});
 
 	return promise;
-}) as typeof api;
+}) as typeof misskeyApi;
 
 export function promiseDialog<T extends Promise<any>>(
 	promise: T,
@@ -115,9 +128,10 @@ export function promiseDialog<T extends Promise<any>>(
 
 let popupIdCount = 0;
 export const popups = ref([]) as Ref<{
-	id: any;
-	component: any;
+	id: number;
+	component: Component;
 	props: Record<string, any>;
+	events: Record<string, any>;
 }[]>;
 
 const zIndexes = {
@@ -131,7 +145,18 @@ export function claimZIndex(priority: keyof typeof zIndexes = 'low'): number {
 	return zIndexes[priority];
 }
 
-export async function popup(component: Component, props: Record<string, any>, events = {}, disposeEvent?: string) {
+// InstanceType<typeof Component>['$emit'] だとインターセクション型が返ってきて
+// 使い物にならないので、代わりに ['$props'] から色々省くことで emit の型を生成する
+// FIXME: 何故か *.ts ファイルからだと型がうまく取れない？ことがあるのをなんとかしたい
+type ComponentEmit<T> = T extends new () => { $props: infer Props }
+	? EmitsExtractor<Props>
+	: never;
+
+type EmitsExtractor<T> = {
+	[K in keyof T as K extends `onVnode${string}` ? never : K extends `on${infer E}` ? Uncapitalize<E> : K extends string ? never : K]: T[K];
+};
+
+export async function popup<T extends Component>(component: T, props: ComponentProps<T>, events: ComponentEmit<T> = {} as ComponentEmit<T>, disposeEvent?: keyof ComponentEmit<T>) {
 	markRaw(component);
 
 	const id = ++popupIdCount;
@@ -160,12 +185,6 @@ export async function popup(component: Component, props: Record<string, any>, ev
 
 export function pageWindow(path: string) {
 	popup(MkPageWindow, {
-		initialPath: path,
-	}, {}, 'closed');
-}
-
-export function modalPageWindow(path: string) {
-	popup(defineAsyncComponent(() => import('@/components/MkModalPageWindow.vue')), {
 		initialPath: path,
 	}, {}, 'closed');
 }
@@ -215,6 +234,7 @@ export function actions<T extends {
 	value: string;
 	text: string;
 	primary?: boolean,
+	danger?: boolean,
 }[]>(props: {
 	type: 'error' | 'info' | 'success' | 'warning' | 'waiting' | 'question';
 	title?: string | null;
@@ -229,6 +249,7 @@ export function actions<T extends {
 			actions: props.actions.map(a => ({
 				text: a.text,
 				primary: a.primary,
+				danger: a.danger,
 				callback: () => {
 					resolve({ canceled: false, result: a.value });
 				},
@@ -325,6 +346,18 @@ export function inputDate(props: {
 	});
 }
 
+export function authenticateDialog(): Promise<{ canceled: true; result: undefined; } | {
+	canceled: false; result: { password: string; token: string | null; };
+}> {
+	return new Promise((resolve, reject) => {
+		popup(MkPasswordDialog, {}, {
+			done: result => {
+				resolve(result ? { canceled: false, result } : { canceled: true, result: undefined });
+			},
+		}, 'closed');
+	});
+}
+
 export function select<C = any>(props: {
 	title?: string | null;
 	text?: string | null;
@@ -399,10 +432,11 @@ export function form(title, form) {
 	});
 }
 
-export async function selectUser(opts: { includeSelf?: boolean } = {}) {
+export async function selectUser(opts: { includeSelf?: boolean; localOnly?: boolean; } = {}): Promise<Misskey.entities.UserDetailed> {
 	return new Promise((resolve, reject) => {
 		popup(defineAsyncComponent(() => import('@/components/MkUserSelectDialog.vue')), {
 			includeSelf: opts.includeSelf,
+			localOnly: opts.localOnly,
 		}, {
 			ok: user => {
 				resolve(user);
@@ -411,7 +445,7 @@ export async function selectUser(opts: { includeSelf?: boolean } = {}) {
 	});
 }
 
-export async function selectDriveFile(multiple: boolean) {
+export async function selectDriveFile(multiple: boolean): Promise<Misskey.entities.DriveFile[]> {
 	return new Promise((resolve, reject) => {
 		popup(defineAsyncComponent(() => import('@/components/MkDriveSelectDialog.vue')), {
 			type: 'file',
@@ -419,7 +453,7 @@ export async function selectDriveFile(multiple: boolean) {
 		}, {
 			done: files => {
 				if (files) {
-					resolve(multiple ? files : files[0]);
+					resolve(files);
 				}
 			},
 		}, 'closed');
@@ -456,11 +490,13 @@ export async function pickEmoji(src: HTMLElement | null, opts) {
 
 export async function cropImage(image: Misskey.entities.DriveFile, options: {
 	aspectRatio: number;
+	uploadFolder?: string | null;
 }): Promise<Misskey.entities.DriveFile> {
 	return new Promise((resolve, reject) => {
 		popup(defineAsyncComponent(() => import('@/components/MkCropperDialog.vue')), {
 			file: image,
 			aspectRatio: options.aspectRatio,
+			uploadFolder: options.uploadFolder,
 		}, {
 			ok: x => {
 				resolve(x);
@@ -523,7 +559,7 @@ export async function openEmojiPicker(src?: HTMLElement, opts, initialTextarea: 
 	});
 }
 
-export function popupMenu(items: MenuItem[] | Ref<MenuItem[]>, src?: HTMLElement, options?: {
+export function popupMenu(items: MenuItem[] | Ref<MenuItem[]>, src?: HTMLElement | EventTarget | null, options?: {
 	align?: string;
 	width?: number;
 	viaKeyboard?: boolean;
@@ -570,6 +606,8 @@ export function contextMenu(items: MenuItem[] | Ref<MenuItem[]>, ev: MouseEvent)
 }
 
 export function post(props: Record<string, any> = {}): Promise<void> {
+	showMovedDialog();
+
 	return new Promise((resolve, reject) => {
 		// NOTE: MkPostFormDialogをdynamic importするとiOSでテキストエリアに自動フォーカスできない
 		// NOTE: ただ、dynamic importしない場合、MkPostFormDialogインスタンスが使いまわされ、
@@ -596,7 +634,7 @@ export function checkExistence(fileData: ArrayBuffer): Promise<any> {
 		const data = new FormData();
 		data.append('md5', getMD5(fileData));
 
-		os.api('drive/files/find-by-hash', {
+		api('drive/files/find-by-hash', {
 			md5: getMD5(fileData)
 		}).then(resp => {
 			resolve(resp.length > 0 ? resp[0] : null);

@@ -1,13 +1,18 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <div>
 	<MkStickyContainer>
 		<template #header><XHeader :tabs="headerTabs"/></template>
-		<MkSpacer :content-max="600" :margin-min="16" :margin-max="32">
+		<MkSpacer :contentMax="600" :marginMin="16" :marginMax="32">
 			<XEditor v-if="data" v-model="data"/>
 		</MkSpacer>
 		<template #footer>
 			<div :class="$style.footer">
-				<MkSpacer :content-max="600" :margin-min="16" :margin-max="16">
+				<MkSpacer :contentMax="600" :marginMin="16" :marginMax="16">
 					<MkButton primary rounded @click="save"><i class="ti ti-check"></i> {{ i18n.ts.save }}</MkButton>
 				</MkSpacer>
 			</div>
@@ -17,15 +22,18 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import * as Misskey from 'misskey-js';
 import { v4 as uuid } from 'uuid';
 import XHeader from './_header_.vue';
 import XEditor from './roles.editor.vue';
-import * as os from '@/os';
-import { i18n } from '@/i18n';
-import { definePageMetadata } from '@/scripts/page-metadata';
-import { useRouter } from '@/router';
+import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { i18n } from '@/i18n.js';
+import { definePageMetadata } from '@/scripts/page-metadata.js';
 import MkButton from '@/components/MkButton.vue';
+import { rolesCache } from '@/cache.js';
+import { useRouter } from '@/router/supplier.js';
 
 const router = useRouter();
 
@@ -33,17 +41,17 @@ const props = defineProps<{
 	id?: string;
 }>();
 
-let role = $ref(null);
-let data = $ref(null);
+const role = ref<Misskey.entities.Role | null>(null);
+const data = ref<any>(null);
 
 if (props.id) {
-	role = await os.api('admin/roles/show', {
+	role.value = await misskeyApi('admin/roles/show', {
 		roleId: props.id,
 	});
 
-	data = role;
+	data.value = role.value;
 } else {
-	data = {
+	data.value = {
 		name: 'New Role',
 		description: '',
 		isAdministrator: false,
@@ -53,6 +61,7 @@ if (props.id) {
 		target: 'manual',
 		condFormula: { id: uuid(), type: 'isRemote' },
 		isPublic: false,
+		isExplorable: false,
 		asBadge: false,
 		canEditMembersByModerator: false,
 		displayOrder: 0,
@@ -61,27 +70,25 @@ if (props.id) {
 }
 
 async function save() {
-	if (role) {
+	rolesCache.delete();
+	if (role.value) {
 		os.apiWithDialog('admin/roles/update', {
-			roleId: role.id,
-			...data,
+			roleId: role.value.id,
+			...data.value,
 		});
-		router.push('/admin/roles/' + role.id);
+		router.push('/admin/roles/' + role.value.id);
 	} else {
 		const created = await os.apiWithDialog('admin/roles/create', {
-			...data,
+			...data.value,
 		});
 		router.push('/admin/roles/' + created.id);
 	}
 }
 
-const headerTabs = $computed(() => []);
+const headerTabs = computed(() => []);
 
-definePageMetadata(computed(() => role ? {
-	title: i18n.ts._role.edit + ': ' + role.name,
-	icon: 'ti ti-badge',
-} : {
-	title: i18n.ts._role.new,
+definePageMetadata(() => ({
+	title: role.value ? `${i18n.ts._role.edit}: ${role.value.name}` : i18n.ts._role.new,
 	icon: 'ti ti-badge',
 }));
 </script>

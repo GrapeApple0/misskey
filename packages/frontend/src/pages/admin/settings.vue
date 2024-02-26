@@ -1,24 +1,29 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <div>
 	<MkStickyContainer>
 		<template #header><XHeader :tabs="headerTabs"/></template>
-		<MkSpacer :content-max="700" :margin-min="16" :margin-max="32">
+		<MkSpacer :contentMax="700" :marginMin="16" :marginMax="32">
 			<FormSuspense :p="init">
 				<div class="_gaps_m">
 					<MkInput v-model="name">
 						<template #label>{{ i18n.ts.instanceName }}</template>
 					</MkInput>
 
+					<MkInput v-model="shortName">
+						<template #label>{{ i18n.ts._serverSettings.shortName }} ({{ i18n.ts.optional }})</template>
+						<template #caption>{{ i18n.ts._serverSettings.shortNameDescription }}</template>
+					</MkInput>
+
 					<MkTextarea v-model="description">
 						<template #label>{{ i18n.ts.instanceDescription }}</template>
 					</MkTextarea>
 
-					<MkInput v-model="tosUrl">
-						<template #prefix><i class="ti ti-link"></i></template>
-						<template #label>{{ i18n.ts.tosUrl }}</template>
-					</MkInput>
-
-					<FormSplit :min-width="300">
+					<FormSplit :minWidth="300">
 						<MkInput v-model="maintainerName">
 							<template #label>{{ i18n.ts.maintainerName }}</template>
 						</MkInput>
@@ -29,59 +34,26 @@
 						</MkInput>
 					</FormSplit>
 
+					<MkInput v-model="repositoryUrl" type="url">
+						<template #label>{{ i18n.ts.repositoryUrl }}</template>
+						<template #prefix><i class="ti ti-link"></i></template>
+						<template #caption>{{ i18n.ts.repositoryUrlDescription }}</template>
+					</MkInput>
+
+					<MkInfo v-if="!instance.providesTarball && !repositoryUrl" warn>
+						{{ i18n.ts.repositoryUrlOrTarballRequired }}
+					</MkInfo>
+
+					<MkInput v-model="impressumUrl" type="url">
+						<template #label>{{ i18n.ts.impressumUrl }}</template>
+						<template #prefix><i class="ti ti-link"></i></template>
+						<template #caption>{{ i18n.ts.impressumDescription }}</template>
+					</MkInput>
+
 					<MkTextarea v-model="pinnedUsers">
 						<template #label>{{ i18n.ts.pinnedUsers }}</template>
 						<template #caption>{{ i18n.ts.pinnedUsersDescription }}</template>
 					</MkTextarea>
-
-					<FormSection>
-						<div class="_gaps_s">
-							<MkSwitch v-model="enableRegistration">
-								<template #label>{{ i18n.ts.enableRegistration }}</template>
-							</MkSwitch>
-
-							<MkSwitch v-model="emailRequiredForSignup">
-								<template #label>{{ i18n.ts.emailRequiredForSignup }}</template>
-							</MkSwitch>
-						</div>
-					</FormSection>
-
-					<FormSection>
-						<template #label>{{ i18n.ts.theme }}</template>
-
-						<div class="_gaps_m">
-							<MkInput v-model="iconUrl">
-								<template #prefix><i class="ti ti-link"></i></template>
-								<template #label>{{ i18n.ts.iconUrl }}</template>
-							</MkInput>
-
-							<MkInput v-model="bannerUrl">
-								<template #prefix><i class="ti ti-link"></i></template>
-								<template #label>{{ i18n.ts.bannerUrl }}</template>
-							</MkInput>
-
-							<MkInput v-model="backgroundImageUrl">
-								<template #prefix><i class="ti ti-link"></i></template>
-								<template #label>{{ i18n.ts.backgroundImageUrl }}</template>
-							</MkInput>
-
-							<MkInput v-model="themeColor">
-								<template #prefix><i class="ti ti-palette"></i></template>
-								<template #label>{{ i18n.ts.themeColor }}</template>
-								<template #caption>#RRGGBB</template>
-							</MkInput>
-
-							<MkTextarea v-model="defaultLightTheme">
-								<template #label>{{ i18n.ts.instanceDefaultLightTheme }}</template>
-								<template #caption>{{ i18n.ts.instanceDefaultThemeDescription }}</template>
-							</MkTextarea>
-
-							<MkTextarea v-model="defaultDarkTheme">
-								<template #label>{{ i18n.ts.instanceDefaultDarkTheme }}</template>
-								<template #caption>{{ i18n.ts.instanceDefaultThemeDescription }}</template>
-							</MkTextarea>
-						</div>
-					</FormSection>
 
 					<FormSection>
 						<template #label>{{ i18n.ts.files }}</template>
@@ -89,8 +61,15 @@
 						<div class="_gaps_m">
 							<MkSwitch v-model="cacheRemoteFiles">
 								<template #label>{{ i18n.ts.cacheRemoteFiles }}</template>
-								<template #caption>{{ i18n.ts.cacheRemoteFilesDescription }}</template>
+								<template #caption>{{ i18n.ts.cacheRemoteFilesDescription }}{{ i18n.ts.youCanCleanRemoteFilesCache }}</template>
 							</MkSwitch>
+
+							<template v-if="cacheRemoteFiles">
+								<MkSwitch v-model="cacheRemoteSensitiveFiles">
+									<template #label>{{ i18n.ts.cacheRemoteSensitiveFiles }}</template>
+									<template #caption>{{ i18n.ts.cacheRemoteSensitiveFilesDescription }}</template>
+								</MkSwitch>
+							</template>
 						</div>
 					</FormSection>
 
@@ -118,16 +97,50 @@
 					</FormSection>
 
 					<FormSection>
-						<template #label>DeepL Translation</template>
+						<template #label>Misskey® Fan-out Timeline Technology™ (FTT)</template>
 
 						<div class="_gaps_m">
-							<MkInput v-model="deeplAuthKey">
-								<template #prefix><i class="ti ti-key"></i></template>
-								<template #label>DeepL Auth Key</template>
-							</MkInput>
-							<MkSwitch v-model="deeplIsPro">
-								<template #label>Pro account</template>
+							<MkSwitch v-model="enableFanoutTimeline">
+								<template #label>{{ i18n.ts.enable }}</template>
+								<template #caption>{{ i18n.ts._serverSettings.fanoutTimelineDescription }}</template>
 							</MkSwitch>
+
+							<MkSwitch v-model="enableFanoutTimelineDbFallback">
+								<template #label>{{ i18n.ts._serverSettings.fanoutTimelineDbFallback }}</template>
+								<template #caption>{{ i18n.ts._serverSettings.fanoutTimelineDbFallbackDescription }}</template>
+							</MkSwitch>
+
+							<MkInput v-model="perLocalUserUserTimelineCacheMax" type="number">
+								<template #label>perLocalUserUserTimelineCacheMax</template>
+							</MkInput>
+
+							<MkInput v-model="perRemoteUserUserTimelineCacheMax" type="number">
+								<template #label>perRemoteUserUserTimelineCacheMax</template>
+							</MkInput>
+
+							<MkInput v-model="perUserHomeTimelineCacheMax" type="number">
+								<template #label>perUserHomeTimelineCacheMax</template>
+							</MkInput>
+
+							<MkInput v-model="perUserListTimelineCacheMax" type="number">
+								<template #label>perUserListTimelineCacheMax</template>
+							</MkInput>
+						</div>
+					</FormSection>
+
+					<FormSection>
+						<template #label>{{ i18n.ts._ad.adsSettings }}</template>
+
+						<div class="_gaps_m">
+							<div class="_gaps_s">
+								<MkInput v-model="notesPerOneAd" :min="0" type="number">
+									<template #label>{{ i18n.ts._ad.notesPerOneAd }}</template>
+									<template #caption>{{ i18n.ts._ad.setZeroToDisable }}</template>
+								</MkInput>
+								<MkInfo v-if="notesPerOneAd > 0 && notesPerOneAd < 20" :warn="true">
+									{{ i18n.ts._ad.adsTooClose }}
+								</MkInfo>
+							</div>
 						</div>
 					</FormSection>
 				</div>
@@ -135,7 +148,7 @@
 		</MkSpacer>
 		<template #footer>
 			<div :class="$style.footer">
-				<MkSpacer :content-max="700" :margin-min="16" :margin-max="16">
+				<MkSpacer :contentMax="700" :marginMin="16" :marginMax="16">
 					<MkButton primary rounded @click="save"><i class="ti ti-check"></i> {{ i18n.ts.save }}</MkButton>
 				</MkSpacer>
 			</div>
@@ -145,98 +158,100 @@
 </template>
 
 <script lang="ts" setup>
-import { } from 'vue';
+import { ref, computed } from 'vue';
 import XHeader from './_header_.vue';
 import MkSwitch from '@/components/MkSwitch.vue';
 import MkInput from '@/components/MkInput.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
+import MkInfo from '@/components/MkInfo.vue';
 import FormSection from '@/components/form/section.vue';
 import FormSplit from '@/components/form/split.vue';
 import FormSuspense from '@/components/form/suspense.vue';
-import * as os from '@/os';
-import { fetchInstance } from '@/instance';
-import { i18n } from '@/i18n';
-import { definePageMetadata } from '@/scripts/page-metadata';
+import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { fetchInstance, instance } from '@/instance.js';
+import { i18n } from '@/i18n.js';
+import { definePageMetadata } from '@/scripts/page-metadata.js';
 import MkButton from '@/components/MkButton.vue';
 
-let name: string | null = $ref(null);
-let description: string | null = $ref(null);
-let tosUrl: string | null = $ref(null);
-let maintainerName: string | null = $ref(null);
-let maintainerEmail: string | null = $ref(null);
-let iconUrl: string | null = $ref(null);
-let bannerUrl: string | null = $ref(null);
-let backgroundImageUrl: string | null = $ref(null);
-let themeColor: any = $ref(null);
-let defaultLightTheme: any = $ref(null);
-let defaultDarkTheme: any = $ref(null);
-let pinnedUsers: string = $ref('');
-let cacheRemoteFiles: boolean = $ref(false);
-let enableRegistration: boolean = $ref(false);
-let emailRequiredForSignup: boolean = $ref(false);
-let enableServiceWorker: boolean = $ref(false);
-let swPublicKey: any = $ref(null);
-let swPrivateKey: any = $ref(null);
-let deeplAuthKey: string = $ref('');
-let deeplIsPro: boolean = $ref(false);
+const name = ref<string | null>(null);
+const shortName = ref<string | null>(null);
+const description = ref<string | null>(null);
+const maintainerName = ref<string | null>(null);
+const maintainerEmail = ref<string | null>(null);
+const repositoryUrl = ref<string | null>(null);
+const impressumUrl = ref<string | null>(null);
+const pinnedUsers = ref<string>('');
+const cacheRemoteFiles = ref<boolean>(false);
+const cacheRemoteSensitiveFiles = ref<boolean>(false);
+const enableServiceWorker = ref<boolean>(false);
+const swPublicKey = ref<string | null>(null);
+const swPrivateKey = ref<string | null>(null);
+const enableFanoutTimeline = ref<boolean>(false);
+const enableFanoutTimelineDbFallback = ref<boolean>(false);
+const perLocalUserUserTimelineCacheMax = ref<number>(0);
+const perRemoteUserUserTimelineCacheMax = ref<number>(0);
+const perUserHomeTimelineCacheMax = ref<number>(0);
+const perUserListTimelineCacheMax = ref<number>(0);
+const notesPerOneAd = ref<number>(0);
 
-async function init() {
-	const meta = await os.api('admin/meta');
-	name = meta.name;
-	description = meta.description;
-	tosUrl = meta.tosUrl;
-	iconUrl = meta.iconUrl;
-	bannerUrl = meta.bannerUrl;
-	backgroundImageUrl = meta.backgroundImageUrl;
-	themeColor = meta.themeColor;
-	defaultLightTheme = meta.defaultLightTheme;
-	defaultDarkTheme = meta.defaultDarkTheme;
-	maintainerName = meta.maintainerName;
-	maintainerEmail = meta.maintainerEmail;
-	pinnedUsers = meta.pinnedUsers.join('\n');
-	cacheRemoteFiles = meta.cacheRemoteFiles;
-	enableRegistration = !meta.disableRegistration;
-	emailRequiredForSignup = meta.emailRequiredForSignup;
-	enableServiceWorker = meta.enableServiceWorker;
-	swPublicKey = meta.swPublickey;
-	swPrivateKey = meta.swPrivateKey;
-	deeplAuthKey = meta.deeplAuthKey;
-	deeplIsPro = meta.deeplIsPro;
+async function init(): Promise<void> {
+	const meta = await misskeyApi('admin/meta');
+	name.value = meta.name;
+	shortName.value = meta.shortName;
+	description.value = meta.description;
+	maintainerName.value = meta.maintainerName;
+	maintainerEmail.value = meta.maintainerEmail;
+	repositoryUrl.value = meta.repositoryUrl;
+	impressumUrl.value = meta.impressumUrl;
+	pinnedUsers.value = meta.pinnedUsers.join('\n');
+	cacheRemoteFiles.value = meta.cacheRemoteFiles;
+	cacheRemoteSensitiveFiles.value = meta.cacheRemoteSensitiveFiles;
+	enableServiceWorker.value = meta.enableServiceWorker;
+	swPublicKey.value = meta.swPublickey;
+	swPrivateKey.value = meta.swPrivateKey;
+	enableFanoutTimeline.value = meta.enableFanoutTimeline;
+	enableFanoutTimelineDbFallback.value = meta.enableFanoutTimelineDbFallback;
+	perLocalUserUserTimelineCacheMax.value = meta.perLocalUserUserTimelineCacheMax;
+	perRemoteUserUserTimelineCacheMax.value = meta.perRemoteUserUserTimelineCacheMax;
+	perUserHomeTimelineCacheMax.value = meta.perUserHomeTimelineCacheMax;
+	perUserListTimelineCacheMax.value = meta.perUserListTimelineCacheMax;
+	notesPerOneAd.value = meta.notesPerOneAd;
 }
 
-function save() {
-	os.apiWithDialog('admin/update-meta', {
-		name,
-		description,
-		tosUrl,
-		iconUrl,
-		bannerUrl,
-		backgroundImageUrl,
-		themeColor: themeColor === '' ? null : themeColor,
-		defaultLightTheme: defaultLightTheme === '' ? null : defaultLightTheme,
-		defaultDarkTheme: defaultDarkTheme === '' ? null : defaultDarkTheme,
-		maintainerName,
-		maintainerEmail,
-		pinnedUsers: pinnedUsers.split('\n'),
-		cacheRemoteFiles,
-		disableRegistration: !enableRegistration,
-		emailRequiredForSignup,
-		enableServiceWorker,
-		swPublicKey,
-		swPrivateKey,
-		deeplAuthKey,
-		deeplIsPro,
-	}).then(() => {
-		fetchInstance();
+async function save(): void {
+	await os.apiWithDialog('admin/update-meta', {
+		name: name.value,
+		shortName: shortName.value === '' ? null : shortName.value,
+		description: description.value,
+		maintainerName: maintainerName.value,
+		maintainerEmail: maintainerEmail.value,
+		repositoryUrl: repositoryUrl.value,
+		impressumUrl: impressumUrl.value,
+		pinnedUsers: pinnedUsers.value.split('\n'),
+		cacheRemoteFiles: cacheRemoteFiles.value,
+		cacheRemoteSensitiveFiles: cacheRemoteSensitiveFiles.value,
+		enableServiceWorker: enableServiceWorker.value,
+		swPublicKey: swPublicKey.value,
+		swPrivateKey: swPrivateKey.value,
+		enableFanoutTimeline: enableFanoutTimeline.value,
+		enableFanoutTimelineDbFallback: enableFanoutTimelineDbFallback.value,
+		perLocalUserUserTimelineCacheMax: perLocalUserUserTimelineCacheMax.value,
+		perRemoteUserUserTimelineCacheMax: perRemoteUserUserTimelineCacheMax.value,
+		perUserHomeTimelineCacheMax: perUserHomeTimelineCacheMax.value,
+		perUserListTimelineCacheMax: perUserListTimelineCacheMax.value,
+		notesPerOneAd: notesPerOneAd.value,
 	});
+
+	fetchInstance(true);
 }
 
-const headerTabs = $computed(() => []);
+const headerTabs = computed(() => []);
 
-definePageMetadata({
+definePageMetadata(() => ({
 	title: i18n.ts.general,
 	icon: 'ti ti-settings',
-});
+}));
 </script>
 
 <style lang="scss" module>

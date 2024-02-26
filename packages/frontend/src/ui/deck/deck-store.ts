@@ -1,9 +1,14 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { throttle } from 'throttle-debounce';
 import { markRaw } from 'vue';
 import { notificationTypes } from 'misskey-js';
-import { Storage } from '../../pizzax';
-import { api } from '@/os';
-import { deepClone } from '@/scripts/clone';
+import { Storage } from '@/pizzax.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { deepClone } from '@/scripts/clone.js';
 
 type ColumnWidget = {
 	name: string;
@@ -22,8 +27,12 @@ export type Column = {
 	antennaId?: string;
 	listId?: string;
 	channelId?: string;
-	includingTypes?: typeof notificationTypes[number][];
+	roleId?: string;
+	excludeTypes?: typeof notificationTypes[number][];
 	tl?: 'home' | 'local' | 'social' | 'global';
+	withRenotes?: boolean;
+	withReplies?: boolean;
+	onlyFiles?: boolean;
 };
 
 export const deckStore = markRaw(new Storage('deck', {
@@ -51,13 +60,17 @@ export const deckStore = markRaw(new Storage('deck', {
 		where: 'deviceAccount',
 		default: true,
 	},
+	useSimpleUiForNonRootPages: {
+		where: 'deviceAccount',
+		default: true,
+	},
 }));
 
 export const loadDeck = async () => {
 	let deck;
 
 	try {
-		deck = await api('i/registry/get', {
+		deck = await misskeyApi('i/registry/get', {
 			scope: ['client', 'deck', 'profiles'],
 			key: deckStore.state.profile,
 		});
@@ -82,7 +95,7 @@ export const loadDeck = async () => {
 
 // TODO: deckがloadされていない状態でsaveすると意図せず上書きが発生するので対策する
 export const saveDeck = throttle(1000, () => {
-	api('i/registry/set', {
+	misskeyApi('i/registry/set', {
 		scope: ['client', 'deck', 'profiles'],
 		key: deckStore.state.profile,
 		value: {
@@ -93,13 +106,13 @@ export const saveDeck = throttle(1000, () => {
 });
 
 export async function getProfiles(): Promise<string[]> {
-	return await api('i/registry/keys', {
+	return await misskeyApi('i/registry/keys', {
 		scope: ['client', 'deck', 'profiles'],
 	});
 }
 
 export async function deleteProfile(key: string): Promise<void> {
-	return await api('i/registry/remove', {
+	return await misskeyApi('i/registry/remove', {
 		scope: ['client', 'deck', 'profiles'],
 		key: key,
 	});

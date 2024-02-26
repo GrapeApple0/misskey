@@ -1,45 +1,48 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
-<XColumn :menu="menu" :column="column" :is-stacked="isStacked" @parent-focus="$event => emit('parent-focus', $event)">
+<XColumn :menu="menu" :column="column" :isStacked="isStacked" :refresher="() => timeline.reloadTimeline()">
 	<template #header>
 		<i class="ti ti-device-tv"></i><span style="margin-left: 8px;">{{ column.name }}</span>
 	</template>
 
 	<template v-if="column.channelId">
 		<div style="padding: 8px; text-align: center;">
-			<MkButton primary gradate rounded inline @click="post"><i class="ti ti-pencil"></i></MkButton>
+			<MkButton primary gradate rounded inline small @click="post"><i class="ti ti-pencil"></i></MkButton>
 		</div>
-		<MkTimeline ref="timeline" src="channel" :channel="column.channelId" @after="() => emit('loaded')"/>
+		<MkTimeline ref="timeline" src="channel" :channel="column.channelId"/>
 	</template>
 </XColumn>
 </template>
 
 <script lang="ts" setup>
-import { } from 'vue';
+import { shallowRef } from 'vue';
+import * as Misskey from 'misskey-js';
 import XColumn from './column.vue';
-import { updateColumn, Column } from './deck-store';
+import { updateColumn, Column } from './deck-store.js';
 import MkTimeline from '@/components/MkTimeline.vue';
 import MkButton from '@/components/MkButton.vue';
-import * as os from '@/os';
-import { i18n } from '@/i18n';
+import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { i18n } from '@/i18n.js';
 
 const props = defineProps<{
 	column: Column;
 	isStacked: boolean;
 }>();
 
-const emit = defineEmits<{
-	(ev: 'loaded'): void;
-	(ev: 'parent-focus', direction: 'up' | 'down' | 'left' | 'right'): void;
-}>();
-
-let timeline = $shallowRef<InstanceType<typeof MkTimeline>>();
+const timeline = shallowRef<InstanceType<typeof MkTimeline>>();
+const channel = shallowRef<Misskey.entities.Channel>();
 
 if (props.column.channelId == null) {
 	setChannel();
 }
 
 async function setChannel() {
-	const channels = await os.api('channels/followed', {
+	const channels = await misskeyApi('channels/my-favorites', {
 		limit: 100,
 	});
 	const { canceled, result: channel } = await os.select({
@@ -56,11 +59,15 @@ async function setChannel() {
 	});
 }
 
-function post() {
+async function post() {
+	if (!channel.value || channel.value.id !== props.column.channelId) {
+		channel.value = await misskeyApi('channels/show', {
+			channelId: props.column.channelId,
+		});
+	}
+
 	os.post({
-		channel: {
-			id: props.column.channelId,
-		},
+		channel: channel.value,
 	});
 }
 

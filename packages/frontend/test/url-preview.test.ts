@@ -1,13 +1,19 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { describe, test, assert, afterEach } from 'vitest';
 import { render, cleanup, type RenderResult } from '@testing-library/vue';
 import './init';
-import type { summaly } from 'summaly';
-import { directives } from '@/directives';
+import type { summaly } from '@misskey-dev/summaly';
+import { components } from '@/components/index.js';
+import { directives } from '@/directives/index.js';
 import MkUrlPreview from '@/components/MkUrlPreview.vue';
 
 type SummalyResult = Awaited<ReturnType<typeof summaly>>;
 
-describe('MkMediaImage', () => {
+describe('MkUrlPreview', () => {
 	const renderPreviewBy = async (summary: Partial<SummalyResult>): Promise<RenderResult> => {
 		if (!summary.player) {
 			summary.player = {
@@ -27,7 +33,7 @@ describe('MkMediaImage', () => {
 
 		const result = render(MkUrlPreview, {
 			props: { url: summary.url },
-			global: { directives },
+			global: { directives, components },
 		});
 
 		await new Promise<void>(resolve => {
@@ -110,6 +116,34 @@ describe('MkMediaImage', () => {
 		assert.strictEqual(iframe?.allow, 'fullscreen;web-share');
 	});
 
+	test('A Summaly proxy response without allow falls back to the default', async () => {
+		const iframe = await renderAndOpenPreview({
+			url: 'https://example.local',
+			player: {
+				url: 'https://example.local/player',
+				width: null,
+				height: null,
+				allow: undefined as any,
+			},
+		});
+		assert.exists(iframe, 'iframe should exist');
+		assert.strictEqual(iframe?.allow, 'autoplay;encrypted-media;fullscreen');
+	});
+
+	test('Filtering the allow list from the Summaly proxy', async () => {
+		const iframe = await renderAndOpenPreview({
+			url: 'https://example.local',
+			player: {
+				url: 'https://example.local/player',
+				width: null,
+				height: null,
+				allow: ['autoplay', 'camera', 'fullscreen'],
+			},
+		});
+		assert.exists(iframe, 'iframe should exist');
+		assert.strictEqual(iframe?.allow, 'autoplay;fullscreen');
+	});
+
 	test('Having a player width should keep the fixed aspect ratio', async () => {
 		const iframe = await renderAndOpenPreview({
 			url: 'https://example.local',
@@ -136,5 +170,23 @@ describe('MkMediaImage', () => {
 		});
 		assert.exists(iframe, 'iframe should exist');
 		assert.strictEqual(iframe?.parentElement?.style.paddingTop, '200px');
+	});
+
+	test('Loading a tweet in iframe', async () => {
+		const iframe = await renderAndOpenPreview({
+			url: 'https://twitter.com/i/web/status/1685072521782325249',
+		});
+		assert.exists(iframe, 'iframe should exist');
+		assert.strictEqual(iframe?.getAttribute('allow'), 'fullscreen;web-share');
+		assert.strictEqual(iframe?.getAttribute('sandbox'), 'allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin');
+	});
+
+	test('Loading a post in iframe', async () => {
+		const iframe = await renderAndOpenPreview({
+			url: 'https://x.com/i/web/status/1685072521782325249',
+		});
+		assert.exists(iframe, 'iframe should exist');
+		assert.strictEqual(iframe?.getAttribute('allow'), 'fullscreen;web-share');
+		assert.strictEqual(iframe?.getAttribute('sandbox'), 'allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin');
 	});
 });

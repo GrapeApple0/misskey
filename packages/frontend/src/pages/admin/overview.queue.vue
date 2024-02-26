@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <div :class="$style.root">
 	<div class="_table status">
@@ -30,21 +35,21 @@
 </template>
 
 <script lang="ts" setup>
-import { markRaw, onMounted, onUnmounted, ref } from 'vue';
+import { markRaw, onMounted, onUnmounted, ref, shallowRef } from 'vue';
 import XChart from './overview.queue.chart.vue';
-import number from '@/filters/number';
-import { stream } from '@/stream';
+import number from '@/filters/number.js';
+import { useStream } from '@/stream.js';
 
-const connection = markRaw(stream.useChannel('queueStats'));
+const connection = markRaw(useStream().useChannel('queueStats'));
 
 const activeSincePrevTick = ref(0);
 const active = ref(0);
 const delayed = ref(0);
 const waiting = ref(0);
-let chartProcess = $shallowRef<InstanceType<typeof XChart>>();
-let chartActive = $shallowRef<InstanceType<typeof XChart>>();
-let chartDelayed = $shallowRef<InstanceType<typeof XChart>>();
-let chartWaiting = $shallowRef<InstanceType<typeof XChart>>();
+const chartProcess = shallowRef<InstanceType<typeof XChart>>();
+const chartActive = shallowRef<InstanceType<typeof XChart>>();
+const chartDelayed = shallowRef<InstanceType<typeof XChart>>();
+const chartWaiting = shallowRef<InstanceType<typeof XChart>>();
 
 const props = defineProps<{
 	domain: string;
@@ -56,10 +61,10 @@ const onStats = (stats) => {
 	delayed.value = stats[props.domain].delayed;
 	waiting.value = stats[props.domain].waiting;
 
-	chartProcess.pushData(stats[props.domain].activeSincePrevTick);
-	chartActive.pushData(stats[props.domain].active);
-	chartDelayed.pushData(stats[props.domain].delayed);
-	chartWaiting.pushData(stats[props.domain].waiting);
+	chartProcess.value.pushData(stats[props.domain].activeSincePrevTick);
+	chartActive.value.pushData(stats[props.domain].active);
+	chartDelayed.value.pushData(stats[props.domain].delayed);
+	chartWaiting.value.pushData(stats[props.domain].waiting);
 };
 
 const onStatsLog = (statsLog) => {
@@ -75,17 +80,17 @@ const onStatsLog = (statsLog) => {
 		dataWaiting.push(stats[props.domain].waiting);
 	}
 
-	chartProcess.setData(dataProcess);
-	chartActive.setData(dataActive);
-	chartDelayed.setData(dataDelayed);
-	chartWaiting.setData(dataWaiting);
+	chartProcess.value.setData(dataProcess);
+	chartActive.value.setData(dataActive);
+	chartDelayed.value.setData(dataDelayed);
+	chartWaiting.value.setData(dataWaiting);
 };
 
 onMounted(() => {
 	connection.on('stats', onStats);
 	connection.on('statsLog', onStatsLog);
 	connection.send('requestLog', {
-		id: Math.random().toString().substr(2, 8),
+		id: Math.random().toString().substring(2, 10),
 		length: 100,
 	});
 });
@@ -122,4 +127,4 @@ onUnmounted(() => {
 		}
 	}
 }
-</style>	
+</style>

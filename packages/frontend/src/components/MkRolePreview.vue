@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <MkA v-adaptive-bg :to="forModeration ? `/admin/roles/${role.id}` : `/roles/${role.id}`" class="_panel" :class="$style.root" tabindex="-1" :style="{ '--color': role.color }">
 	<div :class="$style.title">
@@ -12,8 +17,10 @@
 			</template>
 		</span>
 		<span :class="$style.name">{{ role.name }}</span>
-		<span v-if="role.target === 'manual'" :class="$style.users">{{ role.usersCount }} users</span>
-		<span v-else-if="role.target === 'conditional'" :class="$style.users">({{ i18n.ts._role.conditional }})</span>
+		<template v-if="detailed">
+			<span v-if="role.target === 'manual'" :class="$style.users">{{ role.usersCount }} users</span>
+			<span v-else-if="role.target === 'conditional'" :class="$style.users">({{ i18n.ts._role.conditional }})</span>
+		</template>
 	</div>
 	<div :class="$style.description">{{ role.description }}</div>
 </MkA>
@@ -21,12 +28,16 @@
 
 <script lang="ts" setup>
 import { } from 'vue';
-import { i18n } from '@/i18n';
+import * as Misskey from 'misskey-js';
+import { i18n } from '@/i18n.js';
 
-const props = defineProps<{
-	role: any;
+const props = withDefaults(defineProps<{
+	role: Misskey.entities.Role;
 	forModeration: boolean;
-}>();
+	detailed: boolean;
+}>(), {
+	detailed: true,
+});
 </script>
 
 <style lang="scss" module>

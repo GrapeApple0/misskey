@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class roleAssignmentExpiresAt1677570181236 {
     name = 'roleAssignmentExpiresAt1677570181236'
 

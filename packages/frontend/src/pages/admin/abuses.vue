@@ -1,8 +1,13 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <MkStickyContainer>
 	<template #header><XHeader :actions="headerActions" :tabs="headerTabs"/></template>
-	<MkSpacer :content-max="900">
-		<div class="lcixvhis">
+	<MkSpacer :contentMax="900">
+		<div>
 			<div class="reports">
 				<div class="">
 					<div class="inputs" style="display: flex;">
@@ -47,49 +52,43 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, shallowRef, ref } from 'vue';
 
 import XHeader from './_header_.vue';
 import MkSelect from '@/components/MkSelect.vue';
 import MkPagination from '@/components/MkPagination.vue';
 import XAbuseReport from '@/components/MkAbuseReport.vue';
-import { i18n } from '@/i18n';
-import { definePageMetadata } from '@/scripts/page-metadata';
+import { i18n } from '@/i18n.js';
+import { definePageMetadata } from '@/scripts/page-metadata.js';
 
-let reports = $shallowRef<InstanceType<typeof MkPagination>>();
+const reports = shallowRef<InstanceType<typeof MkPagination>>();
 
-let state = $ref('unresolved');
-let reporterOrigin = $ref('combined');
-let targetUserOrigin = $ref('combined');
-let searchUsername = $ref('');
-let searchHost = $ref('');
+const state = ref('unresolved');
+const reporterOrigin = ref('combined');
+const targetUserOrigin = ref('combined');
+const searchUsername = ref('');
+const searchHost = ref('');
 
 const pagination = {
 	endpoint: 'admin/abuse-user-reports' as const,
 	limit: 10,
 	params: computed(() => ({
-		state,
-		reporterOrigin,
-		targetUserOrigin,
+		state: state.value,
+		reporterOrigin: reporterOrigin.value,
+		targetUserOrigin: targetUserOrigin.value,
 	})),
 };
 
 function resolved(reportId) {
-	reports.removeItem(item => item.id === reportId);
+	reports.value.removeItem(reportId);
 }
 
-const headerActions = $computed(() => []);
+const headerActions = computed(() => []);
 
-const headerTabs = $computed(() => []);
+const headerTabs = computed(() => []);
 
-definePageMetadata({
+definePageMetadata(() => ({
 	title: i18n.ts.abuseReports,
 	icon: 'ti ti-exclamation-circle',
-});
+}));
 </script>
-
-<style lang="scss" scoped>
-.lcixvhis {
-	margin: var(--margin);
-}
-</style>

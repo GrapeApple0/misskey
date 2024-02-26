@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <div class="_gaps_m">
 	<div :class="$style.buttons">
@@ -32,41 +37,42 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, useCssModule } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { v4 as uuid } from 'uuid';
 import FormSection from '@/components/form/section.vue';
 import MkButton from '@/components/MkButton.vue';
 import MkInfo from '@/components/MkInfo.vue';
-import * as os from '@/os';
-import { ColdDeviceStorage, defaultStore } from '@/store';
-import { unisonReload } from '@/scripts/unison-reload';
-import { stream } from '@/stream';
-import { $i } from '@/account';
-import { i18n } from '@/i18n';
-import { version, host } from '@/config';
-import { definePageMetadata } from '@/scripts/page-metadata';
-import { miLocalStorage } from '@/local-storage';
+import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { ColdDeviceStorage, defaultStore } from '@/store.js';
+import { unisonReload } from '@/scripts/unison-reload.js';
+import { useStream } from '@/stream.js';
+import { $i } from '@/account.js';
+import { i18n } from '@/i18n.js';
+import { version, host } from '@/config.js';
+import { definePageMetadata } from '@/scripts/page-metadata.js';
+import { miLocalStorage } from '@/local-storage.js';
 const { t, ts } = i18n;
 
-useCssModule();
-
 const defaultStoreSaveKeys: (keyof typeof defaultStore['state'])[] = [
+	'collapseRenotes',
 	'menu',
 	'visibility',
 	'localOnly',
 	'statusbars',
 	'widgets',
 	'tl',
+	'pinnedUserLists',
 	'overridedDeviceKind',
 	'serverDisconnectedBehavior',
-	'collapseRenotes',
-	'showNoteActionsOnlyHover',
 	'nsfw',
+	'highlightSensitiveMedia',
 	'animation',
 	'animatedMfm',
 	'advancedMfm',
 	'loadRawImages',
 	'imageNewTab',
+	'dataSaver',
 	'disableShowingAnimatedImages',
 	'emojiStyle',
 	'disableDrawer',
@@ -78,31 +84,42 @@ const defaultStoreSaveKeys: (keyof typeof defaultStore['state'])[] = [
 	'useReactionPickerForContextMenu',
 	'showGapBetweenNotesInTimeline',
 	'instanceTicker',
-	'reactionPickerSize',
-	'reactionPickerWidth',
-	'reactionPickerHeight',
-	'reactionPickerUseDrawerForMobile',
+	'emojiPickerScale',
+	'emojiPickerWidth',
+	'emojiPickerHeight',
+	'emojiPickerUseDrawerForMobile',
 	'defaultSideView',
 	'menuDisplay',
 	'reportError',
 	'squareAvatars',
+	'showAvatarDecorations',
 	'numberOfPageCache',
+	'showNoteActionsOnlyHover',
+	'showClipButtonInNoteFooter',
+	'reactionsDisplaySize',
+	'forceShowAds',
 	'aiChanMode',
+	'devMode',
+	'mediaListWithOneImageAppearance',
+	'notificationPosition',
+	'notificationStackAxis',
+	'enableCondensedLineForAcct',
+	'keepScreenOn',
+	'defaultWithReplies',
+	'disableStreamingTimeline',
+	'useGroupedNotifications',
+	'sound_masterVolume',
+	'sound_note',
+	'sound_noteMy',
+	'sound_notification',
+	'sound_antenna',
+	'sound_channel',
 ];
 const coldDeviceStorageSaveKeys: (keyof typeof ColdDeviceStorage.default)[] = [
 	'lightTheme',
 	'darkTheme',
 	'syncDeviceDarkMode',
 	'plugins',
-	'mediaVolume',
-	'sound_masterVolume',
-	'sound_note',
-	'sound_noteMy',
-	'sound_notification',
-	'sound_chat',
-	'sound_chatBg',
-	'sound_antenna',
-	'sound_channel',
 ];
 
 const scope = ['clientPreferencesProfiles'];
@@ -124,20 +141,20 @@ type Profile = {
 	};
 };
 
-const connection = $i && stream.useChannel('main');
+const connection = $i && useStream().useChannel('main');
 
-let profiles = $ref<Record<string, Profile> | null>(null);
+const profiles = ref<Record<string, Profile> | null>(null);
 
-os.api('i/registry/get-all', { scope })
+misskeyApi('i/registry/get-all', { scope })
 	.then(res => {
-		profiles = res || {};
+		profiles.value = res || {};
 	});
 
 function isObject(value: unknown): value is Record<string, unknown> {
 	return value != null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function validate(profile: unknown): void {
+function validate(profile: any): void {
 	if (!isObject(profile)) throw new Error('not an object');
 
 	// Check if unnecessary properties exist
@@ -145,12 +162,12 @@ function validate(profile: unknown): void {
 
 	if (!profile.name) throw new Error('Missing required prop: name');
 	if (!profile.misskeyVersion) throw new Error('Missing required prop: misskeyVersion');
-	
+
 	// Check if createdAt and updatedAt is Date
 	// https://zenn.dev/lollipop_onl/articles/eoz-judge-js-invalid-date
-	if (!profile.createdAt || Number.isNaN(new Date(profile.createdAt).getTime())) throw new Error('createdAt is falsy or not Date');
+	if (!profile.createdAt || Number.isNaN(new Date(profile.createdAt as any).getTime())) throw new Error('createdAt is falsy or not Date');
 	if (profile.updatedAt) {
-		if (Number.isNaN(new Date(profile.updatedAt).getTime())) {
+		if (Number.isNaN(new Date(profile.updatedAt as any).getTime())) {
 			throw new Error('updatedAt is not Date');
 		}
 	} else if (profile.updatedAt !== null) {
@@ -182,14 +199,14 @@ function getSettings(): Profile['settings'] {
 }
 
 async function saveNew(): Promise<void> {
-	if (!profiles) return;
+	if (!profiles.value) return;
 
 	const { canceled, result: name } = await os.inputText({
 		title: ts._preferencesBackups.inputName,
 	});
 	if (canceled) return;
 
-	if (Object.values(profiles).some(x => x.name === name)) {
+	if (Object.values(profiles.value).some(x => x.name === name)) {
 		return os.alert({
 			title: ts._preferencesBackups.cannotSave,
 			text: t('_preferencesBackups.nameAlreadyExists', { name }),
@@ -213,7 +230,7 @@ function loadFile(): void {
 	input.type = 'file';
 	input.multiple = false;
 	input.onchange = async () => {
-		if (!profiles) return;
+		if (!profiles.value) return;
 		if (!input.files || input.files.length === 0) return;
 
 		const file = input.files[0];
@@ -234,7 +251,7 @@ function loadFile(): void {
 			return os.alert({
 				type: 'error',
 				title: ts._preferencesBackups.cannotLoad,
-				text: err?.message,
+				text: (err as any)?.message ?? '',
 			});
 		}
 
@@ -253,9 +270,9 @@ function loadFile(): void {
 }
 
 async function applyProfile(id: string): Promise<void> {
-	if (!profiles) return;
+	if (!profiles.value) return;
 
-	const profile = profiles[id];
+	const profile = profiles.value[id];
 
 	const { canceled: cancel1 } = await os.confirm({
 		type: 'warning',
@@ -274,7 +291,7 @@ async function applyProfile(id: string): Promise<void> {
 			defaultStore.set(key, settings.hot[key]);
 		}
 	}
-	
+
 	// coldDeviceStorage
 	for (const key of coldDeviceStorageSaveKeys) {
 		if (settings.cold[key] !== undefined) {
@@ -313,23 +330,23 @@ async function applyProfile(id: string): Promise<void> {
 }
 
 async function deleteProfile(id: string): Promise<void> {
-	if (!profiles) return;
+	if (!profiles.value) return;
 
 	const { canceled } = await os.confirm({
 		type: 'info',
 		title: ts.delete,
-		text: t('deleteAreYouSure', { x: profiles[id].name }),
+		text: t('deleteAreYouSure', { x: profiles.value[id].name }),
 	});
 	if (canceled) return;
 
 	await os.apiWithDialog('i/registry/remove', { scope, key: id });
-	delete profiles[id];
+	delete profiles.value[id];
 }
 
 async function save(id: string): Promise<void> {
-	if (!profiles) return;
+	if (!profiles.value) return;
 
-	const { name, createdAt } = profiles[id];
+	const { name, createdAt } = profiles.value[id];
 
 	const { canceled } = await os.confirm({
 		type: 'info',
@@ -350,25 +367,25 @@ async function save(id: string): Promise<void> {
 }
 
 async function rename(id: string): Promise<void> {
-	if (!profiles) return;
+	if (!profiles.value) return;
 
 	const { canceled: cancel1, result: name } = await os.inputText({
 		title: ts._preferencesBackups.inputName,
 	});
-	if (cancel1 || profiles[id].name === name) return;
+	if (cancel1 || profiles.value[id].name === name) return;
 
-	if (Object.values(profiles).some(x => x.name === name)) {
+	if (Object.values(profiles.value).some(x => x.name === name)) {
 		return os.alert({
 			title: ts._preferencesBackups.cannotSave,
 			text: t('_preferencesBackups.nameAlreadyExists', { name }),
 		});
 	}
 
-	const registry = Object.assign({}, { ...profiles[id] });
+	const registry = Object.assign({}, { ...profiles.value[id] });
 
 	const { canceled: cancel2 } = await os.confirm({
 		type: 'info',
-		title: ts._preferencesBackups.rename,
+		title: ts.rename,
 		text: t('_preferencesBackups.renameConfirm', { old: registry.name, new: name }),
 	});
 	if (cancel2) return;
@@ -378,7 +395,7 @@ async function rename(id: string): Promise<void> {
 }
 
 function menu(ev: MouseEvent, profileId: string) {
-	if (!profiles) return;
+	if (!profiles.value) return;
 
 	return os.popupMenu([{
 		text: ts._preferencesBackups.apply,
@@ -388,9 +405,9 @@ function menu(ev: MouseEvent, profileId: string) {
 		type: 'a',
 		text: ts.download,
 		icon: 'ti ti-download',
-		href: URL.createObjectURL(new Blob([JSON.stringify(profiles[profileId], null, 2)], { type: 'application/json' })),
-		download: `${profiles[profileId].name}.json`,
-	}, null, {
+		href: URL.createObjectURL(new Blob([JSON.stringify(profiles.value[profileId], null, 2)], { type: 'application/json' })),
+		download: `${profiles.value[profileId].name}.json`,
+	}, { type: 'divider' }, {
 		text: ts.rename,
 		icon: 'ti ti-forms',
 		action: () => rename(profileId),
@@ -398,21 +415,21 @@ function menu(ev: MouseEvent, profileId: string) {
 		text: ts._preferencesBackups.save,
 		icon: 'ti ti-device-floppy',
 		action: () => save(profileId),
-	}, null, {
-		text: ts._preferencesBackups.delete,
+	}, { type: 'divider' }, {
+		text: ts.delete,
 		icon: 'ti ti-trash',
 		action: () => deleteProfile(profileId),
 		danger: true,
-	}], ev.currentTarget ?? ev.target);
+	}], (ev.currentTarget ?? ev.target ?? undefined) as unknown as HTMLElement | undefined);
 }
 
 onMounted(() => {
 	// streamingのuser storage updateイベントを監視して更新
 	connection?.on('registryUpdated', ({ scope: recievedScope, key, value }) => {
 		if (!recievedScope || recievedScope.length !== scope.length || recievedScope[0] !== scope[0]) return;
-		if (!profiles) return;
+		if (!profiles.value) return;
 
-		profiles[key] = value;
+		profiles.value[key] = value;
 	});
 });
 
@@ -420,10 +437,10 @@ onUnmounted(() => {
 	connection?.off('registryUpdated');
 });
 
-definePageMetadata(computed(() => ({
+definePageMetadata(() => ({
 	title: ts.preferencesBackups,
 	icon: 'ti ti-device-floppy',
-})));
+}));
 </script>
 
 <style lang="scss" module>

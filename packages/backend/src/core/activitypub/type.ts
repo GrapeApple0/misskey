@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export type Obj = { [x: string]: any };
 export type ApObject = IObject | string | (IObject | string)[];
 
@@ -7,6 +12,7 @@ export interface IObject {
 	id?: string;
 	name?: string | null;
 	summary?: string;
+	_misskey_summary?: string;
 	published?: string;
 	cc?: ApObject;
 	to?: ApObject;
@@ -157,6 +163,8 @@ export interface IActor extends IObject {
 	name?: string;
 	preferredUsername?: string;
 	manuallyApprovesFollowers?: boolean;
+	movedTo?: string;
+	alsoKnownAs?: string[];
 	discoverable?: boolean;
 	inbox: string;
 	sharedInbox?: string;	// 後方互換性のため
@@ -192,7 +200,6 @@ export interface IApPropertyValue extends IObject {
 }
 
 export const isPropertyValue = (object: IObject): object is IApPropertyValue =>
-	object &&
 	getApType(object) === 'PropertyValue' &&
 	typeof object.name === 'string' &&
 	'value' in object &&
@@ -300,6 +307,11 @@ export interface IFlag extends IActivity {
 	type: 'Flag';
 }
 
+export interface IMove extends IActivity {
+	type: 'Move';
+	target: IObject | string;
+}
+
 export const isCreate = (object: IObject): object is ICreate => getApType(object) === 'Create';
 export const isDelete = (object: IObject): object is IDelete => getApType(object) === 'Delete';
 export const isUpdate = (object: IObject): object is IUpdate => getApType(object) === 'Update';
@@ -314,3 +326,4 @@ export const isLike = (object: IObject): object is ILike => getApType(object) ==
 export const isAnnounce = (object: IObject): object is IAnnounce => getApType(object) === 'Announce';
 export const isBlock = (object: IObject): object is IBlock => getApType(object) === 'Block';
 export const isFlag = (object: IObject): object is IFlag => getApType(object) === 'Flag';
+export const isMove = (object: IObject): object is IMove => getApType(object) === 'Move';

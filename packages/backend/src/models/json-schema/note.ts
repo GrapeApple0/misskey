@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export const packedNoteSchema = {
 	type: 'object',
 	properties: {
@@ -64,6 +69,7 @@ export const packedNoteSchema = {
 		visibility: {
 			type: 'string',
 			optional: false, nullable: false,
+			enum: ['public', 'home', 'followers', 'specified'],
 		},
 		mentions: {
 			type: 'array',
@@ -112,6 +118,48 @@ export const packedNoteSchema = {
 		poll: {
 			type: 'object',
 			optional: true, nullable: true,
+			properties: {
+				expiresAt: {
+					type: 'string',
+					optional: true, nullable: true,
+					format: 'date-time',
+				},
+				multiple: {
+					type: 'boolean',
+					optional: false, nullable: false,
+				},
+				choices: {
+					type: 'array',
+					optional: false, nullable: false,
+					items: {
+						type: 'object',
+						optional: false, nullable: false,
+						properties: {
+							isVoted: {
+								type: 'boolean',
+								optional: false, nullable: false,
+							},
+							text: {
+								type: 'string',
+								optional: false, nullable: false,
+							},
+							votes: {
+								type: 'number',
+								optional: false, nullable: false,
+							},
+						},
+					},
+				},
+			},
+		},
+		emojis: {
+			type: 'object',
+			optional: true, nullable: false,
+			additionalProperties: {
+				anyOf: [{
+					type: 'string',
+				}],
+			},
 		},
 		channelId: {
 			type: 'string',
@@ -122,18 +170,30 @@ export const packedNoteSchema = {
 		channel: {
 			type: 'object',
 			optional: true, nullable: true,
-			items: {
-				type: 'object',
-				optional: false, nullable: false,
-				properties: {
-					id: {
-						type: 'string',
-						optional: false, nullable: false,
-					},
-					name: {
-						type: 'string',
-						optional: false, nullable: true,
-					},
+			properties: {
+				id: {
+					type: 'string',
+					optional: false, nullable: false,
+				},
+				name: {
+					type: 'string',
+					optional: false, nullable: false,
+				},
+				color: {
+					type: 'string',
+					optional: false, nullable: false,
+				},
+				isSensitive: {
+					type: 'boolean',
+					optional: false, nullable: false,
+				},
+				allowRenoteToExternal: {
+					type: 'boolean',
+					optional: false, nullable: false,
+				},
+				userId: {
+					type: 'string',
+					optional: false, nullable: true,
 				},
 			},
 		},
@@ -145,9 +205,23 @@ export const packedNoteSchema = {
 			type: 'string',
 			optional: false, nullable: true,
 		},
+		reactionEmojis: {
+			type: 'object',
+			optional: false, nullable: false,
+			additionalProperties: {
+				anyOf: [{
+					type: 'string',
+				}],
+			},
+		},
 		reactions: {
 			type: 'object',
 			optional: false, nullable: false,
+			additionalProperties: {
+				anyOf: [{
+					type: 'number',
+				}],
+			},
 		},
 		renoteCount: {
 			type: 'number',
@@ -165,9 +239,21 @@ export const packedNoteSchema = {
 			type: 'string',
 			optional: true, nullable: false,
 		},
+		reactionAndUserPairCache: {
+			type: 'array',
+			optional: true, nullable: false,
+			items: {
+				type: 'string',
+				optional: false, nullable: false,
+			},
+		},
+		clippedCount: {
+			type: 'number',
+			optional: true, nullable: false,
+		},
 
 		myReaction: {
-			type: 'object',
+			type: 'string',
 			optional: true, nullable: true,
 		},
 	},

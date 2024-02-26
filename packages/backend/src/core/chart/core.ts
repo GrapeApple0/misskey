@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 /**
  * チャートエンジン
  *
@@ -89,6 +94,29 @@ type ToJsonSchema<S> = {
 };
 
 export function getJsonSchema<S extends Schema>(schema: S): ToJsonSchema<Unflatten<ChartResult<S>>> {
+	const unflatten = (str: string, parent: Record<string, any>) => {
+		const keys = str.split('.');
+		const key = keys.shift();
+		const nextKey = keys[0];
+
+		if (key == null) return;
+
+		if (parent.properties[key] == null) {
+			parent.properties[key] = nextKey ? {
+				type: 'object',
+				properties: {},
+				required: [],
+			} : {
+				type: 'array',
+				items: {
+					type: 'number',
+				},
+			};
+		}
+
+		if (nextKey) unflatten(keys.join('.'), parent.properties[key] as Record<string, any>);
+	};
+
 	const jsonSchema = {
 		type: 'object',
 		properties: {} as Record<string, unknown>,
@@ -96,10 +124,7 @@ export function getJsonSchema<S extends Schema>(schema: S): ToJsonSchema<Unflatt
 	};
 
 	for (const k in schema) {
-		jsonSchema.properties[k] = {
-			type: 'array',
-			items: { type: 'number' },
-		};
+		unflatten(k, jsonSchema);
 	}
 
 	return jsonSchema as ToJsonSchema<Unflatten<ChartResult<S>>>;
@@ -254,7 +279,7 @@ export default abstract class Chart<T extends Schema> {
 	private convertRawRecord(x: RawRecord<T>): KVs<T> {
 		const kvs = {} as Record<string, number>;
 		for (const k of Object.keys(x).filter((k) => k.startsWith(COLUMN_PREFIX)) as (keyof Columns<T>)[]) {
-			kvs[(k as string).substr(COLUMN_PREFIX.length).split(COLUMN_DELIMITER).join('.')] = x[k] as unknown as number;
+			kvs[(k as string).substring(COLUMN_PREFIX.length).split(COLUMN_DELIMITER).join('.')] = x[k] as unknown as number;
 		}
 		return kvs as KVs<T>;
 	}
@@ -627,7 +652,7 @@ export default abstract class Chart<T extends Schema> {
 			}
 
 		// 要求された範囲の最も古い箇所に位置するログが存在しなかったら
-		} else if (!isTimeSame(new Date(logs[logs.length - 1].date * 1000), gt)) {
+		} else if (!isTimeSame(new Date(logs.at(-1)!.date * 1000), gt)) {
 			// 要求された範囲の最も古い箇所時点での最も新しいログを持ってきて末尾に追加する
 			// (隙間埋めできないため)
 			const outdatedLog = await repository.findOne({

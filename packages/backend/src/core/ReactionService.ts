@@ -1,12 +1,17 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Inject, Injectable } from '@nestjs/common';
-import { IsNull } from 'typeorm';
+import * as Redis from 'ioredis';
 import { DI } from '@/di-symbols.js';
-import type { EmojisRepository, BlockingsRepository, NoteReactionsRepository, UsersRepository, NotesRepository } from '@/models/index.js';
+import type { EmojisRepository, NoteReactionsRepository, UsersRepository, NotesRepository } from '@/models/_.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
-import type { RemoteUser, User } from '@/models/entities/User.js';
-import type { Note } from '@/models/entities/Note.js';
+import type { MiRemoteUser, MiUser } from '@/models/User.js';
+import type { MiNote } from '@/models/Note.js';
 import { IdService } from '@/core/IdService.js';
-import type { NoteReaction } from '@/models/entities/NoteReaction.js';
+import type { MiNoteReaction } from '@/models/NoteReaction.js';
 import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { NotificationService } from '@/core/NotificationService.js';
@@ -20,10 +25,17 @@ import { MetaService } from '@/core/MetaService.js';
 import { bindThis } from '@/decorators.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
+import { CustomEmojiService } from '@/core/CustomEmojiService.js';
+import { RoleService } from '@/core/RoleService.js';
+import { FeaturedService } from '@/core/FeaturedService.js';
+import { trackPromise } from '@/misc/promise-tracker.js';
+
+const FALLBACK = '\u2764';
+const PER_NOTE_REACTION_USER_PAIR_CACHE_MAX = 16;
 
 const legacies: Record<string, string> = {
 	'like': '👍',
-	'love': '❤', // ここに記述する場合は異体字セレクタを入れない
+	'love': '\u2764', // ハート、異体字セレクタを入れない
 	'laugh': '😆',
 	'hmm': '🤔',
 	'surprise': '😮',
@@ -52,14 +64,17 @@ type DecodedReaction = {
 	host?: string | null;
 };
 
+const isCustomEmojiRegexp = /^:([\w+-]+)(?:@\.)?:$/;
+const decodeCustomEmojiRegexp = /^:([\w+-]+)(?:@([\w.-]+))?:$/;
+
 @Injectable()
 export class ReactionService {
 	constructor(
+		@Inject(DI.redis)
+		private redisClient: Redis.Redis,
+
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
-
-		@Inject(DI.blockingsRepository)
-		private blockingsRepository: BlockingsRepository,
 
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
@@ -72,10 +87,13 @@ export class ReactionService {
 
 		private utilityService: UtilityService,
 		private metaService: MetaService,
+		private customEmojiService: CustomEmojiService,
+		private roleService: RoleService,
 		private userEntityService: UserEntityService,
 		private noteEntityService: NoteEntityService,
 		private userBlockingService: UserBlockingService,
 		private idService: IdService,
+		private featuredService: FeaturedService,
 		private globalEventService: GlobalEventService,
 		private apRendererService: ApRendererService,
 		private apDeliverManagerService: ApDeliverManagerService,
@@ -85,7 +103,7 @@ export class ReactionService {
 	}
 
 	@bindThis
-	public async create(user: { id: User['id']; host: User['host']; isBot: User['isBot'] }, note: Note, reaction?: string | null) {
+	public async create(user: { id: MiUser['id']; host: MiUser['host']; isBot: MiUser['isBot'] }, note: MiNote, _reaction?: string | null) {
 		// Check blocking
 		if (note.userId !== user.id) {
 			const blocked = await this.userBlockingService.checkBlocked(note.userId, user.id);
@@ -99,16 +117,45 @@ export class ReactionService {
 			throw new IdentifiableError('68e9d2d1-48bf-42c2-b90a-b20e09fd3d48', 'Note not accessible for you.');
 		}
 
-		if (note.reactionAcceptance === 'likeOnly' || ((note.reactionAcceptance === 'likeOnlyForRemote') && (user.host != null))) {
-			reaction = '❤️';
-		} else {
-			// TODO: cache
-			reaction = await this.toDbReaction(reaction, user.host);
+		let reaction = _reaction ?? FALLBACK;
+
+		if (note.reactionAcceptance === 'likeOnly' || ((note.reactionAcceptance === 'likeOnlyForRemote' || note.reactionAcceptance === 'nonSensitiveOnlyForLocalLikeOnlyForRemote') && (user.host != null))) {
+			reaction = '\u2764';
+		} else if (_reaction) {
+			const custom = reaction.match(isCustomEmojiRegexp);
+			if (custom) {
+				const reacterHost = this.utilityService.toPunyNullable(user.host);
+
+				const name = custom[1];
+				const emoji = reacterHost == null
+					? (await this.customEmojiService.localEmojisCache.fetch()).get(name)
+					: await this.emojisRepository.findOneBy({
+						host: reacterHost,
+						name,
+					});
+
+				if (emoji) {
+					if (emoji.roleIdsThatCanBeUsedThisEmojiAsReaction.length === 0 || (await this.roleService.getUserRoles(user.id)).some(r => emoji.roleIdsThatCanBeUsedThisEmojiAsReaction.includes(r.id))) {
+						reaction = reacterHost ? `:${name}@${reacterHost}:` : `:${name}:`;
+
+						// センシティブ
+						if ((note.reactionAcceptance === 'nonSensitiveOnly' || note.reactionAcceptance === 'nonSensitiveOnlyForLocalLikeOnlyForRemote') && emoji.isSensitive) {
+							reaction = FALLBACK;
+						}
+					} else {
+						// リアクションとして使う権限がない
+						reaction = FALLBACK;
+					}
+				} else {
+					reaction = FALLBACK;
+				}
+			} else {
+				reaction = this.normalize(reaction);
+			}
 		}
 
-		const record: NoteReaction = {
-			id: this.idService.genId(),
-			createdAt: new Date(),
+		const record: MiNoteReaction = {
+			id: this.idService.gen(),
 			noteId: note.id,
 			userId: user.id,
 			reaction,
@@ -142,30 +189,56 @@ export class ReactionService {
 		await this.notesRepository.createQueryBuilder().update()
 			.set({
 				reactions: () => sql,
-				... (!user.isBot ? { score: () => '"score" + 1' } : {}),
+				...(note.reactionAndUserPairCache.length < PER_NOTE_REACTION_USER_PAIR_CACHE_MAX ? {
+					reactionAndUserPairCache: () => `array_append("reactionAndUserPairCache", '${user.id}/${reaction}')`,
+				} : {}),
 			})
 			.where('id = :id', { id: note.id })
 			.execute();
 
-		this.perUserReactionsChart.update(user, note);
+		// 30%の確率、セルフではない、3日以内に投稿されたノートの場合ハイライト用ランキング更新
+		if (
+			Math.random() < 0.3 &&
+			note.userId !== user.id &&
+			(Date.now() - this.idService.parse(note.id).date.getTime()) < 1000 * 60 * 60 * 24 * 3
+		) {
+			if (note.channelId != null) {
+				if (note.replyId == null) {
+					this.featuredService.updateInChannelNotesRanking(note.channelId, note.id, 1);
+				}
+			} else {
+				if (note.visibility === 'public' && note.userHost == null && note.replyId == null) {
+					this.featuredService.updateGlobalNotesRanking(note.id, 1);
+					this.featuredService.updatePerUserNotesRanking(note.userId, note.id, 1);
+				}
+			}
+		}
+
+		const meta = await this.metaService.fetch();
+
+		if (meta.enableChartsForRemoteUser || (user.host == null)) {
+			this.perUserReactionsChart.update(user, note);
+		}
 
 		// カスタム絵文字リアクションだったら絵文字情報も送る
 		const decodedReaction = this.decodeReaction(reaction);
 
-		const emoji = await this.emojisRepository.findOne({
-			where: {
-				name: decodedReaction.name,
-				host: decodedReaction.host ?? IsNull(),
-			},
-			select: ['name', 'host', 'originalUrl', 'publicUrl'],
-		});
+		const customEmoji = decodedReaction.name == null ? null : decodedReaction.host == null
+			? (await this.customEmojiService.localEmojisCache.fetch()).get(decodedReaction.name)
+			: await this.emojisRepository.findOne(
+				{
+					where: {
+						name: decodedReaction.name,
+						host: decodedReaction.host,
+					},
+				});
 
 		this.globalEventService.publishNoteStream(note.id, 'reacted', {
 			reaction: decodedReaction.reaction,
-			emoji: emoji != null ? {
-				name: emoji.host ? `${emoji.name}@${emoji.host}` : `${emoji.name}@.`,
+			emoji: customEmoji != null ? {
+				name: customEmoji.host ? `${customEmoji.name}@${customEmoji.host}` : `${customEmoji.name}@.`,
 				// || emoji.originalUrl してるのは後方互換性のため（publicUrlはstringなので??はだめ）
-				url: emoji.publicUrl || emoji.originalUrl,
+				url: customEmoji.publicUrl || customEmoji.originalUrl,
 			} : null,
 			userId: user.id,
 		});
@@ -173,10 +246,9 @@ export class ReactionService {
 		// リアクションされたユーザーがローカルユーザーなら通知を作成
 		if (note.userHost === null) {
 			this.notificationService.createNotification(note.userId, 'reaction', {
-				notifierId: user.id,
 				noteId: note.id,
 				reaction: reaction,
-			});
+			}, user.id);
 		}
 
 		//#region 配信
@@ -185,7 +257,7 @@ export class ReactionService {
 			const dm = this.apDeliverManagerService.createDeliverManager(user, content);
 			if (note.userHost !== null) {
 				const reactee = await this.usersRepository.findOneBy({ id: note.userId });
-				dm.addDirectRecipe(reactee as RemoteUser);
+				dm.addDirectRecipe(reactee as MiRemoteUser);
 			}
 
 			if (['public', 'home', 'followers'].includes(note.visibility)) {
@@ -193,17 +265,17 @@ export class ReactionService {
 			} else if (note.visibility === 'specified') {
 				const visibleUsers = await Promise.all(note.visibleUserIds.map(id => this.usersRepository.findOneBy({ id })));
 				for (const u of visibleUsers.filter(u => u && this.userEntityService.isRemoteUser(u))) {
-					dm.addDirectRecipe(u as RemoteUser);
+					dm.addDirectRecipe(u as MiRemoteUser);
 				}
 			}
 
-			dm.execute();
+			trackPromise(dm.execute());
 		}
 		//#endregion
 	}
 
 	@bindThis
-	public async delete(user: { id: User['id']; host: User['host']; isBot: User['isBot']; }, note: Note) {
+	public async delete(user: { id: MiUser['id']; host: MiUser['host']; isBot: MiUser['isBot']; }, note: MiNote) {
 		// if already unreacted
 		const exist = await this.noteReactionsRepository.findOneBy({
 			noteId: note.id,
@@ -226,11 +298,10 @@ export class ReactionService {
 		await this.notesRepository.createQueryBuilder().update()
 			.set({
 				reactions: () => sql,
+				reactionAndUserPairCache: () => `array_remove("reactionAndUserPairCache", '${user.id}/${exist.reaction}')`,
 			})
 			.where('id = :id', { id: note.id })
 			.execute();
-
-		if (!user.isBot) this.notesRepository.decrement({ id: note.id }, 'score', 1);
 
 		this.globalEventService.publishNoteStream(note.id, 'unreacted', {
 			reaction: this.decodeReaction(exist.reaction).reaction,
@@ -243,56 +314,49 @@ export class ReactionService {
 			const dm = this.apDeliverManagerService.createDeliverManager(user, content);
 			if (note.userHost !== null) {
 				const reactee = await this.usersRepository.findOneBy({ id: note.userId });
-				dm.addDirectRecipe(reactee as RemoteUser);
+				dm.addDirectRecipe(reactee as MiRemoteUser);
 			}
 			dm.addFollowersRecipe();
-			dm.execute();
+			trackPromise(dm.execute());
 		}
 		//#endregion
 	}
 
+	/**
+	 * 文字列タイプのレガシーな形式のリアクションを現在の形式に変換しつつ、
+	 * データベース上には存在する「0個のリアクションがついている」という情報を削除する。
+	 */
 	@bindThis
-	public async getFallbackReaction(): Promise<string> {
-		const meta = await this.metaService.fetch();
-		return meta.useStarForReactionFallback ? '⭐' : '👍';
+	public convertLegacyReactions(reactions: MiNote['reactions']): MiNote['reactions'] {
+		return Object.entries(reactions)
+			.filter(([, count]) => {
+				// `ReactionService.prototype.delete`ではリアクション削除時に、
+				// `MiNote['reactions']`のエントリの値をデクリメントしているが、
+				// デクリメントしているだけなのでエントリ自体は0を値として持つ形で残り続ける。
+				// そのため、この処理がなければ、「0個のリアクションがついている」ということになってしまう。
+				return count > 0;
+			})
+			.map(([reaction, count]) => {
+				// unchecked indexed access
+				const convertedReaction = legacies[reaction] as string | undefined;
+
+				const key = this.decodeReaction(convertedReaction ?? reaction).reaction;
+
+				return [key, count] as const;
+			})
+			.reduce<MiNote['reactions']>((acc, [key, count]) => {
+				// unchecked indexed access
+				const prevCount = acc[key] as number | undefined;
+
+				acc[key] = (prevCount ?? 0) + count;
+
+				return acc;
+			}, {});
 	}
 
 	@bindThis
-	public convertLegacyReactions(reactions: Record<string, number>) {
-		const _reactions = {} as Record<string, number>;
-
-		for (const reaction of Object.keys(reactions)) {
-			if (reactions[reaction] <= 0) continue;
-
-			if (Object.keys(legacies).includes(reaction)) {
-				if (_reactions[legacies[reaction]]) {
-					_reactions[legacies[reaction]] += reactions[reaction];
-				} else {
-					_reactions[legacies[reaction]] = reactions[reaction];
-				}
-			} else {
-				if (_reactions[reaction]) {
-					_reactions[reaction] += reactions[reaction];
-				} else {
-					_reactions[reaction] = reactions[reaction];
-				}
-			}
-		}
-
-		const _reactions2 = {} as Record<string, number>;
-
-		for (const reaction of Object.keys(_reactions)) {
-			_reactions2[this.decodeReaction(reaction).reaction] = _reactions[reaction];
-		}
-
-		return _reactions2;
-	}
-
-	@bindThis
-	public async toDbReaction(reaction?: string | null, reacterHost?: string | null): Promise<string> {
-		if (reaction == null) return await this.getFallbackReaction();
-
-		reacterHost = this.utilityService.toPunyNullable(reacterHost);
+	public normalize(reaction: string | null): string {
+		if (reaction == null) return FALLBACK;
 
 		// 文字列タイプのリアクションを絵文字に変換
 		if (Object.keys(legacies).includes(reaction)) return legacies[reaction];
@@ -307,23 +371,12 @@ export class ReactionService {
 			return unicode.match('\u200d') ? unicode : unicode.replace(/\ufe0f/g, '');
 		}
 
-		const custom = reaction.match(/^:([\w+-]+)(?:@\.)?:$/);
-		if (custom) {
-			const name = custom[1];
-			const emoji = await this.emojisRepository.findOneBy({
-				host: reacterHost ?? IsNull(),
-				name,
-			});
-
-			if (emoji) return reacterHost ? `:${name}@${reacterHost}:` : `:${name}:`;
-		}
-
-		return await this.getFallbackReaction();
+		return FALLBACK;
 	}
 
 	@bindThis
 	public decodeReaction(str: string): DecodedReaction {
-		const custom = str.match(/^:([\w+-]+)(?:@([\w.-]+))?:$/);
+		const custom = str.match(decodeCustomEmojiRegexp);
 
 		if (custom) {
 			const name = custom[1];

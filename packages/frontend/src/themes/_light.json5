@@ -21,6 +21,7 @@
 		fgTransparent: ':alpha<0.5<@fg',
 		fgHighlighted: ':darken<3<@fg',
 		fgOnAccent: '#fff',
+		fgOnWhite: '#333',
 		divider: 'rgba(0, 0, 0, 0.1)',
 		indicator: '@accent',
 		panel: ':lighten<3<@bg',
@@ -53,9 +54,6 @@
 		infoWarnBg: '#fff0db',
 		infoWarnFg: '#8f6e31',
 		switchBg: 'rgba(0, 0, 0, 0.15)',
-		cwBg: '#b1b9c1',
-		cwFg: '#fff',
-		cwHoverBg: '#bbc4ce',
 		buttonBg: 'rgba(0, 0, 0, 0.05)',
 		buttonHoverBg: 'rgba(0, 0, 0, 0.1)',
 		buttonGradateA: '@accent',
@@ -77,7 +75,7 @@
 		codeString: '#b98710',
 		codeNumber: '#0fbbbb',
 		codeBoolean: '#62b70c',
-		deckDivider: ':darken<3<@bg',
+		deckBg: ':darken<3<@bg',
 		htmlThemeColor: '@bg',
 		X2: ':darken<2<@panel',
 		X3: 'rgba(0, 0, 0, 0.05)',
@@ -95,5 +93,9 @@
 		X15: ':alpha<0<@panel',
 		X16: ':alpha<0.7<@panel',
 		X17: ':alpha<0.8<@bg',
+	},
+
+	codeHighlighter: {
+		base: 'catppuccin-latte',
 	},
 }

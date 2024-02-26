@@ -1,17 +1,25 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import type { DriveFilesRepository, GalleryPostsRepository } from '@/models/index.js';
-import { GalleryPost } from '@/models/entities/GalleryPost.js';
-import type { DriveFile } from '@/models/entities/DriveFile.js';
+import type { DriveFilesRepository, GalleryPostsRepository } from '@/models/_.js';
+import { MiGalleryPost } from '@/models/GalleryPost.js';
+import type { MiDriveFile } from '@/models/DriveFile.js';
 import { IdService } from '@/core/IdService.js';
 import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.js';
 import { DI } from '@/di-symbols.js';
+import { isNotNull } from '@/misc/is-not-null.js';
 
 export const meta = {
 	tags: ['gallery'],
 
 	requireCredential: true,
+
+	prohibitMoved: true,
 
 	kind: 'write:gallery',
 
@@ -44,9 +52,8 @@ export const paramDef = {
 	required: ['title', 'fileIds'],
 } as const;
 
-// eslint-disable-next-line import/no-default-export
 @Injectable()
-export default class extends Endpoint<typeof meta, typeof paramDef> {
+export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
 		@Inject(DI.galleryPostsRepository)
 		private galleryPostsRepository: GalleryPostsRepository,
@@ -63,15 +70,14 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 					id: fileId,
 					userId: me.id,
 				}),
-			))).filter((file): file is DriveFile => file != null);
+			))).filter(isNotNull);
 
 			if (files.length === 0) {
 				throw new Error();
 			}
 
-			const post = await this.galleryPostsRepository.insert(new GalleryPost({
-				id: this.idService.genId(),
-				createdAt: new Date(),
+			const post = await this.galleryPostsRepository.insert(new MiGalleryPost({
+				id: this.idService.gen(),
 				updatedAt: new Date(),
 				title: ps.title,
 				description: ps.description,

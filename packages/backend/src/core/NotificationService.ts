@@ -1,140 +1,175 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { setTimeout } from 'node:timers/promises';
+import * as Redis from 'ioredis';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { In } from 'typeorm';
 import { DI } from '@/di-symbols.js';
-import type { MutingsRepository, NotificationsRepository, UserProfilesRepository, UsersRepository } from '@/models/index.js';
-import type { User } from '@/models/entities/User.js';
-import type { Notification } from '@/models/entities/Notification.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
+import type { UsersRepository } from '@/models/_.js';
+import type { MiUser } from '@/models/User.js';
+import type { MiNotification } from '@/models/Notification.js';
 import { bindThis } from '@/decorators.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { PushNotificationService } from '@/core/PushNotificationService.js';
 import { NotificationEntityService } from '@/core/entities/NotificationEntityService.js';
 import { IdService } from '@/core/IdService.js';
+import { CacheService } from '@/core/CacheService.js';
+import type { Config } from '@/config.js';
+import { UserListService } from '@/core/UserListService.js';
+import type { FilterUnionByProperty } from '@/types.js';
+import { trackPromise } from '@/misc/promise-tracker.js';
 
 @Injectable()
 export class NotificationService implements OnApplicationShutdown {
 	#shutdownController = new AbortController();
 
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
+		@Inject(DI.redis)
+		private redisClient: Redis.Redis,
+
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
 
-		@Inject(DI.userProfilesRepository)
-		private userProfilesRepository: UserProfilesRepository,
-
-		@Inject(DI.notificationsRepository)
-		private notificationsRepository: NotificationsRepository,
-
-		@Inject(DI.mutingsRepository)
-		private mutingsRepository: MutingsRepository,
-
 		private notificationEntityService: NotificationEntityService,
-		private userEntityService: UserEntityService,
 		private idService: IdService,
 		private globalEventService: GlobalEventService,
 		private pushNotificationService: PushNotificationService,
+		private cacheService: CacheService,
+		private userListService: UserListService,
 	) {
 	}
 
 	@bindThis
-	public async readNotification(
-		userId: User['id'],
-		notificationIds: Notification['id'][],
+	public async readAllNotification(
+		userId: MiUser['id'],
+		force = false,
 	) {
-		if (notificationIds.length === 0) return;
+		const latestReadNotificationId = await this.redisClient.get(`latestReadNotification:${userId}`);
 
-		// Update documents
-		const result = await this.notificationsRepository.update({
-			notifieeId: userId,
-			id: In(notificationIds),
-			isRead: false,
-		}, {
-			isRead: true,
-		});
+		const latestNotificationIdsRes = await this.redisClient.xrevrange(
+			`notificationTimeline:${userId}`,
+			'+',
+			'-',
+			'COUNT', 1);
+		const latestNotificationId = latestNotificationIdsRes[0]?.[0];
 
-		if (result.affected === 0) return;
+		if (latestNotificationId == null) return;
 
-		if (!await this.userEntityService.getHasUnreadNotification(userId)) return this.postReadAllNotifications(userId);
-		else return this.postReadNotifications(userId, notificationIds);
+		this.redisClient.set(`latestReadNotification:${userId}`, latestNotificationId);
+
+		if (force || latestReadNotificationId == null || (latestReadNotificationId < latestNotificationId)) {
+			return this.postReadAllNotifications(userId);
+		}
 	}
 
 	@bindThis
-	public async readNotificationByQuery(
-		userId: User['id'],
-		query: Record<string, any>,
-	) {
-		const notificationIds = await this.notificationsRepository.findBy({
-			...query,
-			notifieeId: userId,
-			isRead: false,
-		}).then(notifications => notifications.map(notification => notification.id));
-
-		return this.readNotification(userId, notificationIds);
-	}
-
-	@bindThis
-	private postReadAllNotifications(userId: User['id']) {
+	private postReadAllNotifications(userId: MiUser['id']) {
 		this.globalEventService.publishMainStream(userId, 'readAllNotifications');
-		return this.pushNotificationService.pushNotification(userId, 'readAllNotifications', undefined);
+		this.pushNotificationService.pushNotification(userId, 'readAllNotifications', undefined);
 	}
 
 	@bindThis
-	private postReadNotifications(userId: User['id'], notificationIds: Notification['id'][]) {
-		return this.pushNotificationService.pushNotification(userId, 'readNotifications', { notificationIds });
+	public createNotification<T extends MiNotification['type']>(
+		notifieeId: MiUser['id'],
+		type: T,
+		data: Omit<FilterUnionByProperty<MiNotification, 'type', T>, 'type' | 'id' | 'createdAt' | 'notifierId'>,
+		notifierId?: MiUser['id'] | null,
+	) {
+		trackPromise(
+			this.#createNotificationInternal(notifieeId, type, data, notifierId),
+		);
 	}
 
-	@bindThis
-	public async createNotification(
-		notifieeId: User['id'],
-		type: Notification['type'],
-		data: Partial<Notification>,
-	): Promise<Notification | null> {
-		if (data.notifierId && (notifieeId === data.notifierId)) {
+	async #createNotificationInternal<T extends MiNotification['type']>(
+		notifieeId: MiUser['id'],
+		type: T,
+		data: Omit<FilterUnionByProperty<MiNotification, 'type', T>, 'type' | 'id' | 'createdAt' | 'notifierId'>,
+		notifierId?: MiUser['id'] | null,
+	): Promise<MiNotification | null> {
+		const profile = await this.cacheService.userProfileCache.fetch(notifieeId);
+
+		// 古いMisskeyバージョンのキャッシュが残っている可能性がある
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		const recieveConfig = (profile.notificationRecieveConfig ?? {})[type];
+		if (recieveConfig?.type === 'never') {
 			return null;
 		}
 
-		const profile = await this.userProfilesRepository.findOneBy({ userId: notifieeId });
+		if (notifierId) {
+			if (notifieeId === notifierId) {
+				return null;
+			}
 
-		const isMuted = profile?.mutingNotificationTypes.includes(type);
+			const mutings = await this.cacheService.userMutingsCache.fetch(notifieeId);
+			if (mutings.has(notifierId)) {
+				return null;
+			}
 
-		// Create notification
-		const notification = await this.notificationsRepository.insert({
-			id: this.idService.genId(),
+			if (recieveConfig?.type === 'following') {
+				const isFollowing = await this.cacheService.userFollowingsCache.fetch(notifieeId).then(followings => Object.hasOwn(followings, notifierId));
+				if (!isFollowing) {
+					return null;
+				}
+			} else if (recieveConfig?.type === 'follower') {
+				const isFollower = await this.cacheService.userFollowingsCache.fetch(notifierId).then(followings => Object.hasOwn(followings, notifieeId));
+				if (!isFollower) {
+					return null;
+				}
+			} else if (recieveConfig?.type === 'mutualFollow') {
+				const [isFollowing, isFollower] = await Promise.all([
+					this.cacheService.userFollowingsCache.fetch(notifieeId).then(followings => Object.hasOwn(followings, notifierId)),
+					this.cacheService.userFollowingsCache.fetch(notifierId).then(followings => Object.hasOwn(followings, notifieeId)),
+				]);
+				if (!isFollowing && !isFollower) {
+					return null;
+				}
+			} else if (recieveConfig?.type === 'list') {
+				const isMember = await this.userListService.membersCache.fetch(recieveConfig.userListId).then(members => members.has(notifierId));
+				if (!isMember) {
+					return null;
+				}
+			}
+		}
+
+		const notification = {
+			id: this.idService.gen(),
 			createdAt: new Date(),
-			notifieeId: notifieeId,
 			type: type,
-			// 相手がこの通知をミュートしているようなら、既読を予めつけておく
-			isRead: isMuted,
+			...(notifierId ? {
+				notifierId,
+			} : {}),
 			...data,
-		} as Partial<Notification>)
-			.then(x => this.notificationsRepository.findOneByOrFail(x.identifiers[0]));
+		} as any as FilterUnionByProperty<MiNotification, 'type', T>;
 
-		const packed = await this.notificationEntityService.pack(notification, {});
+		const redisIdPromise = this.redisClient.xadd(
+			`notificationTimeline:${notifieeId}`,
+			'MAXLEN', '~', this.config.perUserNotificationsMaxCount.toString(),
+			'*',
+			'data', JSON.stringify(notification));
+
+		const packed = await this.notificationEntityService.pack(notification, notifieeId, {});
 
 		// Publish notification event
 		this.globalEventService.publishMainStream(notifieeId, 'notification', packed);
 
 		// 2秒経っても(今回作成した)通知が既読にならなかったら「未読の通知がありますよ」イベントを発行する
-		setTimeout(2000, 'unread note', { signal: this.#shutdownController.signal }).then(async () => {
-			const fresh = await this.notificationsRepository.findOneBy({ id: notification.id });
-			if (fresh == null) return; // 既に削除されているかもしれない
-			if (fresh.isRead) return;
-
-			//#region ただしミュートしているユーザーからの通知なら無視
-			const mutings = await this.mutingsRepository.findBy({
-				muterId: notifieeId,
-			});
-			if (data.notifierId && mutings.map(m => m.muteeId).includes(data.notifierId)) {
-				return;
-			}
-			//#endregion
+		// テスト通知の場合は即時発行
+		const interval = notification.type === 'test' ? 0 : 2000;
+		setTimeout(interval, 'unread notification', { signal: this.#shutdownController.signal }).then(async () => {
+			const latestReadNotificationId = await this.redisClient.get(`latestReadNotification:${notifieeId}`);
+			if (latestReadNotificationId && (latestReadNotificationId >= (await redisIdPromise)!)) return;
 
 			this.globalEventService.publishMainStream(notifieeId, 'unreadNotification', packed);
 			this.pushNotificationService.pushNotification(notifieeId, 'notification', packed);
 
-			if (type === 'follow') this.emailNotificationFollow(notifieeId, await this.usersRepository.findOneByOrFail({ id: data.notifierId! }));
-			if (type === 'receiveFollowRequest') this.emailNotificationReceiveFollowRequest(notifieeId, await this.usersRepository.findOneByOrFail({ id: data.notifierId! }));
+			if (type === 'follow') this.emailNotificationFollow(notifieeId, await this.usersRepository.findOneByOrFail({ id: notifierId! }));
+			if (type === 'receiveFollowRequest') this.emailNotificationReceiveFollowRequest(notifieeId, await this.usersRepository.findOneByOrFail({ id: notifierId! }));
 		}, () => { /* aborted, ignore it */ });
 
 		return notification;
@@ -146,7 +181,7 @@ export class NotificationService implements OnApplicationShutdown {
 	// TODO: locale ファイルをクライアント用とサーバー用で分けたい
 
 	@bindThis
-	private async emailNotificationFollow(userId: User['id'], follower: User) {
+	private async emailNotificationFollow(userId: MiUser['id'], follower: MiUser) {
 		/*
 		const userProfile = await UserProfiles.findOneByOrFail({ userId: userId });
 		if (!userProfile.email || !userProfile.emailNotificationTypes.includes('follow')) return;
@@ -158,7 +193,7 @@ export class NotificationService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	private async emailNotificationReceiveFollowRequest(userId: User['id'], follower: User) {
+	private async emailNotificationReceiveFollowRequest(userId: MiUser['id'], follower: MiUser) {
 		/*
 		const userProfile = await UserProfiles.findOneByOrFail({ userId: userId });
 		if (!userProfile.email || !userProfile.emailNotificationTypes.includes('receiveFollowRequest')) return;
@@ -169,7 +204,13 @@ export class NotificationService implements OnApplicationShutdown {
 		*/
 	}
 
-	onApplicationShutdown(signal?: string | undefined): void {
+	@bindThis
+	public dispose(): void {
 		this.#shutdownController.abort();
+	}
+
+	@bindThis
+	public onApplicationShutdown(signal?: string | undefined): void {
+		this.dispose();
 	}
 }

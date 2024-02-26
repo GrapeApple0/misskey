@@ -1,7 +1,12 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Brackets } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
-import type { UsersRepository, UserProfilesRepository } from '@/models/index.js';
-import type { User } from '@/models/entities/User.js';
+import type { UsersRepository, UserProfilesRepository } from '@/models/_.js';
+import type { MiUser } from '@/models/User.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DI } from '@/di-symbols.js';
@@ -37,9 +42,8 @@ export const paramDef = {
 	required: ['query'],
 } as const;
 
-// eslint-disable-next-line import/no-default-export
 @Injectable()
-export default class extends Endpoint<typeof meta, typeof paramDef> {
+export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
@@ -52,16 +56,18 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 		super(meta, paramDef, async (ps, me) => {
 			const activeThreshold = new Date(Date.now() - (1000 * 60 * 60 * 24 * 30)); // 30日
 
+			ps.query = ps.query.trim();
 			const isUsername = ps.query.startsWith('@');
 
-			let users: User[] = [];
+			let users: MiUser[] = [];
 
 			if (isUsername) {
 				const usernameQuery = this.usersRepository.createQueryBuilder('user')
 					.where('user.usernameLower LIKE :username', { username: sqlLikeEscape(ps.query.replace('@', '').toLowerCase()) + '%' })
-					.andWhere(new Brackets(qb => { qb
-						.where('user.updatedAt IS NULL')
-						.orWhere('user.updatedAt > :activeThreshold', { activeThreshold: activeThreshold });
+					.andWhere(new Brackets(qb => {
+						qb
+							.where('user.updatedAt IS NULL')
+							.orWhere('user.updatedAt > :activeThreshold', { activeThreshold: activeThreshold });
 					}))
 					.andWhere('user.isSuspended = FALSE');
 
@@ -73,12 +79,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 				users = await usernameQuery
 					.orderBy('user.updatedAt', 'DESC', 'NULLS LAST')
-					.take(ps.limit)
-					.skip(ps.offset)
+					.limit(ps.limit)
+					.offset(ps.offset)
 					.getMany();
 			} else {
 				const nameQuery = this.usersRepository.createQueryBuilder('user')
-					.where(new Brackets(qb => { 
+					.where(new Brackets(qb => {
 						qb.where('user.name ILIKE :query', { query: '%' + sqlLikeEscape(ps.query) + '%' });
 
 						// Also search username if it qualifies as username
@@ -86,9 +92,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 							qb.orWhere('user.usernameLower LIKE :username', { username: '%' + sqlLikeEscape(ps.query.toLowerCase()) + '%' });
 						}
 					}))
-					.andWhere(new Brackets(qb => { qb
-						.where('user.updatedAt IS NULL')
-						.orWhere('user.updatedAt > :activeThreshold', { activeThreshold: activeThreshold });
+					.andWhere(new Brackets(qb => {
+						qb
+							.where('user.updatedAt IS NULL')
+							.orWhere('user.updatedAt > :activeThreshold', { activeThreshold: activeThreshold });
 					}))
 					.andWhere('user.isSuspended = FALSE');
 
@@ -100,8 +107,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 				users = await nameQuery
 					.orderBy('user.updatedAt', 'DESC', 'NULLS LAST')
-					.take(ps.limit)
-					.skip(ps.offset)
+					.limit(ps.limit)
+					.offset(ps.offset)
 					.getMany();
 
 				if (users.length < ps.limit) {
@@ -117,23 +124,24 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 					const query = this.usersRepository.createQueryBuilder('user')
 						.where(`user.id IN (${ profQuery.getQuery() })`)
-						.andWhere(new Brackets(qb => { qb
-							.where('user.updatedAt IS NULL')
-							.orWhere('user.updatedAt > :activeThreshold', { activeThreshold: activeThreshold });
+						.andWhere(new Brackets(qb => {
+							qb
+								.where('user.updatedAt IS NULL')
+								.orWhere('user.updatedAt > :activeThreshold', { activeThreshold: activeThreshold });
 						}))
 						.andWhere('user.isSuspended = FALSE')
 						.setParameters(profQuery.getParameters());
 
 					users = users.concat(await query
 						.orderBy('user.updatedAt', 'DESC', 'NULLS LAST')
-						.take(ps.limit)
-						.skip(ps.offset)
+						.limit(ps.limit)
+						.offset(ps.offset)
 						.getMany(),
 					);
 				}
 			}
 
-			return await this.userEntityService.packMany(users, me, { detail: ps.detail });
+			return await this.userEntityService.packMany(users, me, { schema: ps.detail ? 'UserDetailed' : 'UserLite' });
 		});
 	}
 }

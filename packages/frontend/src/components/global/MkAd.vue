@@ -1,6 +1,19 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <div v-if="chosen && !shouldHide" :class="$style.root">
-	<div v-if="!showMenu" :class="[$style.main, $style['form_' + chosen.place]]">
+	<div
+		v-if="!showMenu"
+		:class="[$style.main, {
+			[$style.form_square]: chosen.place === 'square',
+			[$style.form_horizontal]: chosen.place === 'horizontal',
+			[$style.form_horizontalBig]: chosen.place === 'horizontal-big',
+			[$style.form_vertical]: chosen.place === 'vertical',
+		}]"
+	>
 		<a :href="chosen.url" target="_blank" :class="$style.link">
 			<img :src="chosen.imageUrl" :class="$style.img">
 			<button class="_button" :class="$style.i" @click.prevent.stop="toggleMenu"><i :class="$style.iIcon" class="ti ti-info-circle"></i></button>
@@ -9,9 +22,9 @@
 	<div v-else :class="$style.menu">
 		<div :class="$style.menuContainer">
 			<div>Ads by {{ host }}</div>
-			<!--<MkButton class="button" primary>{{ $ts._ad.like }}</MkButton>-->
-			<MkButton v-if="chosen.ratio !== 0" :class="$style.menuButton" @click="reduceFrequency">{{ $ts._ad.reduceFrequencyOfThisAd }}</MkButton>
-			<button class="_textButton" @click="toggleMenu">{{ $ts._ad.back }}</button>
+			<!--<MkButton class="button" primary>{{ i18n.ts._ad.like }}</MkButton>-->
+			<MkButton v-if="chosen.ratio !== 0" :class="$style.menuButton" @click="reduceFrequency">{{ i18n.ts._ad.reduceFrequencyOfThisAd }}</MkButton>
+			<button class="_textButton" @click="toggleMenu">{{ i18n.ts._ad.back }}</button>
 		</div>
 	</div>
 </div>
@@ -20,12 +33,13 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { instance } from '@/instance';
-import { host } from '@/config';
+import { i18n } from '@/i18n.js';
+import { instance } from '@/instance.js';
+import { host } from '@/config.js';
 import MkButton from '@/components/MkButton.vue';
-import { defaultStore } from '@/store';
-import * as os from '@/os';
-import { $i } from '@/account';
+import { defaultStore } from '@/store.js';
+import * as os from '@/os.js';
+import { $i } from '@/account.js';
 
 type Ad = (typeof instance)['ads'][number];
 
@@ -82,7 +96,7 @@ const choseAd = (): Ad | null => {
 };
 
 const chosen = ref(choseAd());
-const shouldHide = $ref($i && $i.policies.canHideAds && (props.specify == null));
+const shouldHide = ref(!defaultStore.state.forceShowAds && $i && $i.policies.canHideAds && (props.specify == null));
 
 function reduceFrequency(): void {
 	if (chosen.value == null) return;
@@ -121,7 +135,7 @@ function reduceFrequency(): void {
 		}
 	}
 
-	&.form_horizontal-big {
+	&.form_horizontalBig {
 		padding: 8px;
 
 		> .link,

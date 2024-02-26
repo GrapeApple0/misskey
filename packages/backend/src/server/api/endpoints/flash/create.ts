@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
-import type { FlashsRepository } from '@/models/index.js';
+import type { FlashsRepository } from '@/models/_.js';
 import { IdService } from '@/core/IdService.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
@@ -11,6 +16,8 @@ export const meta = {
 
 	requireCredential: true,
 
+	prohibitMoved: true,
+
 	kind: 'write:flash',
 
 	limit: {
@@ -19,6 +26,12 @@ export const meta = {
 	},
 
 	errors: {
+	},
+
+	res: {
+		type: 'object',
+		optional: false, nullable: false,
+		ref: 'Flash',
 	},
 } as const;
 
@@ -35,9 +48,8 @@ export const paramDef = {
 	required: ['title', 'summary', 'script', 'permissions'],
 } as const;
 
-// eslint-disable-next-line import/no-default-export
 @Injectable()
-export default class extends Endpoint<typeof meta, typeof paramDef> {
+export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
 		@Inject(DI.flashsRepository)
 		private flashsRepository: FlashsRepository,
@@ -47,9 +59,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const flash = await this.flashsRepository.insert({
-				id: this.idService.genId(),
+				id: this.idService.gen(),
 				userId: me.id,
-				createdAt: new Date(),
 				updatedAt: new Date(),
 				title: ps.title,
 				summary: ps.summary,

@@ -1,6 +1,12 @@
-import * as Acct from 'misskey-js/built/acct';
-import { i18n } from '@/i18n';
-import * as os from '@/os';
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+import * as Misskey from 'misskey-js';
+import { i18n } from '@/i18n.js';
+import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 
 export async function lookupUser() {
 	const { canceled, result } = await os.inputText({
@@ -9,11 +15,11 @@ export async function lookupUser() {
 	if (canceled) return;
 
 	const show = (user) => {
-		os.pageWindow(`/user-info/${user.id}`);
+		os.pageWindow(`/admin/user/${user.id}`);
 	};
 
-	const usernamePromise = os.api('users/show', Acct.parse(result));
-	const idPromise = os.api('users/show', { userId: result });
+	const usernamePromise = misskeyApi('users/show', Misskey.acct.parse(result));
+	const idPromise = misskeyApi('users/show', { userId: result });
 	let _notFound = false;
 	const notFound = () => {
 		if (_notFound) {
@@ -33,4 +39,27 @@ export async function lookupUser() {
 	idPromise.then(show).catch(err => {
 		notFound();
 	});
+}
+
+export async function lookupUserByEmail() {
+	const { canceled, result } = await os.inputText({
+		title: i18n.ts.emailAddress,
+		type: 'email',
+	});
+	if (canceled) return;
+
+	try {
+		const user = await os.apiWithDialog('admin/accounts/find-by-email', { email: result });
+
+		os.pageWindow(`/admin/user/${user.id}`);
+	} catch (err) {
+		if (err.code === 'USER_NOT_FOUND') {
+			os.alert({
+				type: 'error',
+				text: i18n.ts.noSuchUser,
+			});
+		} else {
+			throw err;
+		}
+	}
 }

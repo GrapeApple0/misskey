@@ -1,29 +1,38 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
-<div class="mk-follow-page">
+<div>
 </div>
 </template>
 
 <script lang="ts" setup>
 import { } from 'vue';
-import * as Acct from 'misskey-js/built/acct';
-import * as os from '@/os';
-import { mainRouter } from '@/router';
-import { i18n } from '@/i18n';
+import * as Misskey from 'misskey-js';
+import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { i18n } from '@/i18n.js';
+import { defaultStore } from '@/store.js';
+import { mainRouter } from '@/router/main.js';
 
 async function follow(user): Promise<void> {
 	const { canceled } = await os.confirm({
 		type: 'question',
-		text: i18n.t('followConfirm', { name: user.name || user.username }),
+		text: i18n.tsx.followConfirm({ name: user.name || user.username }),
 	});
 
 	if (canceled) {
 		window.close();
 		return;
 	}
-	
+
 	os.apiWithDialog('following/create', {
 		userId: user.id,
+		withReplies: defaultStore.state.defaultWithReplies,
 	});
+	user.withReplies = defaultStore.state.defaultWithReplies;
 }
 
 const acct = new URL(location.href).searchParams.get('acct');
@@ -34,7 +43,7 @@ if (acct == null) {
 let promise;
 
 if (acct.startsWith('https://')) {
-	promise = os.api('ap/show', {
+	promise = misskeyApi('ap/show', {
 		uri: acct,
 	});
 	promise.then(res => {
@@ -52,7 +61,7 @@ if (acct.startsWith('https://')) {
 		}
 	});
 } else {
-	promise = os.api('users/show', Acct.parse(acct));
+	promise = misskeyApi('users/show', Misskey.acct.parse(acct));
 	promise.then(user => {
 		follow(user);
 	});

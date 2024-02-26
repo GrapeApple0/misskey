@@ -1,10 +1,17 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <MkA :to="`/play/${flash.id}`" class="vhpxefrk _panel" tabindex="-1">
 	<article>
 		<header>
 			<h1 :title="flash.title">{{ flash.title }}</h1>
 		</header>
-		<p v-if="flash.summary" :title="flash.summary">{{ flash.summary.length > 85 ? flash.summary.slice(0, 85) + '…' : flash.summary }}</p>
+		<p v-if="flash.summary" :title="flash.summary">
+			<Mfm class="summaryMfm" :text="flash.summary" :plain="true" :nowrap="true"/>
+		</p>
 		<footer>
 			<img class="icon" :src="flash.user.avatarUrl"/>
 			<p>{{ userName(flash.user) }}</p>
@@ -15,10 +22,10 @@
 
 <script lang="ts" setup>
 import { } from 'vue';
-import { userName } from '@/filters/user';
+import { userName } from '@/filters/user.js';
 
 const props = defineProps<{
-	//flash: misskey.entities.Flash;
+	//flash: Misskey.entities.Flash;
 	flash: any;
 }>();
 </script>
@@ -49,6 +56,12 @@ const props = defineProps<{
 			margin: 0;
 			color: var(--urlPreviewText);
 			font-size: 0.8em;
+			overflow: clip;
+
+			> .summaryMfm {
+				display: block;
+				width: 100%;
+			}
 		}
 
 		> footer {
@@ -87,7 +100,7 @@ const props = defineProps<{
 
 	@media (max-width: 500px) {
 		font-size: 10px;
-		
+
 		> article {
 			padding: 8px;
 

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <div v-if="meta" :class="$style.root" :style="{ backgroundImage: `url(${ meta.backgroundImageUrl })` }"></div>
 </template>
@@ -5,11 +10,11 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import * as Misskey from 'misskey-js';
-import * as os from '@/os';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 
-const meta = ref<Misskey.entities.DetailedInstanceMetadata>();
+const meta = ref<Misskey.entities.MetaResponse>();
 
-os.api('meta', { detail: true }).then(gotMeta => {
+misskeyApi('meta', { detail: true }).then(gotMeta => {
 	meta.value = gotMeta;
 });
 </script>

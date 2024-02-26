@@ -1,5 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { Inject, Injectable } from '@nestjs/common';
-import { summaly } from 'summaly';
+import { summaly } from '@misskey-dev/summaly';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { MetaService } from '@/core/MetaService.js';
@@ -70,10 +75,10 @@ export class UrlPreviewService {
 				await summaly(url, {
 					followRedirects: false,
 					lang: lang ?? 'ja-JP',
-					agent: {
+					agent: this.config.proxy ? {
 						http: this.httpRequestService.httpAgent,
 						https: this.httpRequestService.httpsAgent,
-					},
+					} : undefined,
 				});
 
 			this.logger.succ(`Got preview of ${url}: ${summary.title}`);
