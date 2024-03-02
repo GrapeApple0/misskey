@@ -466,6 +466,7 @@ function setVisibility() {
 		isSilenced: $i.isSilenced,
 		currentLocalOnly: localOnly.value,
 		src: visibilityButton.value,
+		...(props.reply ? { isReplyVisibilitySpecified: props.reply.visibility === 'specified' } : {}),
 	}, {
 		changeVisibility: v => {
 			visibility.value = v;

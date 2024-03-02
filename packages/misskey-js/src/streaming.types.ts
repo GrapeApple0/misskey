@@ -40,6 +40,7 @@ export type Channels = {
 			unreadNotification: (payload: Notification) => void;
 			unreadMention: (payload: Note['id']) => void;
 			readAllUnreadMentions: () => void;
+			notificationFlushed: () => void;
 			unreadSpecifiedNote: (payload: Note['id']) => void;
 			readAllUnreadSpecifiedNotes: () => void;
 			readAllAntennas: () => void;
@@ -243,13 +244,6 @@ export type NoteUpdatedEvent = {
 	type: 'deleted';
 	body: {
 		deletedAt: string;
-	};
-} | {
-	id: Note['id'];
-	type: 'updated';
-	body: {
-		cw: string | null;
-		text: string;
 	};
 } | {
 	type: 'pollVoted';

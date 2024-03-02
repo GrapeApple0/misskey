@@ -69,9 +69,6 @@ export type ModerationLog = {
 	type: 'deleteNote';
 	info: ModerationLogPayloads['deleteNote'];
 } | {
-	type: 'editNote';
-	info: ModerationLogPayloads['editNote'];
-} | {
 	type: 'createGlobalAnnouncement';
 	info: ModerationLogPayloads['createGlobalAnnouncement'];
 } | {
@@ -98,6 +95,9 @@ export type ModerationLog = {
 } | {
 	type: 'unsuspendRemoteInstance';
 	info: ModerationLogPayloads['unsuspendRemoteInstance'];
+} | {
+	type: 'updateRemoteInstanceNote';
+	info: ModerationLogPayloads['updateRemoteInstanceNote'];
 } | {
 	type: 'markSensitiveDriveFile';
 	info: ModerationLogPayloads['markSensitiveDriveFile'];
@@ -152,7 +152,7 @@ export type ServerStats = {
 	}
 };
 
-export type ServerStatsLog = string[];
+export type ServerStatsLog = ServerStats[];
 
 export type QueueStats = {
 	deliver: {
@@ -169,7 +169,7 @@ export type QueueStats = {
 	};
 };
 
-export type QueueStatsLog = string[];
+export type QueueStatsLog = QueueStats[];
 
 export type EmojiAdded = {
 	emoji: EmojiDetailed

@@ -112,7 +112,6 @@ export const moderationLogTypes = [
 	'promoteQueue',
 	'deleteDriveFile',
 	'deleteNote',
-	'editNote',
 	'createGlobalAnnouncement',
 	'createUserAnnouncement',
 	'updateGlobalAnnouncement',
@@ -122,6 +121,7 @@ export const moderationLogTypes = [
 	'resetPassword',
 	'suspendRemoteInstance',
 	'unsuspendRemoteInstance',
+	'updateRemoteInstanceNote',
 	'markSensitiveDriveFile',
 	'unmarkSensitiveDriveFile',
 	'resolveAbuseReport',
@@ -214,14 +214,6 @@ export type ModerationLogPayloads = {
 		noteUserHost: string | null;
 		note: any;
 	};
-	editNote: {
-		noteId: string;
-		noteUserId: string;
-		noteUserUsername: string;
-		noteUserHost: string | null;
-		note: any;
-		oldNote: any;
-	};
 	createGlobalAnnouncement: {
 		announcementId: string;
 		announcement: any;
@@ -269,6 +261,12 @@ export type ModerationLogPayloads = {
 	unsuspendRemoteInstance: {
 		id: string;
 		host: string;
+	};
+	updateRemoteInstanceNote: {
+		id: string;
+		host: string;
+		before: string | null;
+		after: string | null;
 	};
 	markSensitiveDriveFile: {
 		fileId: string;

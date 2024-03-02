@@ -14,6 +14,7 @@ import FFmpeg from 'fluent-ffmpeg';
 import isSvg from 'is-svg';
 import probeImageSize from 'probe-image-size';
 import sharp from 'sharp';
+import { sharpBmp } from '@misskey-dev/sharp-read-bmp';
 import { encode } from 'blurhash';
 import { createTempDir } from '@/misc/create-temp.js';
 import { bindThis } from '@/decorators.js';
@@ -119,7 +120,7 @@ export class FileInfoService {
 			'image/avif',
 			'image/svg+xml',
 		].includes(type.mime)) {
-			blurhash = await this.getBlurhash(path).catch(e => {
+			blurhash = await this.getBlurhash(path, type.mime).catch(e => {
 				warnings.push(`getBlurhash failed: ${e}`);
 				return undefined;
 			});
@@ -290,9 +291,9 @@ export class FileInfoService {
 	 * Calculate average color of image
 	 */
 	@bindThis
-	private getBlurhash(path: string): Promise<string> {
-		return new Promise((resolve, reject) => {
-			sharp(path)
+	private getBlurhash(path: string, type: string): Promise<string> {
+		return new Promise(async (resolve, reject) => {
+			(await sharpBmp(path, type))
 				.raw()
 				.ensureAlpha()
 				.resize(64, 64, { fit: 'inside' })

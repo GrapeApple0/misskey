@@ -127,6 +127,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<MkMediaList v-if="targetFiles" :mediaList="targetFiles"/>
 			</details>
 		</template>
+		<template v-else-if="log.type === 'updateRemoteInstanceNote'">
+			<div>{{ i18n.ts.user }}: {{ log.info.userId }}</div>
+			<div :class="$style.diff">
+				<CodeDiff :context="5" :hideHeader="true" :oldString="log.info.before ?? ''" :newString="log.info.after ?? ''" maxHeight="300px"/>
+			</div>
+		</template>
+
 		<details>
 			<summary>raw</summary>
 			<pre>{{ JSON5.stringify(log, null, '\t') }}</pre>
