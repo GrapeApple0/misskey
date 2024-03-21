@@ -67,9 +67,6 @@
 		"ncp": "2.0.0",
 		"start-server-and-test": "2.0.3"
 	},
-	"optionalDependencies": {
-		"@tensorflow/tfjs-core": "4.15.0"
-	},
 	"pnpm": {
 		"overrides": {
 			"sharp@<0.32.6": ">=0.32.6",
