@@ -55,9 +55,11 @@ export class InboxProcessorService {
 		const activity = job.data.activity;
 
 		//#region Log
-		const info = Object.assign({}, activity);
-		delete info['@context'];
-		this.logger.debug(JSON.stringify(info, null, 2));
+		if (process.env.PRINT_INBOX_ACTIVITY) {
+			const info = Object.assign({}, activity);
+			delete info['@context'];
+			this.logger.info(JSON.stringify(info, null, 2));
+		}
 		//#endregion
 
 		const host = this.utilityService.toPuny(new URL(signature.keyId).hostname);
