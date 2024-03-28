@@ -319,10 +319,11 @@ export class NoteEntityService implements OnModuleInit {
 			.filter(x => x.startsWith(':') && x.includes('@') && !x.includes('@.')) // リモートカスタム絵文字のみ
 			.map(x => this.reactionService.decodeReaction(x).reaction.replaceAll(':', ''));
 		const packedFiles = options?._hint_?.packedFiles;
+
 		const packed: Packed<'Note'> = await awaitAll({
 			id: note.id,
 			createdAt: this.idService.parse(note.id).date.toISOString(),
-			updatedAt: note.updatedAt && (note.updatedAt.getTime() - this.idService.parse(note.id).date.getTime()) > 1000 * 10 ? note.updatedAt.toISOString() : undefined,
+			updatedAt: note.updatedAt ? note.updatedAt.toISOString() : undefined,
 			userId: note.userId,
 			user: this.userEntityService.pack(note.user ?? note.userId, me),
 			text: text,
