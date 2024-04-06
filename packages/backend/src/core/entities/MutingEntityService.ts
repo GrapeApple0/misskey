@@ -12,7 +12,6 @@ import type { } from '@/models/Blocking.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiMuting } from '@/models/Muting.js';
 import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
 import { UserEntityService } from './UserEntityService.js';
 
 @Injectable()
@@ -22,7 +21,6 @@ export class MutingEntityService {
 		private mutingsRepository: MutingsRepository,
 
 		private userEntityService: UserEntityService,
-		private idService: IdService,
 	) {
 	}
 
@@ -35,7 +33,7 @@ export class MutingEntityService {
 
 		return await awaitAll({
 			id: muting.id,
-			createdAt: this.idService.parse(muting.id).date.toISOString(),
+			createdAt: muting.createdAt.toISOString(),
 			expiresAt: muting.expiresAt ? muting.expiresAt.toISOString() : null,
 			muteeId: muting.muteeId,
 			mutee: this.userEntityService.pack(muting.muteeId, me, {

@@ -47,13 +47,13 @@ export class AggregateRetentionProcessorService {
 		// 今日登録したユーザーを全て取得
 		const targetUsers = await this.usersRepository.findBy({
 			host: IsNull(),
-			id: MoreThan(this.idService.gen(Date.now() - (1000 * 60 * 60 * 24))),
+			createdAt: MoreThan(new Date(Date.now() - (1000 * 60 * 60 * 24))),
 		});
 		const targetUserIds = targetUsers.map(u => u.id);
 
 		try {
 			await this.retentionAggregationsRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
 				createdAt: now,
 				updatedAt: now,
 				dateKey,

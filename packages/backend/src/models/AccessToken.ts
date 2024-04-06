@@ -14,6 +14,11 @@ export class MiAccessToken {
 	public id: string;
 
 	@Column('timestamp with time zone', {
+		comment: 'The created date of the AccessToken.',
+	})
+	public createdAt: Date;
+
+	@Column('timestamp with time zone', {
 		nullable: true,
 	})
 	public lastUsedAt: Date | null;

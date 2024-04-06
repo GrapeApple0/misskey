@@ -99,8 +99,8 @@ export class ReversiService implements OnApplicationShutdown, OnModuleInit {
 			// 既にマッチしている対局が無いか探す(3分以内)
 			const games = await this.reversiGamesRepository.find({
 				where: [
-					{ id: MoreThan(this.idService.gen(Date.now() - 1000 * 60 * 3)), user1Id: me.id, user2Id: targetUser.id, isStarted: false },
-					{ id: MoreThan(this.idService.gen(Date.now() - 1000 * 60 * 3)), user1Id: targetUser.id, user2Id: me.id, isStarted: false },
+					{ id: MoreThan(this.idService.genId(new Date(Date.now() - 1000 * 60 * 3))), user1Id: me.id, user2Id: targetUser.id, isStarted: false },
+					{ id: MoreThan(this.idService.genId(new Date(Date.now() - 1000 * 60 * 3))), user1Id: targetUser.id, user2Id: me.id, isStarted: false },
 				],
 				relations: ['user1', 'user2'],
 				order: { id: 'DESC' },
@@ -146,8 +146,8 @@ export class ReversiService implements OnApplicationShutdown, OnModuleInit {
 			// 既にマッチしている対局が無いか探す(3分以内)
 			const games = await this.reversiGamesRepository.find({
 				where: [
-					{ id: MoreThan(this.idService.gen(Date.now() - 1000 * 60 * 3)), user1Id: me.id, isStarted: false },
-					{ id: MoreThan(this.idService.gen(Date.now() - 1000 * 60 * 3)), user2Id: me.id, isStarted: false },
+					{ id: MoreThan(this.idService.genId(new Date(Date.now() - 1000 * 60 * 3))), user1Id: me.id, isStarted: false },
+					{ id: MoreThan(this.idService.genId(new Date(Date.now() - 1000 * 60 * 3))), user2Id: me.id, isStarted: false },
 				],
 				relations: ['user1', 'user2'],
 				order: { id: 'DESC' },
@@ -224,7 +224,7 @@ export class ReversiService implements OnApplicationShutdown, OnModuleInit {
 	@bindThis
 	public async cleanOutdatedGames() {
 		await this.reversiGamesRepository.delete({
-			id: LessThan(this.idService.gen(Date.now() - 1000 * 60 * 10)),
+			id: LessThan(this.idService.genId(new Date(Date.now() - 1000 * 60 * 10))),
 			isStarted: false,
 		});
 	}
@@ -282,7 +282,7 @@ export class ReversiService implements OnApplicationShutdown, OnModuleInit {
 	@bindThis
 	private async matched(parentId: MiUser['id'], childId: MiUser['id'], options: { noIrregularRules: boolean; }): Promise<MiReversiGame> {
 		const game = await this.reversiGamesRepository.insert({
-			id: this.idService.gen(),
+			id: this.idService.genId(),
 			user1Id: parentId,
 			user2Id: childId,
 			user1Ready: false,

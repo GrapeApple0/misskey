@@ -15,6 +15,12 @@ export class MiChannelFavorite {
 	public id: string;
 
 	@Index()
+	@Column('timestamp with time zone', {
+		comment: 'The created date of the ChannelFavorite.',
+	})
+	public createdAt: Date;
+
+	@Index()
 	@Column({
 		...id(),
 	})

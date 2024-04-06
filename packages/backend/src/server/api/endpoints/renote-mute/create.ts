@@ -90,7 +90,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			// Create mute
 			await this.renoteMutingsRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				muterId: muter.id,
 				muteeId: mutee.id,
 			} as MiRenoteMuting);

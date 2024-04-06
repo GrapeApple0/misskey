@@ -57,7 +57,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (policies.inviteLimit) {
 				const count = await this.registrationTicketsRepository.countBy({
-					id: MoreThan(this.idService.gen(Date.now() - (policies.inviteLimitCycle * 1000 * 60))),
+					createdAt: MoreThan(new Date(Date.now() - (policies.inviteLimitCycle * 1000 * 60))),
 					createdById: me.id,
 				});
 
@@ -67,7 +67,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			const ticket = await this.registrationTicketsRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				createdBy: me,
 				createdById: me.id,
 				expiresAt: policies.inviteExpirationTime ? new Date(Date.now() + (policies.inviteExpirationTime * 1000 * 60)) : null,

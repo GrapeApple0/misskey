@@ -80,7 +80,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				const now = new Date();
 
 				await this.accessTokensRepository.insert({
-					id: this.idService.gen(now.getTime()),
+					id: this.idService.genId(),
+					createdAt: now,
 					lastUsedAt: now,
 					appId: session.appId,
 					userId: me.id,

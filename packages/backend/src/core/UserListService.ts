@@ -100,7 +100,8 @@ export class UserListService implements OnApplicationShutdown, OnModuleInit {
 		}
 
 		await this.userListMembershipsRepository.insert({
-			id: this.idService.gen(),
+			id: this.idService.genId(),
+			createdAt: new Date(),
 			userId: target.id,
 			userListId: list.id,
 			userListUserId: list.userId,

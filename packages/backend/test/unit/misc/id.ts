@@ -15,35 +15,35 @@ import { ulidRegExp, parseUlid } from '@/misc/id/ulid.js';
 describe('misc:id', () => {
 	test('aid', () => {
 		const date = Date.now();
-		const gotAid = genAid(date);
+		const gotAid = genAid(new Date(date));
 		expect(gotAid).toMatch(aidRegExp);
 		expect(parseAid(gotAid).date.getTime()).toBe(date);
 	});
 
 	test('aidx', () => {
 		const date = Date.now();
-		const gotAidx = genAidx(date);
+		const gotAidx = genAidx(new Date(date));
 		expect(gotAidx).toMatch(aidxRegExp);
 		expect(parseAidx(gotAidx).date.getTime()).toBe(date);
 	});
 
 	test('meid', () => {
 		const date = Date.now();
-		const gotMeid = genMeid(date);
+		const gotMeid = genMeid(new Date(date));
 		expect(gotMeid).toMatch(meidRegExp);
 		expect(parseMeid(gotMeid).date.getTime()).toBe(date);
 	});
 
 	test('meidg', () => {
 		const date = Date.now();
-		const gotMeidg = genMeidg(date);
+		const gotMeidg = genMeidg(new Date(date));
 		expect(gotMeidg).toMatch(meidgRegExp);
 		expect(parseMeidg(gotMeidg).date.getTime()).toBe(date);
 	});
 
 	test('objectid', () => {
 		const date = Date.now();
-		const gotObjectId = genObjectId(date);
+		const gotObjectId = genObjectId(new Date(date));
 		expect(gotObjectId).toMatch(objectIdRegExp);
 		expect(Math.floor(parseObjectId(gotObjectId).date.getTime() / 1000)).toBe(Math.floor(date / 1000));
 	});

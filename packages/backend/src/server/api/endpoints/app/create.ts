@@ -55,7 +55,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			// Create account
 			const app = await this.appsRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				userId: me ? me.id : null,
 				name: ps.name,
 				description: ps.description,

@@ -322,7 +322,7 @@ export class NoteEntityService implements OnModuleInit {
 
 		const packed: Packed<'Note'> = await awaitAll({
 			id: note.id,
-			createdAt: this.idService.parse(note.id).date.toISOString(),
+			createdAt: note.createdAt.toISOString(),
 			updatedAt: note.updatedAt ? note.updatedAt.toISOString() : undefined,
 			userId: note.userId,
 			user: this.userEntityService.pack(note.user ?? note.userId, me),
@@ -404,9 +404,6 @@ export class NoteEntityService implements OnModuleInit {
 		if (meId) {
 			const idsNeedFetchMyReaction = new Set<MiNote['id']>();
 
-			// パフォーマンスのためノートが作成されてから2秒以上経っていない場合はリアクションを取得しない
-			const oldId = this.idService.gen(Date.now() - 2000);
-
 			for (const note of notes) {
 				if (note.renote && (note.text == null && note.fileIds.length === 0)) { // pure renote
 					const reactionsCount = Object.values(note.renote.reactions).reduce((a, b) => a + b, 0);
@@ -419,7 +416,8 @@ export class NoteEntityService implements OnModuleInit {
 						idsNeedFetchMyReaction.add(note.renote.id);
 					}
 				} else {
-					if (note.id < oldId) {
+					// パフォーマンスのためノートが作成されてから2秒以上経っていない場合はリアクションを取得しない
+					if (note.createdAt.getTime() + 2000 < Date.now()) {
 						const reactionsCount = Object.values(note.reactions).reduce((a, b) => a + b, 0);
 						if (reactionsCount === 0) {
 							myReactionsMap.set(note.id, null);

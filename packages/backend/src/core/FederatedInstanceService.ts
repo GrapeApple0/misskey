@@ -56,7 +56,7 @@ export class FederatedInstanceService implements OnApplicationShutdown {
 
 		if (index == null) {
 			const i = await this.instancesRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
 				host,
 				firstRetrievedAt: new Date(),
 			}).then(x => this.instancesRepository.findOneByOrFail(x.identifiers[0]));

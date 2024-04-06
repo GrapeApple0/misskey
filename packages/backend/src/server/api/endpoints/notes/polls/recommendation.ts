@@ -99,7 +99,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					id: In(polls.map(poll => poll.noteId)),
 				},
 				order: {
-					id: 'DESC',
+					createdAt: 'DESC',
 				},
 			});
 

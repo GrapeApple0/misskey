@@ -81,7 +81,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			const channel = await this.channelsRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				userId: me.id,
 				name: ps.name,
 				description: ps.description ?? null,

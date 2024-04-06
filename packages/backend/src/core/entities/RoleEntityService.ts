@@ -12,7 +12,6 @@ import type { MiUser } from '@/models/User.js';
 import type { MiRole } from '@/models/Role.js';
 import { bindThis } from '@/decorators.js';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
-import { IdService } from '@/core/IdService.js';
 
 @Injectable()
 export class RoleEntityService {
@@ -22,8 +21,6 @@ export class RoleEntityService {
 
 		@Inject(DI.roleAssignmentsRepository)
 		private roleAssignmentsRepository: RoleAssignmentsRepository,
-
-		private idService: IdService,
 	) {
 	}
 
@@ -54,7 +51,7 @@ export class RoleEntityService {
 
 		return await awaitAll({
 			id: role.id,
-			createdAt: this.idService.parse(role.id).date.toISOString(),
+			createdAt: role.createdAt.toISOString(),
 			updatedAt: role.updatedAt.toISOString(),
 			name: role.name,
 			description: role.description,

@@ -83,7 +83,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			const report = await this.abuseUserReportsRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				targetUserId: user.id,
 				targetUserHost: user.host,
 				reporterId: me.id,

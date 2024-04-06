@@ -122,7 +122,7 @@ export class HashtagService {
 		} else {
 			if (isUserAttached) {
 				this.hashtagsRepository.insert({
-					id: this.idService.gen(),
+					id: this.idService.genId(),
 					name: tag,
 					mentionedUserIds: [],
 					mentionedUsersCount: 0,
@@ -139,7 +139,7 @@ export class HashtagService {
 				} as MiHashtag);
 			} else {
 				this.hashtagsRepository.insert({
-					id: this.idService.gen(),
+					id: this.idService.genId(),
 					name: tag,
 					mentionedUserIds: [user.id],
 					mentionedUsersCount: 1,

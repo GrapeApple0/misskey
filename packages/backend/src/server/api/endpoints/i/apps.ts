@@ -7,7 +7,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { AccessTokensRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
-import { IdService } from '@/core/IdService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -64,8 +63,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 	constructor(
 		@Inject(DI.accessTokensRepository)
 		private accessTokensRepository: AccessTokensRepository,
-
-		private idService: IdService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const query = this.accessTokensRepository.createQueryBuilder('token')
@@ -73,8 +70,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				.leftJoinAndSelect('token.app', 'app');
 
 			switch (ps.sort) {
-				case '+createdAt': query.orderBy('token.id', 'DESC'); break;
-				case '-createdAt': query.orderBy('token.id', 'ASC'); break;
+				case '+createdAt': query.orderBy('token.createdAt', 'DESC'); break;
+				case '-createdAt': query.orderBy('token.createdAt', 'ASC'); break;
 				case '+lastUsedAt': query.orderBy('token.lastUsedAt', 'DESC'); break;
 				case '-lastUsedAt': query.orderBy('token.lastUsedAt', 'ASC'); break;
 				default: query.orderBy('token.id', 'ASC'); break;
@@ -85,8 +82,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			return await Promise.all(tokens.map(token => ({
 				id: token.id,
 				name: token.name ?? token.app?.name,
-				createdAt: this.idService.parse(token.id).date.toISOString(),
-				lastUsedAt: token.lastUsedAt?.toISOString(),
+				createdAt: token.createdAt,
+				lastUsedAt: token.lastUsedAt,
 				permission: token.permission,
 			})));
 		});

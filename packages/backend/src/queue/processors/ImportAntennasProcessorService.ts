@@ -77,7 +77,8 @@ export class ImportAntennasProcessorService {
 					continue;
 				}
 				const result = await this.antennasRepository.insert({
-					id: this.idService.gen(now.getTime()),
+					id: this.idService.genId(),
+					createdAt: now,
 					lastUsedAt: now,
 					userId: job.data.user.id,
 					name: antenna.name,

@@ -151,6 +151,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					if (cached) {
 						cached.push({
 							...body,
+							createdAt: new Date(body.createdAt),
 							updatedAt: new Date(body.updatedAt),
 							lastUsedAt: new Date(body.lastUsedAt),
 						});
@@ -164,6 +165,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 						if (i > -1) {
 							cached[i] = {
 								...body,
+								createdAt: new Date(body.createdAt),
 								updatedAt: new Date(body.updatedAt),
 								lastUsedAt: new Date(body.lastUsedAt),
 							};
@@ -183,6 +185,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					if (cached) {
 						cached.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 							...body,
+							createdAt: new Date(body.createdAt),
 							expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
 							user: null, // joinなカラムは通常取ってこないので
 							role: null, // joinなカラムは通常取ってこないので
@@ -226,10 +229,10 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					return this.userEntityService.isRemoteUser(user);
 				}
 				case 'createdLessThan': {
-					return this.idService.parse(user.id).date.getTime() > (Date.now() - (value.sec * 1000));
+					return user.createdAt.getTime() > (Date.now() - (value.sec * 1000));
 				}
 				case 'createdMoreThan': {
-					return this.idService.parse(user.id).date.getTime() < (Date.now() - (value.sec * 1000));
+					return user.createdAt.getTime() < (Date.now() - (value.sec * 1000));
 				}
 				case 'followersLessThanOrEq': {
 					return user.followersCount <= value.value;
@@ -420,7 +423,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 
 	@bindThis
 	public async assign(userId: MiUser['id'], roleId: MiRole['id'], expiresAt: Date | null = null, moderator?: MiUser): Promise<void> {
-		const now = Date.now();
+		const now = new Date();
 
 		const role = await this.rolesRepository.findOneByOrFail({ id: roleId });
 
@@ -430,7 +433,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		});
 
 		if (existing) {
-			if (existing.expiresAt && (existing.expiresAt.getTime() < now)) {
+			if (existing.expiresAt && (existing.expiresAt.getTime() < now.getTime())) {
 				await this.roleAssignmentsRepository.delete({
 					roleId: roleId,
 					userId: userId,
@@ -441,7 +444,8 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		}
 
 		const created = await this.roleAssignmentsRepository.insert({
-			id: this.idService.gen(now),
+			id: this.idService.genId(),
+			createdAt: now,
 			expiresAt: expiresAt,
 			roleId: roleId,
 			userId: userId,
@@ -528,7 +532,8 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	public async create(values: Partial<MiRole>, moderator?: MiUser): Promise<MiRole> {
 		const date = new Date();
 		const created = await this.rolesRepository.insert({
-			id: this.idService.gen(date.getTime()),
+			id: this.idService.genId(),
+			createdAt: date,
 			updatedAt: date,
 			lastUsedAt: date,
 			name: values.name,

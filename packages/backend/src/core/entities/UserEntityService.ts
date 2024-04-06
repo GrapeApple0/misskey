@@ -21,7 +21,6 @@ import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
 import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
-import { IdService } from '@/core/IdService.js';
 import type { AnnouncementService } from '@/core/AnnouncementService.js';
 import type { CustomEmojiService } from '@/core/CustomEmojiService.js';
 import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
@@ -56,7 +55,6 @@ export class UserEntityService implements OnModuleInit {
 	private announcementService: AnnouncementService;
 	private roleService: RoleService;
 	private federatedInstanceService: FederatedInstanceService;
-	private idService: IdService;
 	private avatarDecorationService: AvatarDecorationService;
 
 	constructor(
@@ -109,6 +107,13 @@ export class UserEntityService implements OnModuleInit {
 
 		@Inject(DI.userMemosRepository)
 		private userMemosRepository: UserMemoRepository,
+
+		//private noteEntityService: NoteEntityService,
+		//private driveFileEntityService: DriveFileEntityService,
+		//private pageEntityService: PageEntityService,
+		//private customEmojiService: CustomEmojiService,
+		//private antennaService: AntennaService,
+		//private roleService: RoleService,
 	) {
 	}
 
@@ -121,7 +126,6 @@ export class UserEntityService implements OnModuleInit {
 		this.announcementService = this.moduleRef.get('AnnouncementService');
 		this.roleService = this.moduleRef.get('RoleService');
 		this.federatedInstanceService = this.moduleRef.get('FederatedInstanceService');
-		this.idService = this.moduleRef.get('IdService');
 		this.avatarDecorationService = this.moduleRef.get('AvatarDecorationService');
 	}
 
@@ -339,7 +343,6 @@ export class UserEntityService implements OnModuleInit {
 		const isAdmin = isMe && isDetailed ? this.roleService.isAdministrator(user) : null;
 		const unreadAnnouncements = isMe && isDetailed ?
 			(await this.announcementService.getUnreadAnnouncements(user)).map((announcement) => ({
-				createdAt: this.idService.parse(announcement.id).date.toISOString(),
 				...announcement,
 			})) : null;
 
@@ -387,7 +390,7 @@ export class UserEntityService implements OnModuleInit {
 					? Promise.all(user.alsoKnownAs.map(uri => this.apPersonService.fetchPerson(uri).then(user => user?.id).catch(() => null)))
 						.then(xs => xs.length === 0 ? null : xs.filter(isNotNull))
 					: null,
-				createdAt: this.idService.parse(user.id).date.toISOString(),
+				createdAt: user.createdAt.toISOString(),
 				updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null,
 				lastFetchedAt: user.lastFetchedAt ? user.lastFetchedAt.toISOString() : null,
 				bannerUrl: user.bannerUrl,

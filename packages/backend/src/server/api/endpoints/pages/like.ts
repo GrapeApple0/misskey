@@ -83,7 +83,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			// Create like
 			await this.pageLikesRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				pageId: page.id,
 				userId: me.id,
 			});

@@ -72,7 +72,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (!previousMemo) {
 				await this.userMemosRepository.insert({
-					id: this.idService.gen(),
+					id: this.idService.genId(),
 					userId: me.id,
 					targetUserId: target.id,
 					memo: ps.memo,

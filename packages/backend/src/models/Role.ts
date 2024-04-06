@@ -97,6 +97,11 @@ export class MiRole {
 	public id: string;
 
 	@Column('timestamp with time zone', {
+		comment: 'The created date of the Role.',
+	})
+	public createdAt: Date;
+
+	@Column('timestamp with time zone', {
 		comment: 'The updated date of the Role.',
 	})
 	public updatedAt: Date;

@@ -12,7 +12,6 @@ import type { } from '@/models/Blocking.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiFlash } from '@/models/Flash.js';
 import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
 import { UserEntityService } from './UserEntityService.js';
 
 @Injectable()
@@ -25,7 +24,6 @@ export class FlashEntityService {
 		private flashLikesRepository: FlashLikesRepository,
 
 		private userEntityService: UserEntityService,
-		private idService: IdService,
 	) {
 	}
 
@@ -39,7 +37,7 @@ export class FlashEntityService {
 
 		return await awaitAll({
 			id: flash.id,
-			createdAt: this.idService.parse(flash.id).date.toISOString(),
+			createdAt: flash.createdAt.toISOString(),
 			updatedAt: flash.updatedAt.toISOString(),
 			userId: flash.userId,
 			user: this.userEntityService.pack(flash.user ?? flash.userId, me), // { schema: 'UserDetailed' } すると無限ループするので注意

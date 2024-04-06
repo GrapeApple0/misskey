@@ -8,7 +8,6 @@ import { DI } from '@/di-symbols.js';
 import type { NoteReactionsRepository } from '@/models/_.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
 import type { OnModuleInit } from '@nestjs/common';
 import type { } from '@/models/Blocking.js';
 import type { MiUser } from '@/models/User.js';
@@ -23,7 +22,6 @@ export class NoteReactionEntityService implements OnModuleInit {
 	private userEntityService: UserEntityService;
 	private noteEntityService: NoteEntityService;
 	private reactionService: ReactionService;
-	private idService: IdService;
 
 	constructor(
 		private moduleRef: ModuleRef,
@@ -34,7 +32,6 @@ export class NoteReactionEntityService implements OnModuleInit {
 		//private userEntityService: UserEntityService,
 		//private noteEntityService: NoteEntityService,
 		//private reactionService: ReactionService,
-		//private idService: IdService,
 	) {
 	}
 
@@ -42,7 +39,6 @@ export class NoteReactionEntityService implements OnModuleInit {
 		this.userEntityService = this.moduleRef.get('UserEntityService');
 		this.noteEntityService = this.moduleRef.get('NoteEntityService');
 		this.reactionService = this.moduleRef.get('ReactionService');
-		this.idService = this.moduleRef.get('IdService');
 	}
 
 	@bindThis
@@ -61,7 +57,7 @@ export class NoteReactionEntityService implements OnModuleInit {
 
 		return {
 			id: reaction.id,
-			createdAt: this.idService.parse(reaction.id).date.toISOString(),
+			createdAt: reaction.createdAt.toISOString(),
 			user: await this.userEntityService.pack(reaction.user ?? reaction.userId, me),
 			type: this.reactionService.convertLegacyReaction(reaction.reaction),
 			...(opts.withNote ? {

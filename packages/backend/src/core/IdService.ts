@@ -44,16 +44,16 @@ export class IdService {
 	 * @param time 日時
 	 */
 	@bindThis
-	public gen(time?: number): string {
-		const t = (!time || (time > Date.now())) ? Date.now() : time;
+	public genId(date?: Date): string {
+		if (!date || (date > new Date())) date = new Date();
 
 		switch (this.method) {
-			case 'aid': return genAid(t);
-			case 'aidx': return genAidx(t);
-			case 'meid': return genMeid(t);
-			case 'meidg': return genMeidg(t);
-			case 'ulid': return ulid(t);
-			case 'objectid': return genObjectId(t);
+			case 'aid': return genAid(date);
+			case 'aidx': return genAidx(date);
+			case 'meid': return genMeid(date);
+			case 'meidg': return genMeidg(date);
+			case 'ulid': return ulid(date.getTime());
+			case 'objectid': return genObjectId(date);
 			default: throw new Error('unrecognized id generation method');
 		}
 	}

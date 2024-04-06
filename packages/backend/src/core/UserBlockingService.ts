@@ -68,7 +68,8 @@ export class UserBlockingService implements OnModuleInit {
 		]);
 
 		const blocking = {
-			id: this.idService.gen(),
+			id: this.idService.genId(),
+			createdAt: new Date(),
 			blocker,
 			blockerId: blocker.id,
 			blockee,

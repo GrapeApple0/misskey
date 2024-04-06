@@ -103,7 +103,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			const page = await this.pagesRepository.insert(new MiPage({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				updatedAt: new Date(),
 				title: ps.title,
 				name: ps.name,

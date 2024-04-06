@@ -12,6 +12,9 @@ export class MiSwSubscription {
 	@PrimaryColumn(id())
 	public id: string;
 
+	@Column('timestamp with time zone')
+	public createdAt: Date;
+
 	@Index()
 	@Column(id())
 	public userId: MiUser['id'];

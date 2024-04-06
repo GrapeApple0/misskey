@@ -11,7 +11,6 @@ import type { Packed } from '@/misc/json-schema.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiRegistrationTicket } from '@/models/RegistrationTicket.js';
 import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
 import { UserEntityService } from './UserEntityService.js';
 
 @Injectable()
@@ -21,7 +20,6 @@ export class InviteCodeEntityService {
 		private registrationTicketsRepository: RegistrationTicketsRepository,
 
 		private userEntityService: UserEntityService,
-		private idService: IdService,
 	) {
 	}
 
@@ -41,7 +39,7 @@ export class InviteCodeEntityService {
 			id: target.id,
 			code: target.code,
 			expiresAt: target.expiresAt ? target.expiresAt.toISOString() : null,
-			createdAt: this.idService.parse(target.id).date.toISOString(),
+			createdAt: target.createdAt.toISOString(),
 			createdBy: target.createdBy ? await this.userEntityService.pack(target.createdBy, me) : null,
 			usedBy: target.usedBy ? await this.userEntityService.pack(target.usedBy, me) : null,
 			usedAt: target.usedAt ? target.usedAt.toISOString() : null,

@@ -35,7 +35,8 @@ describe('AnnouncementService', () => {
 	function createUser(data: Partial<MiUser> = {}) {
 		const un = secureRndstr(16);
 		return usersRepository.insert({
-			id: genAidx(Date.now()),
+			id: genAidx(new Date()),
+			createdAt: new Date(),
 			username: un,
 			usernameLower: un,
 			...data,
@@ -43,9 +44,10 @@ describe('AnnouncementService', () => {
 			.then(x => usersRepository.findOneByOrFail(x.identifiers[0]));
 	}
 
-	function createAnnouncement(data: Partial<MiAnnouncement & { createdAt: Date }> = {}) {
+	function createAnnouncement(data: Partial<MiAnnouncement> = {}) {
 		return announcementsRepository.insert({
-			id: genAidx(data.createdAt ?? new Date()),
+			id: genAidx(new Date()),
+			createdAt: new Date(),
 			updatedAt: null,
 			title: 'Title',
 			text: 'Text',

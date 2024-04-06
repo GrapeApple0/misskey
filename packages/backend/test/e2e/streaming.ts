@@ -19,6 +19,7 @@ describe('Streaming', () => {
 	const follow = async (follower: any, followee: any) => {
 		await Followings.save({
 			id: 'a',
+			createdAt: new Date(),
 			followerId: follower.id,
 			followeeId: followee.id,
 			followerHost: follower.host,

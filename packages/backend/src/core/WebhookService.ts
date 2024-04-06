@@ -51,6 +51,7 @@ export class WebhookService implements OnApplicationShutdown {
 					if (body.active) {
 						this.webhooks.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 							...body,
+							createdAt: new Date(body.createdAt),
 							latestSentAt: body.latestSentAt ? new Date(body.latestSentAt) : null,
 							user: null, // joinなカラムは通常取ってこないので
 						});
@@ -62,12 +63,14 @@ export class WebhookService implements OnApplicationShutdown {
 						if (i > -1) {
 							this.webhooks[i] = { // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 								...body,
+								createdAt: new Date(body.createdAt),
 								latestSentAt: body.latestSentAt ? new Date(body.latestSentAt) : null,
 								user: null, // joinなカラムは通常取ってこないので
 							};
 						} else {
 							this.webhooks.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 								...body,
+								createdAt: new Date(body.createdAt),
 								latestSentAt: body.latestSentAt ? new Date(body.latestSentAt) : null,
 								user: null, // joinなカラムは通常取ってこないので
 							});

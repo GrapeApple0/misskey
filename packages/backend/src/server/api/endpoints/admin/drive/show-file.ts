@@ -8,7 +8,6 @@ import type { DriveFilesRepository, UsersRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
 import { RoleService } from '@/core/RoleService.js';
-import { IdService } from '@/core/IdService.js';
 import { ApiError } from '../../../error.js';
 
 export const meta = {
@@ -183,7 +182,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private usersRepository: UsersRepository,
 
 		private roleService: RoleService,
-		private idService: IdService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const file = ps.fileId ? await this.driveFilesRepository.findOneBy({ id: ps.fileId }) : await this.driveFilesRepository.findOne({
@@ -233,7 +231,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				type: file.type,
 				name: file.name,
 				md5: file.md5,
-				createdAt: this.idService.parse(file.id).date.toISOString(),
+				createdAt: file.createdAt.toISOString(),
 				requestIp: iAmModerator ? file.requestIp : null,
 				requestHeaders: iAmModerator && !ownerIsModerator ? file.requestHeaders : null,
 			};

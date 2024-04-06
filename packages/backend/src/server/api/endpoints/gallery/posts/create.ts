@@ -77,7 +77,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			const post = await this.galleryPostsRepository.insert(new MiGalleryPost({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				updatedAt: new Date(),
 				title: ps.title,
 				description: ps.description,

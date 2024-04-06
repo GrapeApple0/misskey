@@ -52,7 +52,8 @@ export class CreateSystemUserService {
 			if (exist) throw new Error('the user is already exists');
 
 			account = await transactionalEntityManager.insert(MiUser, {
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				username: username,
 				usernameLower: username.toLowerCase(),
 				host: null,

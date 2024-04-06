@@ -74,7 +74,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			await this.bubbleGameRecordsRepository.insert({
-				id: this.idService.gen(now.getTime()),
+				id: this.idService.genId(new Date(now.getTime())),
 				seed: ps.seed,
 				seededAt: seedDate,
 				userId: me.id,

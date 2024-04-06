@@ -184,7 +184,8 @@ export class SignupApiService {
 			const hash = await bcrypt.hash(password, salt);
 
 			const pendingUser = await this.userPendingsRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				code,
 				email: emailAddress!,
 				username: username,

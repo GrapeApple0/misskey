@@ -122,7 +122,8 @@ export class SignupService {
 			if (exist) throw new Error(' the username is already used');
 
 			account = await transactionalEntityManager.save(new MiUser({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				username: username,
 				usernameLower: username.toLowerCase(),
 				host: this.utilityService.toPunyNullable(host),

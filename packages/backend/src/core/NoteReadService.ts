@@ -58,7 +58,7 @@ export class NoteReadService implements OnApplicationShutdown {
 		if (isThreadMuted) return;
 
 		const unread = {
-			id: this.idService.gen(),
+			id: this.idService.genId(),
 			noteId: note.id,
 			userId: userId,
 			isSpecified: params.isSpecified,

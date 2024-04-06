@@ -17,7 +17,6 @@ import { deepClone } from '@/misc/clone.js';
 import { bindThis } from '@/decorators.js';
 import { isMimeImage } from '@/misc/is-mime-image.js';
 import { isNotNull } from '@/misc/is-not-null.js';
-import { IdService } from '@/core/IdService.js';
 import { UtilityService } from '../UtilityService.js';
 import { VideoProcessingService } from '../VideoProcessingService.js';
 import { UserEntityService } from './UserEntityService.js';
@@ -45,7 +44,6 @@ export class DriveFileEntityService {
 		private utilityService: UtilityService,
 		private driveFolderEntityService: DriveFolderEntityService,
 		private videoProcessingService: VideoProcessingService,
-		private idService: IdService,
 	) {
 	}
 
@@ -198,7 +196,7 @@ export class DriveFileEntityService {
 
 		return await awaitAll<Packed<'DriveFile'>>({
 			id: file.id,
-			createdAt: this.idService.parse(file.id).date.toISOString(),
+			createdAt: file.createdAt.toISOString(),
 			name: file.name,
 			type: file.type,
 			md5: file.md5,
@@ -233,7 +231,7 @@ export class DriveFileEntityService {
 
 		return await awaitAll<Packed<'DriveFile'>>({
 			id: file.id,
-			createdAt: this.idService.parse(file.id).date.toISOString(),
+			createdAt: file.createdAt.toISOString(),
 			name: file.name,
 			type: file.type,
 			md5: file.md5,

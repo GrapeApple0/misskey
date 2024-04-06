@@ -46,7 +46,8 @@ export class RegistryApiService {
 			});
 		} else {
 			await this.registryItemsRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
+				createdAt: new Date(),
 				updatedAt: new Date(),
 				userId: userId,
 				domain: domain,

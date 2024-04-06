@@ -416,7 +416,7 @@ export class ApNoteService {
 			this.logger.info(`register emoji host=${host}, name=${name}`);
 
 			return await this.emojisRepository.insert({
-				id: this.idService.gen(),
+				id: this.idService.genId(),
 				host,
 				name,
 				uri: tag.id,

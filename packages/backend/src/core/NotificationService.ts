@@ -134,7 +134,7 @@ export class NotificationService implements OnApplicationShutdown {
 		}
 
 		const notification = {
-			id: this.idService.gen(),
+			id: this.idService.genId(),
 			createdAt: new Date(),
 			type: type,
 			...(notifierId ? {

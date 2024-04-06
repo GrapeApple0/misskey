@@ -72,8 +72,10 @@ export class PollService {
 			throw new Error('already voted');
 		}
 
+		// Create vote
 		await this.pollVotesRepository.insert({
-			id: this.idService.gen(),
+			id: this.idService.genId(),
+			createdAt: new Date(),
 			noteId: note.id,
 			userId: user.id,
 			choice: choice,

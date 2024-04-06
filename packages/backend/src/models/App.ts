@@ -13,6 +13,12 @@ export class MiApp {
 	public id: string;
 
 	@Index()
+	@Column('timestamp with time zone', {
+		comment: 'The created date of the App.',
+	})
+	public createdAt: Date;
+
+	@Index()
 	@Column({
 		...id(),
 		nullable: true,

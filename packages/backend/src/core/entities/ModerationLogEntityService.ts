@@ -10,7 +10,6 @@ import { awaitAll } from '@/misc/prelude/await-all.js';
 import type { } from '@/models/Blocking.js';
 import type { MiModerationLog } from '@/models/ModerationLog.js';
 import { bindThis } from '@/decorators.js';
-import { IdService } from '@/core/IdService.js';
 import { UserEntityService } from './UserEntityService.js';
 
 @Injectable()
@@ -20,7 +19,6 @@ export class ModerationLogEntityService {
 		private moderationLogsRepository: ModerationLogsRepository,
 
 		private userEntityService: UserEntityService,
-		private idService: IdService,
 	) {
 	}
 
@@ -32,7 +30,7 @@ export class ModerationLogEntityService {
 
 		return await awaitAll({
 			id: log.id,
-			createdAt: this.idService.parse(log.id).date.toISOString(),
+			createdAt: log.createdAt.toISOString(),
 			type: log.type,
 			info: log.info,
 			userId: log.userId,

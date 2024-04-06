@@ -110,6 +110,7 @@ export class ExportNotesProcessorService {
 
 		private driveService: DriveService,
 		private queueLoggerService: QueueLoggerService,
+
 		private driveFileEntityService: DriveFileEntityService,
 		private idService: IdService,
 	) {
