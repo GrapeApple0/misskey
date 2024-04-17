@@ -63,7 +63,7 @@ export class NoteReactionEntityService implements OnModuleInit {
 		}
 		return {
 			id: reaction.id,
-			createdAt: reaction.createdAt.toISOString(),
+			createdAt: createdAt.toISOString(),
 			user: await this.userEntityService.pack(reaction.user ?? reaction.userId, me),
 			type: this.reactionService.convertLegacyReaction(reaction.reaction),
 			...(opts.withNote ? {
