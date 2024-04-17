@@ -194,7 +194,8 @@ export class DriveFileEntityService {
 		}, options);
 		const file = typeof src === 'object' ? src : await this.driveFilesRepository.findOneByOrFail({ id: src });
 		let createdAt = file.createdAt;
-		if (createdAt === new Date('2000-01-01 0:0:0-0')) {
+		const diff = Math.abs(createdAt.getTime() - new Date('2000-01-01 0:0:0-0').getTime());
+		if (diff < 10) {
 			createdAt = parseAidx(file.id).date;
 			await this.driveFilesRepository.update(file.id, {
 				createdAt,

@@ -321,7 +321,8 @@ export class NoteEntityService implements OnModuleInit {
 			.map(x => this.reactionService.decodeReaction(x).reaction.replaceAll(':', ''));
 		const packedFiles = options?._hint_?.packedFiles;
 		let createdAt = note.createdAt;
-		if (createdAt === new Date('2000-01-01 0:0:0-0')) {
+		const diff = Math.abs(createdAt.getTime() - new Date('2000-01-01 0:0:0-0').getTime());
+		if (diff < 10) {
 			createdAt = parseAidx(note.id).date;
 			await this.notesRepository.update(note.id, { createdAt });
 		}

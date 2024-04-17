@@ -56,7 +56,8 @@ export class NoteReactionEntityService implements OnModuleInit {
 
 		const reaction = typeof src === 'object' ? src : await this.noteReactionsRepository.findOneByOrFail({ id: src });
 		let createdAt = reaction.createdAt;
-		if (createdAt === new Date('2000-01-01 0:0:0-0')) {
+		const diff = Math.abs(createdAt.getTime() - new Date('2000-01-01 0:0:0-0').getTime());
+		if (diff < 10) {
 			createdAt = parseAidx(reaction.id).date;
 			await this.noteReactionsRepository.update(reaction.id, { createdAt });
 		}
