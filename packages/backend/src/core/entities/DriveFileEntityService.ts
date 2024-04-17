@@ -17,6 +17,7 @@ import { deepClone } from '@/misc/clone.js';
 import { bindThis } from '@/decorators.js';
 import { isMimeImage } from '@/misc/is-mime-image.js';
 import { isNotNull } from '@/misc/is-not-null.js';
+import { parseAidx } from '@/misc/id/aidx.js';
 import { UtilityService } from '../UtilityService.js';
 import { VideoProcessingService } from '../VideoProcessingService.js';
 import { UserEntityService } from './UserEntityService.js';
@@ -191,12 +192,17 @@ export class DriveFileEntityService {
 			detail: false,
 			self: false,
 		}, options);
-
 		const file = typeof src === 'object' ? src : await this.driveFilesRepository.findOneByOrFail({ id: src });
-
+		let createdAt = file.createdAt;
+		if (createdAt === new Date('2000-01-01 0:0:0-0')) {
+			createdAt = parseAidx(file.id).date;
+			await this.driveFilesRepository.update(file.id, {
+				createdAt,
+			});
+		}
 		return await awaitAll<Packed<'DriveFile'>>({
 			id: file.id,
-			createdAt: file.createdAt.toISOString(),
+			createdAt: createdAt.toISOString(),
 			name: file.name,
 			type: file.type,
 			md5: file.md5,

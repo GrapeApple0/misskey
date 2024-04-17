@@ -24,9 +24,11 @@ function getNoise(): string {
 	return counter.toString(36).padStart(2, '0').slice(-2);
 }
 
-export function genAid(date: Date): string {
-	const t = date.getTime();
-	if (isNaN(t)) throw new Error('Failed to create AID: Invalid Date');
+export function genAid(date: Date | number): string {
+	let t = 0;
+	if (typeof date === 'number') t = date;
+	else if (date instanceof Date) t = date.getTime();
+	if (t === 0) throw new Error('Failed to create AID: Invalid Date');
 	counter++;
 	return getTime(t) + getNoise();
 }

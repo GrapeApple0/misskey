@@ -22,6 +22,7 @@ import type { CustomEmojiService } from '../CustomEmojiService.js';
 import type { ReactionService } from '../ReactionService.js';
 import type { UserEntityService } from './UserEntityService.js';
 import type { DriveFileEntityService } from './DriveFileEntityService.js';
+import { parseAidx } from '@/misc/id/aidx.js';
 
 @Injectable()
 export class NoteEntityService implements OnModuleInit {
@@ -319,7 +320,11 @@ export class NoteEntityService implements OnModuleInit {
 			.filter(x => x.startsWith(':') && x.includes('@') && !x.includes('@.')) // リモートカスタム絵文字のみ
 			.map(x => this.reactionService.decodeReaction(x).reaction.replaceAll(':', ''));
 		const packedFiles = options?._hint_?.packedFiles;
-
+		let createdAt = note.createdAt;
+		if (createdAt === new Date('2000-01-01 0:0:0-0')) {
+			createdAt = parseAidx(note.id).date;
+			await this.notesRepository.update(note.id, { createdAt });
+		}
 		const packed: Packed<'Note'> = await awaitAll({
 			id: note.id,
 			createdAt: note.createdAt.toISOString(),

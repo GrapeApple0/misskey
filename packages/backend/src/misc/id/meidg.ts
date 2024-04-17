@@ -29,7 +29,8 @@ function getRandom() {
 	return str;
 }
 
-export function genMeidg(date: Date): string {
+export function genMeidg(date: Date | number): string {
+	if (typeof date === 'number') return 'g' + getTime(date) + getRandom();
 	return 'g' + getTime(date.getTime()) + getRandom();
 }
 

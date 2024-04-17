@@ -16,6 +16,7 @@ import type { ReactionService } from '../ReactionService.js';
 import type { UserEntityService } from './UserEntityService.js';
 import type { NoteEntityService } from './NoteEntityService.js';
 import { ModuleRef } from '@nestjs/core';
+import { parseAidx } from '@/misc/id/aidx.js';
 
 @Injectable()
 export class NoteReactionEntityService implements OnModuleInit {
@@ -54,7 +55,11 @@ export class NoteReactionEntityService implements OnModuleInit {
 		}, options);
 
 		const reaction = typeof src === 'object' ? src : await this.noteReactionsRepository.findOneByOrFail({ id: src });
-
+		let createdAt = reaction.createdAt;
+		if (createdAt === new Date('2000-01-01 0:0:0-0')) {
+			createdAt = parseAidx(reaction.id).date;
+			await this.noteReactionsRepository.update(reaction.id, { createdAt });
+		}
 		return {
 			id: reaction.id,
 			createdAt: reaction.createdAt.toISOString(),

@@ -31,9 +31,11 @@ function getNoise(): string {
 	return counter.toString(36).padStart(NOISE_LENGTH, '0').slice(-NOISE_LENGTH);
 }
 
-export function genAidx(date: Date): string {
-	const t = date.getTime();
-	if (isNaN(t)) throw new Error('Failed to create AIDX: Invalid Date');
+export function genAidx(date: Date | number): string {
+	let t = 0;
+	if (typeof date === 'number') t = date;
+	else if (date instanceof Date) t = date.getTime();
+	if (t === 0) throw new Error('Failed to create AIDX: Invalid Date');
 	counter++;
 	return getTime(t) + nodeId + getNoise();
 }
