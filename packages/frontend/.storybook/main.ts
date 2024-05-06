@@ -34,6 +34,10 @@ const config = {
 		disableTelemetry: true,
 	},
 	async viteFinal(config) {
+		const replacePluginForIsChromatic = config.plugins?.findIndex((plugin: Plugin) => plugin && plugin.name === 'replace') ?? -1;
+		if (~replacePluginForIsChromatic) {
+			config.plugins?.splice(replacePluginForIsChromatic, 1);
+		}
 		return mergeConfig(config, {
 			plugins: [
 				{
