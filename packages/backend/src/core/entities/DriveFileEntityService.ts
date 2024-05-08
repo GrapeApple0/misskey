@@ -235,10 +235,17 @@ export class DriveFileEntityService {
 
 		const file = typeof src === 'object' ? src : await this.driveFilesRepository.findOneBy({ id: src });
 		if (file == null) return null;
-
+		let createdAt = file.createdAt;
+		const diff = Math.abs(createdAt.getTime() - new Date('2000-01-01 0:0:0-0').getTime());
+		if (diff < 10) {
+			createdAt = parseAidx(file.id).date;
+			await this.driveFilesRepository.update(file.id, {
+				createdAt,
+			});
+		}
 		return await awaitAll<Packed<'DriveFile'>>({
 			id: file.id,
-			createdAt: file.createdAt.toISOString(),
+			createdAt: createdAt.toISOString(),
 			name: file.name,
 			type: file.type,
 			md5: file.md5,
