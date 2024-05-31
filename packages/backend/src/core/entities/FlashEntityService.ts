@@ -31,6 +31,9 @@ export class FlashEntityService {
 	public async pack(
 		src: MiFlash['id'] | MiFlash,
 		me?: { id: MiUser['id'] } | null | undefined,
+		hint?: {
+			packedUser?: Packed<'UserLite'>
+		},
 	): Promise<Packed<'Flash'>> {
 		const meId = me ? me.id : null;
 		const flash = typeof src === 'object' ? src : await this.flashsRepository.findOneByOrFail({ id: src });
@@ -40,7 +43,7 @@ export class FlashEntityService {
 			createdAt: flash.createdAt.toISOString(),
 			updatedAt: flash.updatedAt.toISOString(),
 			userId: flash.userId,
-			user: this.userEntityService.pack(flash.user ?? flash.userId, me), // { schema: 'UserDetailed' } すると無限ループするので注意
+			user: hint?.packedUser ?? this.userEntityService.pack(flash.user ?? flash.userId, me), // { schema: 'UserDetailed' } すると無限ループするので注意
 			title: flash.title,
 			summary: flash.summary,
 			script: flash.script,
@@ -50,11 +53,14 @@ export class FlashEntityService {
 	}
 
 	@bindThis
-	public packMany(
-		flashs: MiFlash[],
+	public async packMany(
+		flashes: MiFlash[],
 		me?: { id: MiUser['id'] } | null | undefined,
 	) {
-		return Promise.all(flashs.map(x => this.pack(x, me)));
+		const _users = flashes.map(({ user, userId }) => user ?? userId);
+		const _userMap = await this.userEntityService.packMany(_users, me)
+			.then(users => new Map(users.map(u => [u.id, u])));
+		return Promise.all(flashes.map(flash => this.pack(flash, me, { packedUser: _userMap.get(flash.userId) })));
 	}
 }
 

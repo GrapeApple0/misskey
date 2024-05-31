@@ -291,6 +291,7 @@ export class NoteEntityService implements OnModuleInit {
 			_hint_?: {
 				myReactions: Map<MiNote['id'], string | null>;
 				packedFiles: Map<MiNote['fileIds'][number], Packed<'DriveFile'> | null>;
+				packedUsers: Map<MiUser['id'], Packed<'UserLite'>>
 			};
 		},
 	): Promise<Packed<'Note'>> {
@@ -326,12 +327,14 @@ export class NoteEntityService implements OnModuleInit {
 			createdAt = parseAidx(note.id).date;
 			await this.notesRepository.update(note.id, { createdAt });
 		}
+		const packedUsers = options?._hint_?.packedUsers;
+
 		const packed: Packed<'Note'> = await awaitAll({
 			id: note.id,
 			createdAt: createdAt.toISOString(),
 			updatedAt: note.updatedAt ? note.updatedAt.toISOString() : undefined,
 			userId: note.userId,
-			user: this.userEntityService.pack(note.user ?? note.userId, me),
+			user: packedUsers?.get(note.userId) ?? this.userEntityService.pack(note.user ?? note.userId, me),
 			text: text,
 			cw: note.cw,
 			visibility: note.visibility,
@@ -454,12 +457,20 @@ export class NoteEntityService implements OnModuleInit {
 		// TODO: 本当は renote とか reply がないのに renoteId とか replyId があったらここで解決しておく
 		const fileIds = notes.map(n => [n.fileIds, n.renote?.fileIds, n.reply?.fileIds]).flat(2).filter(isNotNull);
 		const packedFiles = fileIds.length > 0 ? await this.driveFileEntityService.packManyByIdsMap(fileIds) : new Map();
+		const users = [
+			...notes.map(({ user, userId }) => user ?? userId),
+			...notes.map(({ replyUserId }) => replyUserId).filter(isNotNull),
+			...notes.map(({ renoteUserId }) => renoteUserId).filter(isNotNull),
+		];
+		const packedUsers = await this.userEntityService.packMany(users, me)
+			.then(users => new Map(users.map(u => [u.id, u])));
 
 		return await Promise.all(notes.map(n => this.pack(n, me, {
 			...options,
 			_hint_: {
 				myReactions: myReactionsMap,
 				packedFiles,
+				packedUsers,
 			},
 		})));
 	}
