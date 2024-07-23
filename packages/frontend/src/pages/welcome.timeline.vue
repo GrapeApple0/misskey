@@ -18,7 +18,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkMediaList :mediaList="note.files"/>
 				</div>
 				<div v-if="note.poll">
-					<MkPoll :noteId="note.id" :poll="note.poll" :readOnly="true"/>
+					<MkPoll :note="note" :poll="note.poll" :readOnly="true"/>
 				</div>
 			</div>
 			<MkReactionsViewer ref="reactionsViewer" :note="note"/>
