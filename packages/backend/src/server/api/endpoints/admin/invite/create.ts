@@ -66,12 +66,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const ticketsPromises = [];
 
 			for (let i = 0; i < ps.count; i++) {
-				ticketsPromises.push(this.registrationTicketsRepository.insert({
+				ticketsPromises.push(this.registrationTicketsRepository.insertOne({
 					id: this.idService.genId(),
 					createdAt: new Date(),
 					expiresAt: ps.expiresAt ? new Date(ps.expiresAt) : null,
 					code: generateInviteCode(),
-				}).then(x => this.registrationTicketsRepository.findOneByOrFail(x.identifiers[0])));
+				}));
 			}
 
 			const tickets = await Promise.all(ticketsPromises);

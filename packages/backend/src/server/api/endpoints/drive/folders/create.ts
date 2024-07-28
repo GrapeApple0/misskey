@@ -75,13 +75,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			// Create folder
-			const folder = await this.driveFoldersRepository.insert({
+			const folder = await this.driveFoldersRepository.insertOne({
 				id: this.idService.genId(),
 				createdAt: new Date(),
 				name: ps.name,
 				parentId: parent !== null ? parent.id : null,
 				userId: me.id,
-			}).then(x => this.driveFoldersRepository.findOneByOrFail(x.identifiers[0]));
+			});
 
 			const folderObj = await this.driveFolderEntityService.pack(folder);
 

@@ -52,6 +52,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { ref } from 'vue';
 import * as Misskey from 'misskey-js';
+import type { MenuItem } from '@/types/menu.js';
 import XSigninDialog from '@/components/MkSigninDialog.vue';
 import XSignupDialog from '@/components/MkSignupDialog.vue';
 import MkButton from '@/components/MkButton.vue';
@@ -64,7 +65,7 @@ import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import MkNumber from '@/components/MkNumber.vue';
 import XActiveUsersChart from '@/components/MkVisitorDashboard.ActiveUsersChart.vue';
-import { openInstanceMenu } from '@/ui/_common_/common';
+import { openInstanceMenu } from '@/ui/_common_/common.js';
 
 const stats = ref<Misskey.entities.StatsResponse | null>(null);
 
@@ -73,23 +74,23 @@ misskeyApi('stats', {}).then((res) => {
 });
 
 function signin() {
-	os.popup(XSigninDialog, {
+	const { dispose } = os.popup(XSigninDialog, {
 		autoSet: true,
-	}, {}, 'closed');
+	}, {
+		closed: () => dispose(),
+	});
 }
 
 function signup() {
-	os.popup(XSignupDialog, {
+	const { dispose } = os.popup(XSignupDialog, {
 		autoSet: true,
-	}, {}, 'closed');
+	}, {
+		closed: () => dispose(),
+	});
 }
 
-function showMenu(ev) {
+function showMenu(ev: MouseEvent) {
 	openInstanceMenu(ev);
-}
-
-function exploreOtherServers() {
-	window.open('https://misskey-hub.net/servers/', '_blank', 'noopener');
 }
 </script>
 

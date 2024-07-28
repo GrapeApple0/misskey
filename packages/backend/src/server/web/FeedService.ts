@@ -13,6 +13,9 @@ import type { MiUser } from '@/models/User.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import { bindThis } from '@/decorators.js';
+import { IdService } from '@/core/IdService.js';
+import { MfmService } from "@/core/MfmService.js";
+import { parse as mfmParse } from 'mfm-js';
 
 @Injectable()
 export class FeedService {
@@ -31,6 +34,8 @@ export class FeedService {
 
 		private userEntityService: UserEntityService,
 		private driveFileEntityService: DriveFileEntityService,
+		private idService: IdService,
+		private mfmService: MfmService,
 	) {
 	}
 
@@ -74,13 +79,14 @@ export class FeedService {
 				id: In(note.fileIds),
 			}) : [];
 			const file = files.find(file => file.type.startsWith('image/'));
+			const text = note.text;
 
 			feed.addItem({
 				title: `New note by ${author.name}`,
 				link: `${this.config.url}/notes/${note.id}`,
 				date: note.createdAt,
 				description: note.cw ?? undefined,
-				content: note.text ?? undefined,
+				content: text ? this.mfmService.toHtml(mfmParse(text), JSON.parse(note.mentionedRemoteUsers)) ?? undefined : undefined,
 				image: file ? this.driveFileEntityService.getPublicUrl(file) : undefined,
 			});
 		}

@@ -54,7 +54,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const permission = unique(ps.permission.map(v => v.replace(/^(.+)(\/|-)(read|write)$/, '$3:$1')));
 
 			// Create account
-			const app = await this.appsRepository.insert({
+			const app = await this.appsRepository.insertOne({
 				id: this.idService.genId(),
 				createdAt: new Date(),
 				userId: me ? me.id : null,
@@ -63,7 +63,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				permission,
 				callbackUrl: ps.callbackUrl,
 				secret: secret,
-			}).then(x => this.appsRepository.findOneByOrFail(x.identifiers[0]));
+			});
 
 			return await this.appEntityService.pack(app, null, {
 				detail: true,

@@ -82,6 +82,7 @@ function getReactionName(reaction: string): string {
 }
 
 .user {
+	display: flex;
 	line-height: 24px;
 	white-space: nowrap;
 	overflow: visible;

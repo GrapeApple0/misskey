@@ -46,14 +46,13 @@ await fs.readFile(
 					path.resolve(__dirname, '../../..', arg)
 				)
 			)
-			.map((path) => (path.startsWith('.') ? path : `./${path}`))
+			.map((path) => path.replace(/(?:(?<=\.stories)\.(?:impl|meta)|\.msw)(?=\.ts$)/g, ''))
 	);
 	if (
 		micromatch(Array.from(modules), [
 			'../../assets/**',
 			'../../fluent-emojis/**',
 			'../../locales/ja-JP.yml',
-			'../../misskey-assets/**',
 			'assets/**',
 			'public/**',
 			'../../pnpm-lock.yaml',

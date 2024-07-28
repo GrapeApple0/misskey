@@ -4,10 +4,9 @@
 	"description": "Misskey TypeGenerator",
 	"type": "module",
 	"scripts": {
-		"generate": "tsx src/generator.ts && eslint ./built/**/* --ext .ts --fix"
+		"generate": "tsx src/generator.ts && eslint ./built/**/*.ts --fix"
 	},
 	"devDependencies": {
-		"@misskey-dev/eslint-plugin": "^1.0.0",
 		"@readme/openapi-parser": "2.5.0",
 		"@types/node": "20.11.22",
 		"@typescript-eslint/eslint-plugin": "7.1.0",

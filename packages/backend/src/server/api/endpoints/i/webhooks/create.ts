@@ -85,11 +85,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const currentWebhooksCount = await this.webhooksRepository.countBy({
 				userId: me.id,
 			});
-			if (currentWebhooksCount > (await this.roleService.getUserPolicies(me.id)).webhookLimit) {
+			if (currentWebhooksCount >= (await this.roleService.getUserPolicies(me.id)).webhookLimit) {
 				throw new ApiError(meta.errors.tooManyWebhooks);
 			}
 
-			const webhook = await this.webhooksRepository.insert({
+			const webhook = await this.webhooksRepository.insertOne({
 				id: this.idService.genId(),
 				createdAt: new Date(),
 				userId: me.id,
@@ -97,7 +97,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				url: ps.url,
 				secret: ps.secret,
 				on: ps.on,
-			}).then(x => this.webhooksRepository.findOneByOrFail(x.identifiers[0]));
+			});
 
 			this.globalEventService.publishInternalEvent('webhookCreated', webhook);
 
