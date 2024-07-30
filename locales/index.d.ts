@@ -257,6 +257,10 @@ export interface Locale extends ILocale {
      */
     "searchUser": string;
     /**
+     * ユーザーのノートを検索
+     */
+    "searchThisUsersNotes": string;
+    /**
      * 返信
      */
     "reply": string;
@@ -801,6 +805,10 @@ export interface Locale extends ILocale {
      */
     "host": string;
     /**
+     * 自分を選択
+     */
+    "selectSelf": string;
+    /**
      * ユーザーを選択
      */
     "selectUser": string;
@@ -860,6 +868,10 @@ export interface Locale extends ILocale {
      * サーバーをサイレンス
      */
     "silenceThisInstance": string;
+    /**
+     * サーバーをメディアサイレンス
+     */
+    "mediaSilenceThisInstance": string;
     /**
      * 操作
      */
@@ -944,6 +956,14 @@ export interface Locale extends ILocale {
      * サイレンスしたいサーバーのホストを改行で区切って設定します。サイレンスされたサーバーに所属するアカウントはすべて「サイレンス」として扱われ、フォローがすべてリクエストになります。ブロックしたインスタンスには影響しません。
      */
     "silencedInstancesDescription": string;
+    /**
+     * メディアサイレンスしたサーバー
+     */
+    "mediaSilencedInstances": string;
+    /**
+     * メディアサイレンスしたいサーバーのホストを改行で区切って設定します。メディアサイレンスされたサーバーに所属するアカウントによるファイルはすべてセンシティブとして扱われ、カスタム絵文字が使用できないようになります。ブロックしたインスタンスには影響しません。
+     */
+    "mediaSilencedInstancesDescription": string;
     /**
      * ミュートとブロック
      */
@@ -4501,6 +4521,18 @@ export interface Locale extends ILocale {
      */
     "specifyUser": string;
     /**
+     * 照会しますか？
+     */
+    "lookupConfirm": string;
+    /**
+     * ハッシュタグのページを開きますか？
+     */
+    "openTagPageConfirm": string;
+    /**
+     * ホスト指定
+     */
+    "specifyHost": string;
+    /**
      * プレビューできません
      */
     "failedToPreviewUrl": string;
@@ -7361,6 +7393,10 @@ export interface Locale extends ILocale {
          * 長い音声を使用するとMisskeyの使用に支障をきたす可能性があります。それでも続行しますか？
          */
         "driveFileDurationWarnDescription": string;
+        /**
+         * 音声が読み込めませんでした。設定を変更してください
+         */
+        "driveFileError": string;
     };
     "_ago": {
         /**
