@@ -637,6 +637,10 @@ export interface Locale extends ILocale {
      */
     "editAntenna": string;
     /**
+     * アンテナを作成
+     */
+    "createAntenna": string;
+    /**
      * ウィジェットを選択
      */
     "selectWidget": string;
@@ -4449,6 +4453,14 @@ export interface Locale extends ILocale {
      */
     "archive": string;
     /**
+     * アーカイブ済み
+     */
+    "archived": string;
+    /**
+     * アーカイブ解除
+     */
+    "unarchive": string;
+    /**
      * {name}をアーカイブしますか？
      */
     "channelArchiveConfirmTitle": ParameterizedString<"name">;
@@ -5032,6 +5044,14 @@ export interface Locale extends ILocale {
      * センシティブなメディアです。表示しますか？
      */
     "sensitiveMediaRevealConfirm": string;
+    /**
+     * 作成したリスト
+     */
+    "createdLists": string;
+    /**
+     * 作成したアンテナ
+     */
+    "createdAntennas": string;
     "_delivery": {
         /**
          * 配信状態
@@ -9156,6 +9176,10 @@ export interface Locale extends ILocale {
              * ユーザーからの通報を処理したとき
              */
             "abuseReportResolved": string;
+            /**
+             * ユーザーが作成されたとき
+             */
+            "userCreated": string;
         };
         /**
          * Webhookを削除しますか？
@@ -9865,6 +9889,24 @@ export interface Locale extends ILocale {
          * ループ再生
          */
         "loop": string;
+    };
+    "_contextMenu": {
+        /**
+         * コンテキストメニュー
+         */
+        "title": string;
+        /**
+         * アプリケーション
+         */
+        "app": string;
+        /**
+         * Shiftキーでアプリケーション
+         */
+        "appWithShift": string;
+        /**
+         * ブラウザのUI
+         */
+        "native": string;
     };
 }
 declare const locales: {
