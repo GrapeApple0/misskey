@@ -5,6 +5,7 @@
 
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
+import { In } from 'typeorm';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { DriveFilesRepository, UsersRepository } from '@/models/_.js';
 import { NoteEditService } from '@/core/NoteEditService.js';
@@ -12,9 +13,8 @@ import { GetterService } from '@/server/api/GetterService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
 import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from '../../error.js';
 import { DI } from '@/di-symbols.js';
-import { In } from 'typeorm';
+import { ApiError } from '../../error.js';
 
 export const meta = {
 	tags: ['notes'],
@@ -27,7 +27,7 @@ export const meta = {
 	limit: {
 		duration: ms('1hour'),
 		max: 10,
-		minInterval: ms('1sec'),
+		minInterval: ms('2min'),
 	},
 
 	errors: {
@@ -112,11 +112,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				throw err;
 			});
 
+			// この操作を行うのが投稿者とは限らない(例えばモデレーター)ため
 			if (!await this.roleService.isModerator(me) && (note.userId !== me.id) && (await this.roleService.getUserPolicies(me.id)).canEditNote !== true) {
 				throw new ApiError(meta.errors.accessDenied);
 			}
 
-			// この操作を行うのが投稿者とは限らない(例えばモデレーター)ため
 			try {
 				const targetNote = await this.noteEditService.edit(await this.usersRepository.findOneByOrFail({ id: note.userId }), note.id, {
 					text: ps.text,
@@ -128,12 +128,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 						expiresAt: ps.poll.expiresAt ? new Date(ps.poll.expiresAt) : null,
 					} : undefined,
 				}, undefined, me);
-				this.globalEventService.publishNoteStream(note.id, 'updated', targetNote);
+				this.globalEventService.publishNoteStream(note.id, 'updated', {
+					note: targetNote,
+				});
 			} catch (e) {
 				if (e instanceof NoteEditService.ContainsProhibitedWordsError) {
 					throw new ApiError(meta.errors.containsProhibitedWords);
 				}
-
 				throw e;
 			}
 		});

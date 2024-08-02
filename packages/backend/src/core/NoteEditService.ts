@@ -5,20 +5,19 @@
 
 import { setImmediate } from 'node:timers/promises';
 import * as mfm from 'mfm-js';
-import { In, DataSource, LessThan } from 'typeorm';
-import * as Redis from 'ioredis';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { In, LessThan } from 'typeorm';
 import { extractMentions } from '@/misc/extract-mentions.js';
 import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mfm.js';
 import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
-import type { ChannelFollowingsRepository, ChannelsRepository, FollowingsRepository, InstancesRepository, MiFollowing, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository, PollsRepository, DriveFilesRepository } from '@/models/_.js';
+import { MiNoteHistory } from '@/models/NoteHistory.js';
+import type { ChannelsRepository, FollowingsRepository, InstancesRepository, MiFollowing, NotesRepository, NoteHistoriesRepository, UserProfilesRepository, UsersRepository, PollsRepository, DriveFilesRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
-import type { MiApp } from '@/models/App.js';
 import { concat } from '@/misc/prelude/array.js';
 import { IdService } from '@/core/IdService.js';
-import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
+import type { MiUser, MiRemoteUser } from '@/models/User.js';
 import type { IPoll } from '@/models/Poll.js';
 import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.js';
 import type { MiChannel } from '@/models/Channel.js';
@@ -32,84 +31,21 @@ import PerUserNotesChart from '@/core/chart/charts/per-user-notes.js';
 import InstanceChart from '@/core/chart/charts/instance.js';
 import ActiveUsersChart from '@/core/chart/charts/active-users.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { NotificationService } from '@/core/NotificationService.js';
-import { HashtagService } from '@/core/HashtagService.js';
-import { AntennaService } from '@/core/AntennaService.js';
+import { UserWebhookService } from '@/core/UserWebhookService.js';
 import { QueueService } from '@/core/QueueService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
 import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
-import { NoteReadService } from '@/core/NoteReadService.js';
 import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.js';
 import { bindThis } from '@/decorators.js';
 import { DB_MAX_NOTE_TEXT_LENGTH } from '@/const.js';
 import { RoleService } from '@/core/RoleService.js';
 import { MetaService } from '@/core/MetaService.js';
 import { SearchService } from '@/core/SearchService.js';
-import { FeaturedService } from '@/core/FeaturedService.js';
-import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
-
-type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
-
-class NotificationManager {
-	private notifier: { id: MiUser['id']; };
-	private note: MiNote;
-	private queue: {
-		target: MiLocalUser['id'];
-		reason: NotificationType;
-	}[];
-
-	constructor(
-		private mutingsRepository: MutingsRepository,
-		private notificationService: NotificationService,
-		notifier: { id: MiUser['id']; },
-		note: MiNote,
-	) {
-		this.notifier = notifier;
-		this.note = note;
-		this.queue = [];
-	}
-
-	@bindThis
-	public push(notifiee: MiLocalUser['id'], reason: NotificationType) {
-		// 自分自身へは通知しない
-		if (this.notifier.id === notifiee) return;
-
-		const exist = this.queue.find(x => x.target === notifiee);
-
-		if (exist) {
-			// 「メンションされているかつ返信されている」場合は、メンションとしての通知ではなく返信としての通知にする
-			if (reason !== 'mention') {
-				exist.reason = reason;
-			}
-		} else {
-			this.queue.push({
-				reason: reason,
-				target: notifiee,
-			});
-		}
-	}
-
-	@bindThis
-	public async notify() {
-		for (const x of this.queue) {
-			if (x.reason === 'renote') {
-				this.notificationService.createNotification(x.target, 'renote', {
-					noteId: this.note.id,
-					targetNoteId: this.note.renoteId!,
-				}, this.notifier.id);
-			} else {
-				this.notificationService.createNotification(x.target, x.reason, {
-					noteId: this.note.id,
-				}, this.notifier.id);
-			}
-		}
-	}
-}
 
 type MinimumUser = {
 	id: MiUser['id'];
@@ -119,25 +55,21 @@ type MinimumUser = {
 };
 
 type Option = {
-	createdAt?: Date | null;
+	publishedAt?: Date | null;
 	name?: string | null;
 	text?: string | null;
 	reply?: MiNote | null;
 	renote?: MiNote | null;
 	files?: MiDriveFile[] | null;
 	poll?: IPoll | null;
-	localOnly?: boolean | null;
 	reactionAcceptance?: MiNote['reactionAcceptance'];
 	cw?: string | null;
-	visibility?: string;
-	visibleUsers?: MinimumUser[] | MiUser[] | null;
 	channel?: MiChannel | null;
 	apMentions?: MinimumUser[] | MiUser[] | null;
 	apHashtags?: string[] | null;
 	apEmojis?: string[] | null;
 	uri?: string | null;
 	url?: string | null;
-	app?: MiApp | null;
 };
 
 @Injectable()
@@ -150,20 +82,11 @@ export class NoteEditService implements OnApplicationShutdown {
 		@Inject(DI.config)
 		private config: Config,
 
-		@Inject(DI.db)
-		private db: DataSource,
-
-		@Inject(DI.redisForTimelines)
-		private redisForTimelines: Redis.Redis,
-
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
 
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
-
-		@Inject(DI.mutingsRepository)
-		private mutingsRepository: MutingsRepository,
 
 		@Inject(DI.instancesRepository)
 		private instancesRepository: InstancesRepository,
@@ -171,20 +94,11 @@ export class NoteEditService implements OnApplicationShutdown {
 		@Inject(DI.userProfilesRepository)
 		private userProfilesRepository: UserProfilesRepository,
 
-		@Inject(DI.userListMembershipsRepository)
-		private userListMembershipsRepository: UserListMembershipsRepository,
-
 		@Inject(DI.channelsRepository)
 		private channelsRepository: ChannelsRepository,
 
-		@Inject(DI.noteThreadMutingsRepository)
-		private noteThreadMutingsRepository: NoteThreadMutingsRepository,
-
 		@Inject(DI.followingsRepository)
 		private followingsRepository: FollowingsRepository,
-
-		@Inject(DI.channelFollowingsRepository)
-		private channelFollowingsRepository: ChannelFollowingsRepository,
 
 		@Inject(DI.pollsRepository)
 		private pollsRepository: PollsRepository,
@@ -192,19 +106,16 @@ export class NoteEditService implements OnApplicationShutdown {
 		@Inject(DI.driveFilesRepository)
 		private driveFilesRepository: DriveFilesRepository,
 
+		@Inject(DI.noteHistoriesRepository)
+		private noteHistoriesRepository: NoteHistoriesRepository,
+
 		private userEntityService: UserEntityService,
 		private noteEntityService: NoteEntityService,
 		private idService: IdService,
 		private globalEventService: GlobalEventService,
 		private queueService: QueueService,
-		private fanoutTimelineService: FanoutTimelineService,
-		private noteReadService: NoteReadService,
-		private notificationService: NotificationService,
 		private relayService: RelayService,
 		private federatedInstanceService: FederatedInstanceService,
-		private hashtagService: HashtagService,
-		private antennaService: AntennaService,
-		private featuredService: FeaturedService,
 		private remoteUserResolveService: RemoteUserResolveService,
 		private apDeliverManagerService: ApDeliverManagerService,
 		private apRendererService: ApRendererService,
@@ -218,6 +129,7 @@ export class NoteEditService implements OnApplicationShutdown {
 		private utilityService: UtilityService,
 		private userBlockingService: UserBlockingService,
 		private moderationLogService: ModerationLogService,
+		private userWebhookService: UserWebhookService,
 	) { }
 
 	@bindThis
@@ -258,64 +170,31 @@ export class NoteEditService implements OnApplicationShutdown {
 			data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId });
 		}
 
-		if (data.createdAt == null) data.createdAt = this.idService.parse(targetId).date;
-		if (data.visibility == null) data.visibility = targetNote.visibility;
-		if (data.localOnly == null) data.localOnly = targetNote.localOnly;
 		if (data.renote == null && targetNote.renoteId) data.renote = await this.notesRepository.findOneByOrFail({ id: targetNote.renoteId });
 		if (data.reply == null && targetNote.replyId) data.reply = await this.notesRepository.findOneByOrFail({ id: targetNote.replyId });
 		if (data.poll == null) data.poll = targetNote.hasPoll ? await this.pollsRepository.findOneByOrFail({ noteId: targetId }) : null;
 		if (data.files == null) data.files = await this.driveFilesRepository.findBy({ id: In(targetNote.fileIds) });
 		if (data.name == null) data.name = targetNote.name;
-		if (data.visibleUsers == null) data.visibleUsers = await this.usersRepository.findBy({ id: In(targetNote.visibleUserIds) });
 		if (data.reactionAcceptance == null) data.reactionAcceptance = targetNote.reactionAcceptance;
-		if (data.channel != null) data.visibility = 'public';
-		if (data.channel != null) data.visibleUsers = [];
-		if (data.channel != null) data.localOnly = true;
 		const meta = await this.metaService.fetch();
-
-		if (data.visibility === 'public' && data.channel == null) {
-			const sensitiveWords = meta.sensitiveWords;
-			if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', sensitiveWords)) {
-				data.visibility = 'home';
-			} else if ((await this.roleService.getUserPolicies(user.id)).canPublicNote === false) {
-				data.visibility = 'home';
-			}
-		}
 
 		if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', meta.prohibitedWords)) {
 			throw new NoteEditService.ContainsProhibitedWordsError();
 		}
 
+		let changeVisibilityToHome = false;
+
 		const inSilencedInstance = this.utilityService.isSilencedHost(meta.silencedHosts, user.host);
 
-		if (data.visibility === 'public' && inSilencedInstance && user.host !== null) {
-			data.visibility = 'home';
-		}
-
-		if (data.renote) {
-			switch (data.renote.visibility) {
-				case 'public':
-					// public noteは無条件にrenote可能
-					break;
-				case 'home':
-					// home noteはhome以下にrenote可能
-					if (data.visibility === 'public') {
-						data.visibility = 'home';
-					}
-					break;
-				case 'followers':
-					// 他人のfollowers noteはreject
-					if (data.renote.userId !== user.id) {
-						throw new Error('Renote target is not public or home');
-					}
-
-					// Renote対象がfollowersならfollowersにする
-					data.visibility = 'followers';
-					break;
-				case 'specified':
-					// specified / direct noteはreject
-					throw new Error('Renote target is not public or home');
+		if (targetNote.visibility === 'public' && data.channel == null) {
+			const sensitiveWords = meta.sensitiveWords;
+			if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', sensitiveWords)) {
+				changeVisibilityToHome = true;
+			} else if ((await this.roleService.getUserPolicies(user.id)).canPublicNote === false) {
+				changeVisibilityToHome = true;
 			}
+		} else if (inSilencedInstance) {
+			changeVisibilityToHome = true;
 		}
 
 		// Check blocking
@@ -328,21 +207,6 @@ export class NoteEditService implements OnApplicationShutdown {
 					}
 				}
 			}
-		}
-
-		// 返信対象がpublicではないならhomeにする
-		if (data.reply && data.reply.visibility !== 'public' && data.visibility === 'public') {
-			data.visibility = 'home';
-		}
-
-		// ローカルのみをRenoteしたらローカルのみにする
-		if (data.renote && data.renote.localOnly && data.channel == null) {
-			data.localOnly = true;
-		}
-
-		// ローカルのみにリプライしたらローカルのみにする
-		if (data.reply && data.reply.localOnly && data.channel == null) {
-			data.localOnly = true;
 		}
 
 		if (data.text) {
@@ -381,23 +245,10 @@ export class NoteEditService implements OnApplicationShutdown {
 			mentionedUsers.push(await this.usersRepository.findOneByOrFail({ id: data.reply!.userId }));
 		}
 
-		if (data.visibility === 'specified') {
-			if (data.visibleUsers == null) throw new Error('invalid param');
-
-			for (const u of data.visibleUsers) {
-				if (!mentionedUsers.some(x => x.id === u.id)) {
-					mentionedUsers.push(u);
-				}
-			}
-
-			if (data.reply && !data.visibleUsers.some(x => x.id === data.reply!.userId)) {
-				data.visibleUsers.push(await this.usersRepository.findOneByOrFail({ id: data.reply!.userId }));
-			}
-		}
-
 		const note = new MiNote({
 			id: targetNote.id,
-			updatedAt: new Date(),
+			updatedAt: data.publishedAt ?? new Date(),
+			visibility: changeVisibilityToHome ? 'home' : targetNote.visibility,
 			fileIds: data.files ? data.files.map(file => file.id) : [],
 			replyId: data.reply ? data.reply.id : null,
 			renoteId: data.renote ? data.renote.id : null,
@@ -414,17 +265,8 @@ export class NoteEditService implements OnApplicationShutdown {
 			tags: tags.map(tag => normalizeForSearch(tag)),
 			emojis,
 			userId: user.id,
-			localOnly: data.localOnly!,
 			reactionAcceptance: data.reactionAcceptance,
-			visibility: data.visibility as any,
-			visibleUserIds: data.visibility === 'specified'
-				? data.visibleUsers
-					? data.visibleUsers.map(u => u.id)
-					: []
-				: [],
-
 			attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
-
 			// 以下非正規化データ
 			replyUserId: data.reply ? data.reply.userId : null,
 			replyUserHost: data.reply ? data.reply.userHost : null,
@@ -467,7 +309,19 @@ export class NoteEditService implements OnApplicationShutdown {
 
 			throw e;
 		}
-
+		this.noteHistoriesRepository.insert(new MiNoteHistory({
+			id: this.idService.gen(),
+			text: targetNote.text,
+			cw: targetNote.cw,
+			targetId: targetNote.id,
+			fileIds: targetNote.fileIds,
+			attachedFileTypes: targetNote.attachedFileTypes,
+			mentions: targetNote.mentions,
+			mentionedRemoteUsers: targetNote.mentionedRemoteUsers,
+			emojis: targetNote.emojis,
+			tags: targetNote.tags,
+			hasPoll: targetNote.hasPoll,
+		}));
 		setImmediate('post updated', { signal: this.#shutdownController.signal }).then(
 			async () => this.postNoteEdited((await this.notesRepository.findOneByOrFail({ id: note.id })), user, data, silent, tags!, mentionedUsers!),
 			() => { /* aborted, ignore this */ },
@@ -480,7 +334,7 @@ export class NoteEditService implements OnApplicationShutdown {
 				noteUserUsername: user.username,
 				noteUserHost: user.host,
 				note: note,
-				oldNote: targetNote,
+				beforeNote: targetNote,
 			});
 		}
 		return note;
@@ -510,11 +364,6 @@ export class NoteEditService implements OnApplicationShutdown {
 			});
 		}
 
-		// ハッシュタグ更新
-		if (data.visibility === 'public' || data.visibility === 'home') {
-			this.hashtagService.updateHashtags(user, tags);
-		}
-
 		if (data.poll && data.poll.expiresAt) {
 			const delay = data.poll.expiresAt.getTime() - Date.now();
 			this.queueService.endedPollNotificationQueue.add(note.id, {
@@ -528,37 +377,21 @@ export class NoteEditService implements OnApplicationShutdown {
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
 
-			// 未読通知を作成
-			if (data.visibility === 'specified') {
-				if (data.visibleUsers == null) throw new Error('invalid param');
-
-				for (const u of data.visibleUsers) {
-					// ローカルユーザーのみ
-					if (!this.userEntityService.isLocalUser(u)) continue;
-
-					this.noteReadService.insertNoteUnread(u.id, note, {
-						isSpecified: true,
-						isMentioned: false,
-					});
-				}
-			} else {
-				for (const u of mentionedUsers) {
-					// ローカルユーザーのみ
-					if (!this.userEntityService.isLocalUser(u)) continue;
-
-					this.noteReadService.insertNoteUnread(u.id, note, {
-						isSpecified: false,
-						isMentioned: true,
-					});
-				}
-			}
-
 			// Pack the note
 			const noteObj = await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
 
 			this.globalEventService.publishNotesStream(noteObj);
 
 			this.roleService.addNoteToRoleTimeline(noteObj);
+
+			this.userWebhookService.getActiveWebhooks().then(webhooks => {
+				webhooks = webhooks.filter(x => x.userId === user.id && x.on.includes('note'));
+				for (const webhook of webhooks) {
+					this.queueService.userWebhookDeliver(webhook, 'note', {
+						note: noteObj,
+					});
+				}
+			});
 
 			//#region AP deliver
 			if (this.userEntityService.isLocalUser(user)) {
@@ -616,11 +449,9 @@ export class NoteEditService implements OnApplicationShutdown {
 
 	@bindThis
 	private async renderNoteOrRenoteActivity(data: Option, note: MiNote, userId: string) {
-		if (data.localOnly) return null;
-
 		const content = data.renote && !this.isQuote(data)
 			? this.apRendererService.renderAnnounce(data.renote.uri ? data.renote.uri : `${this.config.url}/notes/${data.renote.id}`, note)
-			: this.apRendererService.renderNoteUpdate(await this.apRendererService.renderNote(note, false, true), note, { id: userId });
+			: this.apRendererService.renderNoteUpdate(await this.apRendererService.renderNote(note, false, true), { id: userId });
 
 		return this.apRendererService.addContext(content);
 	}

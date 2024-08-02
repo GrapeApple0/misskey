@@ -292,6 +292,10 @@ export function getNoteMenu(props: {
 		props.translation.value = res;
 	}
 
+	function edit() {
+		os.edit({ target: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel });
+	}
+
 	let menu: MenuItem[];
 	if ($i) {
 		const statePromise = misskeyApi('notes/state', {
@@ -431,11 +435,11 @@ export function getNoteMenu(props: {
 			),
 			...(appearNote.userId === $i.id || $i.isModerator || $i.isAdmin ? [
 				{ type: 'divider' },
-				/*appearNote.userId === $i.id && $i.policies.canEditNote ? */{
+				$i.policies.canEditNote || $i.isModerator || $i.isAdmin ? {
 					icon: 'ti ti-edit',
 					text: i18n.ts.edit,
 					action: edit,
-				}/* : undefined*/,
+				} : undefined,
 				appearNote.userId === $i.id ? {
 					icon: 'ti ti-edit',
 					text: i18n.ts.deleteAndEdit,

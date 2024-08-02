@@ -16,12 +16,12 @@ import type { UsersRepository, NotesRepository, FollowingsRepository, PollsRepos
 import { bindThis } from '@/decorators.js';
 import { DebounceLoader } from '@/misc/loader.js';
 import { IdService } from '@/core/IdService.js';
+import { parseAidx } from '@/misc/id/aidx.js';
 import type { OnModuleInit } from '@nestjs/common';
 import type { CustomEmojiService } from '../CustomEmojiService.js';
 import type { ReactionService } from '../ReactionService.js';
 import type { UserEntityService } from './UserEntityService.js';
 import type { DriveFileEntityService } from './DriveFileEntityService.js';
-import { parseAidx } from '@/misc/id/aidx.js';
 
 @Injectable()
 export class NoteEntityService implements OnModuleInit {

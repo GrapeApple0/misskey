@@ -23,6 +23,8 @@ export class MiNote {
 
 	@Column('timestamp with time zone', {
 		default: null,
+		nullable: true,
+		comment: 'The updated date of the Note.',
 	})
 	public updatedAt: Date | null;
 

@@ -416,6 +416,8 @@ import type {
 	NotesFeaturedResponse,
 	NotesGlobalTimelineRequest,
 	NotesGlobalTimelineResponse,
+	NotesHistoriesRequest,
+	NotesHistoriesResponse,
 	NotesHybridTimelineRequest,
 	NotesHybridTimelineResponse,
 	NotesLocalTimelineRequest,
@@ -450,6 +452,7 @@ import type {
 	NotesTranslateRequest,
 	NotesTranslateResponse,
 	NotesUnrenoteRequest,
+	NotesUpdateRequest,
 	NotesUserListTimelineRequest,
 	NotesUserListTimelineResponse,
 	NotificationsCreateRequest,
@@ -855,6 +858,7 @@ export type Endpoints = {
 	'notes/favorites/delete': { req: NotesFavoritesDeleteRequest; res: EmptyResponse };
 	'notes/featured': { req: NotesFeaturedRequest; res: NotesFeaturedResponse };
 	'notes/global-timeline': { req: NotesGlobalTimelineRequest; res: NotesGlobalTimelineResponse };
+	'notes/histories': { req: NotesHistoriesRequest; res: NotesHistoriesResponse };
 	'notes/hybrid-timeline': { req: NotesHybridTimelineRequest; res: NotesHybridTimelineResponse };
 	'notes/local-timeline': { req: NotesLocalTimelineRequest; res: NotesLocalTimelineResponse };
 	'notes/mentions': { req: NotesMentionsRequest; res: NotesMentionsResponse };
@@ -875,6 +879,7 @@ export type Endpoints = {
 	'notes/timeline': { req: NotesTimelineRequest; res: NotesTimelineResponse };
 	'notes/translate': { req: NotesTranslateRequest; res: NotesTranslateResponse };
 	'notes/unrenote': { req: NotesUnrenoteRequest; res: EmptyResponse };
+	'notes/update': { req: NotesUpdateRequest; res: EmptyResponse };
 	'notes/user-list-timeline': { req: NotesUserListTimelineRequest; res: NotesUserListTimelineResponse };
 	'notifications/create': { req: NotificationsCreateRequest; res: EmptyResponse };
 	'notifications/flush': { req: EmptyRequest; res: EmptyResponse };
@@ -1239,6 +1244,7 @@ export const endpointReqTypes: Record<keyof Endpoints, 'application/json' | 'mul
 	'notes/favorites/delete': 'application/json',
 	'notes/featured': 'application/json',
 	'notes/global-timeline': 'application/json',
+	'notes/histories': 'application/json',
 	'notes/hybrid-timeline': 'application/json',
 	'notes/local-timeline': 'application/json',
 	'notes/mentions': 'application/json',
@@ -1259,6 +1265,7 @@ export const endpointReqTypes: Record<keyof Endpoints, 'application/json' | 'mul
 	'notes/timeline': 'application/json',
 	'notes/translate': 'application/json',
 	'notes/unrenote': 'application/json',
+	'notes/update': 'application/json',
 	'notes/user-list-timeline': 'application/json',
 	'notifications/create': 'application/json',
 	'notifications/flush': 'application/json',

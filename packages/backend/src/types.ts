@@ -170,6 +170,14 @@ export type ModerationLogPayloads = {
 		fileUserUsername: string | null;
 		fileUserHost: string | null;
 	};
+	editNote: {
+		noteId: string;
+		noteUserId: string;
+		noteUserUsername: string;
+		noteUserHost: string | null;
+		note: any;
+		beforeNote: any;
+	};
 	deleteNote: {
 		noteId: string;
 		noteUserId: string;
