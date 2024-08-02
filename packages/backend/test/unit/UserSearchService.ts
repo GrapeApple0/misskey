@@ -37,7 +37,7 @@ describe('UserSearchService', () => {
 	async function createUser(data: Partial<MiUser> = {}) {
 		const user = await usersRepository
 			.insert({
-				id: idService.gen(),
+				id: idService.genId(),
 				...data,
 			})
 			.then(x => usersRepository.findOneByOrFail(x.identifiers[0]));
@@ -52,7 +52,7 @@ describe('UserSearchService', () => {
 	async function createFollowings(follower: MiUser, followees: MiUser[]) {
 		for (const followee of followees) {
 			await followingsRepository.insert({
-				id: idService.gen(),
+				id: idService.genId(),
 				followerId: follower.id,
 				followeeId: followee.id,
 			});

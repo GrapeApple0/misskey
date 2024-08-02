@@ -50,7 +50,7 @@ export class AbuseReportService {
 	}[]) {
 		const entities = params.map(param => {
 			return {
-				id: this.idService.gen(),
+				id: this.idService.genId(),
 				targetUserId: param.targetUserId,
 				targetUserHost: param.targetUserHost,
 				reporterId: param.reporterId,

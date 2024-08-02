@@ -29,17 +29,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i v-if="isMyRenote" class="ti ti-dots" style="margin-right: 4px;"></i>
 				<MkTime :time="note.createdAt"/>
 			</button>
-			<span
-				v-if="note.visibility !== 'public'" style="margin-left: 0.5em;"
-				:title="i18n.ts._visibility[note.visibility]"
-			>
+			<span v-if="note.visibility !== 'public'" style="margin-left: 0.5em;" :title="i18n.ts._visibility[note.visibility]">
 				<i v-if="note.visibility === 'home'" class="ti ti-home"></i>
 				<i v-else-if="note.visibility === 'followers'" class="ti ti-lock"></i>
 				<i v-else-if="note.visibility === 'specified'" ref="specified" class="ti ti-mail"></i>
 			</span>
-			<span v-if="note.localOnly" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i
-				class="ti ti-world-off"
-			></i></span>
+			<span v-if="note.localOnly" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i class="ti ti-world-off"></i></span>
 		</div>
 	</div>
 	<article :class="$style.note" @contextmenu.stop="onContextmenu">
@@ -52,10 +47,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkA>
 					<span v-if="appearNote.user.isBot" :class="$style.isBot">bot</span>
 					<div :class="$style.noteHeaderInfo">
-						<span
-							v-if="appearNote.visibility !== 'public'" style="margin-left: 0.5em;"
-							:title="i18n.ts._visibility[appearNote.visibility]"
-						>
+						<span v-if="appearNote.visibility !== 'public'" style="margin-left: 0.5em;" :title="i18n.ts._visibility[appearNote.visibility]">
 							<i v-if="appearNote.visibility === 'home'" class="ti ti-home"></i>
 							<i v-else-if="appearNote.visibility === 'followers'" class="ti ti-lock"></i>
 							<i v-else-if="appearNote.visibility === 'specified'" ref="specified" class="ti ti-mail"></i>
@@ -102,9 +94,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</div>
 		<footer>
 			<div :class="$style.noteFooterInfo">
-				<div v-if="appearNote.updatedAt">
-					{{ i18n.ts.edited }}: <MkTime :time="appearNote.updatedAt" mode="detail"/>
-				</div>
 				<MkA :to="notePage(appearNote)">
 					<MkTime :time="appearNote.createdAt" mode="detail" colored/>
 				</MkA>
@@ -119,27 +108,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i class="ti ti-arrow-back-up"></i>
 				<p v-if="appearNote.repliesCount > 0" :class="$style.noteFooterButtonCount">{{ number(appearNote.repliesCount) }}</p>
 			</button>
-			<button
-				v-if="canRenote && !splitRNButton" ref="renoteButton" class="_button" :class="$style.noteFooterButton"
-				@mousedown.prevent="renote()"
-			>
+			<button v-if="canRenote && !splitRNButton" ref="renoteButton" class="_button" :class="$style.noteFooterButton" @mousedown.prevent="renote()">
 				<i class="ti ti-repeat"></i>
 				<p v-if="appearNote.renoteCount > 0" :class="$style.noteFooterButtonCount">{{ appearNote.renoteCount }}</p>
 			</button>
-			<button
-				v-else-if="canRenote && splitRNButton" ref="renoteButton" class="_button" :class="$style.noteFooterButton"
-				@mousedown="renote()"
-			>
+			<button v-else-if="canRenote && splitRNButton" ref="renoteButton" class="_button" :class="$style.noteFooterButton" @mousedown="renote()">
 				<i class="ti ti-repeat"></i>
 				<p v-if="appearNote.renoteCount > 0" :class="$style.noteFooterButtonCount">{{ number(appearNote.renoteCount) }}</p>
 			</button>
 			<button v-else class="_button" :class="$style.noteFooterButton" disabled>
 				<i class="ti ti-ban"></i>
 			</button>
-			<button
-				v-if="canRenote && splitRNButton" ref="quoteButton" class="_button" :class="$style.noteFooterButton"
-				@click="quoteRenote()"
-			>
+			<button v-if="canRenote && splitRNButton" ref="quoteButton" class="_button" :class="$style.noteFooterButton" @click="quoteRenote()">
 				<i class="ti ti-quote"></i>
 			</button>
 			<button ref="reactButton" :class="$style.noteFooterButton" class="_button" @click="toggleReact()">
@@ -162,11 +142,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'renotes' }]" @click="tab = 'renotes'"><i class="ti ti-repeat"></i> {{ i18n.ts.renotes }}</button>
 		<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'quotes' }]" @click="tab = 'quotes'"><i class="ti ti-quote"></i> {{ i18n.ts.quotes }}</button>
 		<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'reactions' }]" @click="tab = 'reactions'"><i class="ti ti-icons"></i> {{ i18n.ts.reactions }}</button>
-		<<<<<<< HEAD
 		<button v-if="defaultStore.state.devMode" class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'raw' }]" @click="tab = 'raw'"><i class="ti ti-code"></i>Raw</button>
-		=======
 		<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'histories' }]" @click="tab = 'histories'"><i class="ti ti-history"></i> {{ i18n.ts.histories }}</button>
-		>>>>>>> note-edit
 	</div>
 	<div>
 		<div v-if="tab === 'replies'" :class="$style.tab_replies">
@@ -211,29 +188,26 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</template>
 			</MkPagination>
 		</div>
-		<<<<<<< HEAD
 		<div v-else-if="tab === 'raw'">
 			<MkObjectView v-if="ap" tall :value="ap"/>
-			=======
-			<div v-else-if="tab === 'histories'">
-				<MkPagination :pagination="historiesPagination" :disableAutoLoad="true">
-					<template #default="{ items }">
-						<MkNoteHistory v-for="item in items" :updatedAt="new Date(item.createdAt)" :text="item.text" :cw="item.cw" :files="item.files" :poll="item.poll" :user="appearNote.user"/>
-					</template>
-				</MkPagination>
-				>>>>>>> note-edit
-			</div>
+		</div>
+		<div v-else-if="tab === 'histories'">
+			<MkPagination :pagination="historiesPagination" :disableAutoLoad="true">
+				<template #default="{ items }">
+					<MkNoteHistory v-for="item in items" :updatedAt="new Date(item.createdAt)" :text="item.text" :cw="item.cw" :files="item.files" :poll="item.poll" :user="appearNote.user"/>
+				</template>
+			</MkPagination>
 		</div>
 	</div>
-	<div v-else class="_panel" :class="$style.muted" @click="muted = false">
-		<I18n :src="i18n.ts.userSaysSomething" tag="small">
-			<template #name>
-				<MkA v-user-preview="appearNote.userId" :to="userPage(appearNote.user)">
-					<MkUserName :user="appearNote.user"/>
-				</MkA>
-			</template>
-		</I18n>
-	</div>
+</div>
+<div v-else class="_panel" :class="$style.muted" @click="muted = false">
+	<I18n :src="i18n.ts.userSaysSomething" tag="small">
+		<template #name>
+			<MkA v-user-preview="appearNote.userId" :to="userPage(appearNote.user)">
+				<MkUserName :user="appearNote.user"/>
+			</MkA>
+		</template>
+	</I18n>
 </div>
 </template>
 

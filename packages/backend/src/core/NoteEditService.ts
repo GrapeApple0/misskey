@@ -310,7 +310,7 @@ export class NoteEditService implements OnApplicationShutdown {
 			throw e;
 		}
 		this.noteHistoriesRepository.insert(new MiNoteHistory({
-			id: this.idService.gen(),
+			id: this.idService.genId(),
 			text: targetNote.text,
 			cw: targetNote.cw,
 			targetId: targetNote.id,

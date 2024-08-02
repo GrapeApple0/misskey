@@ -39,7 +39,7 @@ describe('SystemWebhookService', () => {
 	async function createUser(data: Partial<MiUser> = {}) {
 		return await usersRepository
 			.insert({
-				id: idService.gen(),
+				id: idService.genId(),
 				...data,
 			})
 			.then(x => usersRepository.findOneByOrFail(x.identifiers[0]));
@@ -48,7 +48,7 @@ describe('SystemWebhookService', () => {
 	async function createWebhook(data: Partial<MiSystemWebhook> = {}) {
 		return systemWebhooksRepository
 			.insert({
-				id: idService.gen(),
+				id: idService.genId(),
 				name: randomString(),
 				on: ['abuseReport'],
 				url: 'https://example.com',
@@ -387,7 +387,7 @@ describe('SystemWebhookService', () => {
 
 			describe('systemWebhookUpdated', () => {
 				test('ActiveなWebhookが編集された時、キャッシュに反映されている', async () => {
-					const id = idService.gen();
+					const id = idService.genId();
 					await createWebhook({ id });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();
@@ -415,7 +415,7 @@ describe('SystemWebhookService', () => {
 				});
 
 				test('NotActiveなWebhookが編集された時、キャッシュに追加されない', async () => {
-					const id = idService.gen();
+					const id = idService.genId();
 					await createWebhook({ id, isActive: false });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();
@@ -442,7 +442,7 @@ describe('SystemWebhookService', () => {
 				});
 
 				test('NotActiveなWebhookがActiveにされた時、キャッシュに追加されている', async () => {
-					const id = idService.gen();
+					const id = idService.genId();
 					const baseWebhook = await createWebhook({ id, isActive: false });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();
@@ -465,7 +465,7 @@ describe('SystemWebhookService', () => {
 				});
 
 				test('ActiveなWebhookがNotActiveにされた時、キャッシュから削除されている', async () => {
-					const id = idService.gen();
+					const id = idService.genId();
 					const baseWebhook = await createWebhook({ id, isActive: true });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();
@@ -491,7 +491,7 @@ describe('SystemWebhookService', () => {
 
 			describe('systemWebhookDeleted', () => {
 				test('キャッシュから削除されている', async () => {
-					const id = idService.gen();
+					const id = idService.genId();
 					const baseWebhook = await createWebhook({ id, isActive: true });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();

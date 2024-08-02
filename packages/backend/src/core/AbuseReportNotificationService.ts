@@ -249,7 +249,7 @@ export class AbuseReportNotificationService implements OnApplicationShutdown {
 		},
 		updater: MiUser,
 	): Promise<MiAbuseReportNotificationRecipient> {
-		const id = this.idService.gen();
+		const id = this.idService.genId();
 		await this.abuseReportNotificationRecipientRepository.insert({
 			...params,
 			id,

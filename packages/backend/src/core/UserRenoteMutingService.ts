@@ -28,7 +28,7 @@ export class UserRenoteMutingService {
 	@bindThis
 	public async mute(user: MiUser, target: MiUser, expiresAt: Date | null = null): Promise<void> {
 		await this.renoteMutingsRepository.insert({
-			id: this.idService.gen(),
+			id: this.idService.genId(),
 			muterId: user.id,
 			muteeId: target.id,
 		});

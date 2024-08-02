@@ -57,7 +57,7 @@ describe('AbuseReportNotificationService', () => {
 	async function createUser(data: Partial<MiUser> = {}) {
 		const user = await usersRepository
 			.insert({
-				id: idService.gen(),
+				id: idService.genId(),
 				...data,
 			})
 			.then(x => usersRepository.findOneByOrFail(x.identifiers[0]));
@@ -72,7 +72,7 @@ describe('AbuseReportNotificationService', () => {
 	async function createWebhook(data: Partial<MiSystemWebhook> = {}) {
 		return systemWebhooksRepository
 			.insert({
-				id: idService.gen(),
+				id: idService.genId(),
 				name: randomString(),
 				on: ['abuseReport'],
 				url: 'https://example.com',
@@ -85,7 +85,7 @@ describe('AbuseReportNotificationService', () => {
 	async function createRecipient(data: Partial<MiAbuseReportNotificationRecipient> = {}) {
 		return abuseReportNotificationRecipientRepository
 			.insert({
-				id: idService.gen(),
+				id: idService.genId(),
 				isActive: true,
 				name: randomString(),
 				...data,

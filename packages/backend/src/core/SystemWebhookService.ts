@@ -89,7 +89,7 @@ export class SystemWebhookService implements OnApplicationShutdown {
 		},
 		updater: MiUser,
 	): Promise<MiSystemWebhook> {
-		const id = this.idService.gen();
+		const id = this.idService.genId();
 		await this.systemWebhooksRepository.insert({
 			...params,
 			id,
