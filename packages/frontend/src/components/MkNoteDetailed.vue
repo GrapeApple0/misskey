@@ -482,9 +482,7 @@ function renote() {
 	showMovedDialog();
 	const { menu: renoteMenu } = getRenoteMenu({ note: appearNote.value, renoteButton });
 	if (!splitRNButton) {
-		os.popupMenu(renoteMenu, renoteButton.value, {
-			viaKeyboard,
-		});
+		os.popupMenu(renoteMenu, renoteButton.value);
 	} else {
 		if (appearNote.value.channel) {
 			misskeyApi('notes/create', {
