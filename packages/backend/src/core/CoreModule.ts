@@ -40,7 +40,6 @@ import { MetaService } from './MetaService.js';
 import { MfmService } from './MfmService.js';
 import { ModerationLogService } from './ModerationLogService.js';
 import { NoteCreateService } from './NoteCreateService.js';
-import { NoteEditService } from './NoteEditService.js';
 import { NoteDeleteService } from './NoteDeleteService.js';
 import { NoteEditService } from './NoteEditService.js';
 import { NotePiningService } from './NotePiningService.js';
@@ -184,7 +183,6 @@ const $MetaService: Provider = { provide: 'MetaService', useExisting: MetaServic
 const $MfmService: Provider = { provide: 'MfmService', useExisting: MfmService };
 const $ModerationLogService: Provider = { provide: 'ModerationLogService', useExisting: ModerationLogService };
 const $NoteCreateService: Provider = { provide: 'NoteCreateService', useExisting: NoteCreateService };
-const $NoteEditService: Provider = { provide: 'NoteEditService', useExisting: NoteEditService };
 const $NoteDeleteService: Provider = { provide: 'NoteDeleteService', useExisting: NoteDeleteService };
 const $NoteEditService: Provider = { provide: 'NoteEditService', useExisting: NoteEditService };
 const $NotePiningService: Provider = { provide: 'NotePiningService', useExisting: NotePiningService };
