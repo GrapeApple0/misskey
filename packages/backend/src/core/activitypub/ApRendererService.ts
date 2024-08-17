@@ -593,21 +593,6 @@ export class ApRendererService {
 		};
 	}
 
-	public renderNoteUpdate(object: IObject, note: MiNote, user: { id: MiUser['id'] }): IUpdate {
-		const activity: IUpdate = {
-			id: `${this.config.url}/users/${user.id}#updates/${new Date().getTime()}`,
-			actor: this.userEntityService.genLocalUserUri(note.userId),
-			type: 'Update',
-			published: new Date().toISOString(),
-			object,
-		};
-
-		if (object.to) activity.to = object.to;
-		if (object.cc) activity.cc = object.cc;
-
-		return activity;
-	}
-
 	@bindThis
 	public renderNoteUpdate(object: IPost, user: { id: MiUser['id'] }): IUpdate {
 		const activity: IUpdate = {
