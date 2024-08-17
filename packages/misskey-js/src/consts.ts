@@ -1,11 +1,16 @@
 import type { operations } from './autogen/types.js';
 import type {
-	AbuseReportNotificationRecipient, Ad,
+	AbuseReportNotificationRecipient,
+	Ad,
 	Announcement,
-	EmojiDetailed, InviteCode,
+	EmojiDetailed,
+	InviteCode,
 	MetaDetailed,
 	Note,
-	Role, SystemWebhook, UserLite,
+	Role,
+	ReversiGameDetailed,
+	SystemWebhook,
+	UserLite,
 } from './autogen/models.js';
 
 export const notificationTypes = ['note', 'follow', 'mention', 'reply', 'renote', 'quote', 'reaction', 'pollVote', 'pollEnded', 'receiveFollowRequest', 'followRequestAccepted', 'groupInvited', 'app', 'roleAssigned', 'achievementEarned'] as const;
@@ -150,6 +155,7 @@ export const moderationLogTypes = [
 	'createAbuseReportNotificationRecipient',
 	'updateAbuseReportNotificationRecipient',
 	'deleteAbuseReportNotificationRecipient',
+	'deleteAccount',
 ] as const;
 
 // See: packages/backend/src/core/ReversiService.ts@L410
@@ -160,7 +166,7 @@ export const reversiUpdateKeys = [
 	'canPutEverywhere',
 	'loopedBoard',
 	'timeLimitForEachTurn',
-] as const;
+] as const satisfies (keyof ReversiGameDetailed)[];
 
 export type ReversiUpdateKey = typeof reversiUpdateKeys[number];
 
@@ -395,5 +401,10 @@ export type ModerationLogPayloads = {
 	deleteAbuseReportNotificationRecipient: {
 		recipientId: string;
 		recipient: AbuseReportNotificationRecipient;
+	};
+	deleteAccount: {
+		userId: string;
+		userUsername: string;
+		userHost: string | null;
 	};
 };
