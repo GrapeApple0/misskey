@@ -52,25 +52,26 @@
 	},
 	"dependencies": {
 		"cssnano": "6.1.2",
+		"esbuild": "0.23.1",
 		"execa": "8.0.1",
 		"fast-glob": "3.3.2",
+		"glob": "11.0.0",
 		"ignore-walk": "6.0.5",
 		"js-yaml": "4.1.0",
 		"postcss": "8.4.47",
 		"tar": "6.2.1",
 		"terser": "5.33.0",
-		"typescript": "5.6.2",
-		"esbuild": "0.23.1",
-		"glob": "11.0.0"
+		"typescript": "5.6.2"
 	},
 	"devDependencies": {
 		"@misskey-dev/eslint-plugin": "2.0.3",
+		"@stylistic/eslint-plugin-ts": "^2.8.0",
 		"@types/node": "20.14.12",
 		"@typescript-eslint/eslint-plugin": "8.8.0",
 		"@typescript-eslint/parser": "8.8.0",
 		"cross-env": "7.0.3",
 		"cypress": "13.14.2",
-		"eslint": "9.8.0",
+		"eslint": "9.11.1",
 		"globals": "15.9.0",
 		"ncp": "2.0.0",
 		"start-server-and-test": "2.0.8"
@@ -79,6 +80,9 @@
 		"overrides": {
 			"sharp@<0.32.6": ">=0.32.6",
 			"axios@>=0.8.1 <1.6.0": ">=1.6.0"
+		},
+		"patchedDependencies": {
+			"@misskey-dev/eslint-plugin@2.0.3": "patches/@misskey-dev__eslint-plugin@2.0.3.patch"
 		}
 	}
 }
