@@ -109,8 +109,8 @@ function onStats(connStats) {
 	outRecent.value = connStats.net.tx;
 }
 
-function onStatsLog(statsLog) {
-	for (const revStats of [...statsLog].reverse()) {
+function onStatsLog(statsLog: Misskey.entities.ServerStatsLog) {
+	for (const revStats of statsLog.toReversed()) {
 		onStats(revStats);
 	}
 }
