@@ -715,6 +715,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</template>
 				<div class="_gaps">
 					<MkButton danger rounded @click="deleteRole"><i class="ti ti-check"></i> {{ i18n.ts.delete  }}</MkButton>
+				</div>
 			</MkFolder>
 		</div>
 	</FormSlot>
