@@ -715,7 +715,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span :class="$style.useDefaultLabel">{{ i18n.ts.delete }}</span>
 				</template>
 				<div class="_gaps">
-					<MkButton danger rounded @click="deleteRole"><i class="ti ti-check"></i> {{ i18n.ts.delete  }}</MkButton>
+					<MkButton danger rounded @click="deleteRole"><i class="ti ti-check"></i> {{ i18n.ts.delete }}</MkButton>
 				</div>
 			</MkFolder>
 		</div>
@@ -726,8 +726,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { watch, ref, computed } from 'vue';
 import { throttle } from 'throttle-debounce';
-import * as os from '@/os.js';
+import { ROLE_POLICIES } from '@@/js/const.js';
 import RolesEditorFormula from './RolesEditorFormula.vue';
+import * as os from '@/os.js';
 import MkInput from '@/components/MkInput.vue';
 import MkColorInput from '@/components/MkColorInput.vue';
 import MkSelect from '@/components/MkSelect.vue';
@@ -737,7 +738,6 @@ import MkSwitch from '@/components/MkSwitch.vue';
 import MkRange from '@/components/MkRange.vue';
 import FormSlot from '@/components/form/slot.vue';
 import { i18n } from '@/i18n.js';
-import { ROLE_POLICIES } from '@@/js/const.js';
 import { instance } from '@/instance.js';
 import { deepClone } from '@/scripts/clone.js';
 import { rolesCache } from '@/cache.js';
