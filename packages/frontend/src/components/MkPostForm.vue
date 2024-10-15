@@ -1138,7 +1138,7 @@ defineExpose({
 .preview {
 	padding: 16px 20px 0 20px;
 	min-height: 75px;
-	max-height: 150px;
+	max-height: 350px;
 	overflow: auto;
 	background-size: auto auto;
 }
@@ -1241,15 +1241,6 @@ html[data-color-scheme=light] .preview {
 .textCount {
 	opacity: 0.7;
 	line-height: 66px;
-	position: absolute;
-	top: 0;
-	right: 2px;
-	padding: 4px 6px;
-	font-size: .9em;
-	color: var(--MI_THEME-warn);
-	border-radius: 6px;
-	min-width: 1.6em;
-	text-align: center;
 
 	&.textOver {
 		color: #ff2a2a;
