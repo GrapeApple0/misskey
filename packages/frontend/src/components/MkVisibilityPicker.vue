@@ -110,12 +110,7 @@ function choose(visibility: typeof Misskey.noteVisibilities[number]): void {
 		background: rgba(0, 0, 0, 0.1);
 	}
 	&.active {
-		color: var(--fgOnAccent);
-		background: var(--accent);
-	}
-	&.localOnly.active {
-		color: var(--accent);
-		background: inherit;
+		color: var(--MI_THEME-accent);
 	}
 }
 .icon {
