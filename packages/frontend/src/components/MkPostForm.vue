@@ -63,7 +63,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<button class="_buttonPrimary" style="padding: 4px; border-radius: 8px;" @click="addVisibleUser"><i class="ti ti-plus ti-fw"></i></button>
 		</div>
 	</div>
-	<MkInfo v-if="warnMfm" warn :class="$style.thisPostMayBeAnnoyingWarn">{{ i18n.ts.thisPostMayBeAnnoying }}<a v-if="visibility == 'public'" style="color: var(--X9)" @click="toHome()">{{ i18n.ts.thisPostMayBeAnnoyingHome }}</a></MkInfo>
 	<MkInfo v-if="hasNotSpecifiedMentions" ref="hasNotSpecifiedMentionsEl" warn :class="$style.hasNotSpecifiedMentions">{{ i18n.ts.notSpecifiedMentionWarning }} - <button class="_textButton" @click="addMissingMention()">{{ i18n.ts.add }}</button></MkInfo>
 	<input v-show="useCw" ref="cwInputEl" v-model="cw" :class="$style.cw" :placeholder="i18n.ts.annotation" @keydown="onKeydown">
 	<div :class="[$style.textOuter, { [$style.withCw]: useCw }]">
@@ -103,6 +102,7 @@ import * as Misskey from 'misskey-js';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import { toASCII } from 'punycode/';
 import { host, url } from '@@/js/config.js';
+import type { PostFormProps } from '@/types/post-form.js';
 import MkNoteSimple from '@/components/MkNoteSimple.vue';
 import MkNotePreview from '@/components/MkNotePreview.vue';
 import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
@@ -131,20 +131,7 @@ const $i = signinRequired();
 
 const modal = inject('modal');
 
-const props = withDefaults(defineProps<{
-	reply?: Misskey.entities.Note;
-	renote?: Misskey.entities.Note;
-	channel?: Misskey.entities.Channel; // TODO
-	mention?: Misskey.entities.User;
-	specified?: Misskey.entities.UserDetailed;
-	initialText?: string;
-	initialCw?: string;
-	initialVisibility?: (typeof Misskey.noteVisibilities)[number];
-	initialFiles?: Misskey.entities.DriveFile[];
-	initialLocalOnly?: boolean;
-	initialVisibleUsers?: Misskey.entities.UserDetailed[];
-	initialNote?: Misskey.entities.Note;
-	instant?: boolean;
+const props = withDefaults(defineProps<PostFormProps & {
 	fixed?: boolean;
 	autofocus?: boolean;
 	freezeAfterPosted?: boolean;
@@ -201,6 +188,7 @@ const recentHashtags = ref(JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]'
 const imeText = ref('');
 const showingOptions = ref(false);
 const textAreaReadOnly = ref(false);
+const justEndedComposition = ref(false);
 
 const draftKey = computed((): string => {
 	let key = props.channel ? `channel:${props.channel.id}` : '';
@@ -475,7 +463,7 @@ function setVisibility() {
 		currentVisibility: visibility.value,
 		isSilenced: $i.isSilenced,
 		currentLocalOnly: localOnly.value,
-		src: visibilityButton.value,
+		src: visibilityButton.value!,
 		...(props.reply ? { isReplyVisibilitySpecified: props.reply.visibility === 'specified' } : {}),
 	}, {
 		changeVisibility: v => {
@@ -552,7 +540,13 @@ function clear() {
 function onKeydown(ev: KeyboardEvent) {
 	if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && canPost.value) post();
 
-	if (ev.key === 'Escape') emit('esc');
+	// justEndedComposition.value is for Safari, which keyDown occurs after compositionend.
+	// ev.isComposing is for another browsers.
+	if (ev.key === 'Escape' && !justEndedComposition.value && !ev.isComposing) emit('esc');
+}
+
+function onKeyup(ev: KeyboardEvent) {
+	justEndedComposition.value = false;
 }
 
 function onCompositionUpdate(ev: CompositionEvent) {
@@ -561,6 +555,7 @@ function onCompositionUpdate(ev: CompositionEvent) {
 
 function onCompositionEnd(ev: CompositionEvent) {
 	imeText.value = '';
+	justEndedComposition.value = true;
 }
 
 async function onPaste(ev: ClipboardEvent) {
@@ -896,8 +891,8 @@ function showActions(ev: MouseEvent) {
 			action.handler({
 				text: text.value,
 				cw: cw.value,
-			}, (key, value: any) => {
-				if (typeof key !== 'string') return;
+			}, (key, value) => {
+				if (typeof key !== 'string' || typeof value !== 'string') return;
 				if (key === 'text') { text.value = value; }
 				if (key === 'cw') { useCw.value = value !== null; cw.value = value; }
 			});
@@ -1061,7 +1056,7 @@ defineExpose({
 	&:focus-visible {
 		outline: none;
 
-		.submitInner {
+		> .submitInner {
 			outline: 2px solid var(--MI_THEME-fgOnAccent);
 			outline-offset: -4px;
 		}
@@ -1076,13 +1071,13 @@ defineExpose({
 	}
 
 	&:not(:disabled):hover {
-		> .inner {
+		> .submitInner {
 			background: linear-gradient(90deg, hsl(from var(--MI_THEME-accent) h s calc(l + 5)), hsl(from var(--MI_THEME-accent) h s calc(l + 5)));
 		}
 	}
 
 	&:not(:disabled):active {
-		> .inner {
+		> .submitInner {
 			background: linear-gradient(90deg, hsl(from var(--MI_THEME-accent) h s calc(l + 5)), hsl(from var(--MI_THEME-accent) h s calc(l + 5)));
 		}
 	}

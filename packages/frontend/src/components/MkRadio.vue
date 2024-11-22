@@ -24,7 +24,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </div>
 </template>
 
-<script lang="ts" setup>
+<script lang="ts" setup generic="T extends unknown">
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -34,7 +34,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(ev: 'update:modelValue', value: any): void;
+	(ev: 'update:modelValue', value: T): void;
 }>();
 
 const checked = computed(() => props.modelValue === props.value);

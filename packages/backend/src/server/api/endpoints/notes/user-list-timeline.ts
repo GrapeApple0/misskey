@@ -100,7 +100,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.noSuchList);
 			}
 
-			return await this.getFromDb(list, {
+			const timeline = await this.getFromDb(list, {
 				untilId,
 				sinceId,
 				limit: ps.limit,
@@ -110,6 +110,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				withFiles: ps.withFiles,
 				withRenotes: ps.withRenotes,
 			}, me);
+
+			this.activeUsersChart.read(me);
+
+			return await this.noteEntityService.packMany(timeline, me);
 		});
 	}
 

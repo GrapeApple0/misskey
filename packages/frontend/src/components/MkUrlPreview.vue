@@ -184,7 +184,7 @@ window.fetch(`/url?url=${encodeURIComponent(requestUrl.href)}&lang=${versatileLa
 		sensitive.value = info.sensitive ?? false;
 	});
 
-function loadMessage(message: any) {
+function loadMessage(message: MessageEvent) {
 	if (message.origin !== 'https://platform.twitter.com') return;
 	const embed = message.data?.['twttr.embed'];
 	if (embed?.method === 'twttr.private.rendered') {
@@ -203,7 +203,9 @@ function openPlayer(): void {
 	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkYouTubePlayer.vue')), {
 		url: requestUrl.href,
 	}, {
-		// TODO
+		closed: () => {
+			dispose();
+		},
 	});
 }
 
@@ -220,9 +222,10 @@ function adjustTweetWidth() {
 (window as any).addEventListener('message', loadMessage);
 (window as any).addEventListener('resize', adjustTweetWidth);
 
+
 onUnmounted(() => {
-	(window as any).removeEventListener('message', loadMessage);
-	(window as any).removeEventListener('resize', adjustTweetWidth);
+	window.removeEventListener('message', loadMessage);
+	window.removeEventListener('resize', adjustTweetWidth);
 });
 </script>
 
