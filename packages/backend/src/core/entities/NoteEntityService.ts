@@ -509,7 +509,7 @@ export class NoteEntityService implements OnModuleInit {
 					}
 				} else {
 					// パフォーマンスのためノートが作成されてから2秒以上経っていない場合はリアクションを取得しない
-					if (note.createdAt.getTime() + 2000 < Date.now()) {
+					if (this.idService.parse(note.id).date.getTime() + 2000 < Date.now()) {
 						const reactionsCount = Object.values(this.reactionsBufferingService.mergeReactions(note.reactions, bufferedReactions?.get(note.id)?.deltas ?? {})).reduce((a, b) => a + b, 0);
 						if (reactionsCount === 0) {
 							myReactionsMap.set(note.id, null);

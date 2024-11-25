@@ -58,6 +58,20 @@ export class IdService {
 		}
 	}
 
+	public gen(date?: number): string {
+		if (!date || (date > Date.now())) date = Date.now();
+
+		switch (this.method) {
+			case 'aid': return genAid(date);
+			case 'aidx': return genAidx(date);
+			case 'meid': return genMeid(date);
+			case 'meidg': return genMeidg(date);
+			case 'ulid': return ulid(date);
+			case 'objectid': return genObjectId(date);
+			default: throw new Error('unrecognized id generation method');
+		}
+	}
+
 	@bindThis
 	public parse(id: string): { date: Date; } {
 		switch (this.method) {
