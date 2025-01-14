@@ -586,7 +586,10 @@ export class ClientServerService {
 					reply.header('X-Robots-Tag', 'noai');
 				}
 
-				const _user = await this.userEntityService.pack(user);
+				const _user = await this.userEntityService.pack(user, null, {
+					schema: 'UserDetailed',
+					userProfile: profile,
+				});
 
 				return await reply.view('user', {
 					user, profile, me,
@@ -869,7 +872,7 @@ export class ClientServerService {
 			});
 
 			if (note == null) return;
-			if (note.visibility !== 'public') return;
+			if (['specified', 'followers'].includes(note.visibility)) return;
 			if (note.userHost != null) return;
 
 			const _note = await this.noteEntityService.pack(note, null, { detail: true });

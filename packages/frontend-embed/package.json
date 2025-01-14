@@ -25,7 +25,7 @@
 		"mfm-js": "0.24.0",
 		"misskey-js": "workspace:*",
 		"frontend-shared": "workspace:*",
-		"punycode": "2.3.1",
+		"punycode.js": "2.3.1",
 		"rollup": "4.26.0",
 		"sass": "1.79.4",
 		"shiki": "1.22.2",

@@ -84,7 +84,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				name: token.name ?? token.app?.name,
 				createdAt: token.createdAt,
 				lastUsedAt: token.lastUsedAt,
-				permission: token.permission,
+				permission: token.app ? token.app.permission : token.permission,
 			})));
 		});
 	}
