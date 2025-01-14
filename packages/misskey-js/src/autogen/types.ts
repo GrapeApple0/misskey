@@ -23538,7 +23538,7 @@ export type operations = {
           'application/json': components['schemas']['Error'];
         };
       };
-      /** @description To many requests */
+      /** @description Too many requests */
       429: {
         content: {
           'application/json': components['schemas']['Error'];
@@ -23572,6 +23572,8 @@ export type operations = {
           untilId?: string;
           sinceDate?: number;
           untilDate?: number;
+          /** @default false */
+          allowPartial?: boolean;
           /** @default true */
           includeMyRenotes?: boolean;
           /** @default true */
