@@ -23,7 +23,6 @@ import { AppLockService } from './AppLockService.js';
 import { AchievementService } from './AchievementService.js';
 import { AvatarDecorationService } from './AvatarDecorationService.js';
 import { CaptchaService } from './CaptchaService.js';
-import { CreateSystemUserService } from './CreateSystemUserService.js';
 import { CustomEmojiService } from './CustomEmojiService.js';
 import { DeleteAccountService } from './DeleteAccountService.js';
 import { DownloadService } from './DownloadService.js';
@@ -36,7 +35,7 @@ import { HashtagService } from './HashtagService.js';
 import { HttpRequestService } from './HttpRequestService.js';
 import { IdService } from './IdService.js';
 import { ImageProcessingService } from './ImageProcessingService.js';
-import { InstanceActorService } from './InstanceActorService.js';
+import { SystemAccountService } from './SystemAccountService.js';
 import { InternalStorageService } from './InternalStorageService.js';
 import { MetaService } from './MetaService.js';
 import { MfmService } from './MfmService.js';
@@ -69,7 +68,6 @@ import { UserSuspendService } from './UserSuspendService.js';
 import { UserAuthService } from './UserAuthService.js';
 import { VideoProcessingService } from './VideoProcessingService.js';
 import { UserWebhookService } from './UserWebhookService.js';
-import { ProxyAccountService } from './ProxyAccountService.js';
 import { UtilityService } from './UtilityService.js';
 import { FileInfoService } from './FileInfoService.js';
 import { SearchService } from './SearchService.js';
@@ -167,7 +165,6 @@ const $AppLockService: Provider = { provide: 'AppLockService', useExisting: AppL
 const $AchievementService: Provider = { provide: 'AchievementService', useExisting: AchievementService };
 const $AvatarDecorationService: Provider = { provide: 'AvatarDecorationService', useExisting: AvatarDecorationService };
 const $CaptchaService: Provider = { provide: 'CaptchaService', useExisting: CaptchaService };
-const $CreateSystemUserService: Provider = { provide: 'CreateSystemUserService', useExisting: CreateSystemUserService };
 const $CustomEmojiService: Provider = { provide: 'CustomEmojiService', useExisting: CustomEmojiService };
 const $DeleteAccountService: Provider = { provide: 'DeleteAccountService', useExisting: DeleteAccountService };
 const $DownloadService: Provider = { provide: 'DownloadService', useExisting: DownloadService };
@@ -180,7 +177,6 @@ const $HashtagService: Provider = { provide: 'HashtagService', useExisting: Hash
 const $HttpRequestService: Provider = { provide: 'HttpRequestService', useExisting: HttpRequestService };
 const $IdService: Provider = { provide: 'IdService', useExisting: IdService };
 const $ImageProcessingService: Provider = { provide: 'ImageProcessingService', useExisting: ImageProcessingService };
-const $InstanceActorService: Provider = { provide: 'InstanceActorService', useExisting: InstanceActorService };
 const $InternalStorageService: Provider = { provide: 'InternalStorageService', useExisting: InternalStorageService };
 const $MetaService: Provider = { provide: 'MetaService', useExisting: MetaService };
 const $MfmService: Provider = { provide: 'MfmService', useExisting: MfmService };
@@ -192,7 +188,7 @@ const $NotePiningService: Provider = { provide: 'NotePiningService', useExisting
 const $NoteReadService: Provider = { provide: 'NoteReadService', useExisting: NoteReadService };
 const $NotificationService: Provider = { provide: 'NotificationService', useExisting: NotificationService };
 const $PollService: Provider = { provide: 'PollService', useExisting: PollService };
-const $ProxyAccountService: Provider = { provide: 'ProxyAccountService', useExisting: ProxyAccountService };
+const $SystemAccountService: Provider = { provide: 'SystemAccountService', useExisting: SystemAccountService };
 const $PushNotificationService: Provider = { provide: 'PushNotificationService', useExisting: PushNotificationService };
 const $QueryService: Provider = { provide: 'QueryService', useExisting: QueryService };
 const $ReactionService: Provider = { provide: 'ReactionService', useExisting: ReactionService };
@@ -319,7 +315,6 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		AchievementService,
 		AvatarDecorationService,
 		CaptchaService,
-		CreateSystemUserService,
 		CustomEmojiService,
 		DeleteAccountService,
 		DownloadService,
@@ -332,7 +327,6 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		HttpRequestService,
 		IdService,
 		ImageProcessingService,
-		InstanceActorService,
 		InternalStorageService,
 		MetaService,
 		MfmService,
@@ -345,7 +339,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		NoteReadService,
 		NotificationService,
 		PollService,
-		ProxyAccountService,
+		SystemAccountService,
 		PushNotificationService,
 		QueryService,
 		ReactionService,
@@ -468,7 +462,6 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$AchievementService,
 		$AvatarDecorationService,
 		$CaptchaService,
-		$CreateSystemUserService,
 		$CustomEmojiService,
 		$DeleteAccountService,
 		$DownloadService,
@@ -481,7 +474,6 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$HttpRequestService,
 		$IdService,
 		$ImageProcessingService,
-		$InstanceActorService,
 		$InternalStorageService,
 		$MetaService,
 		$MfmService,
@@ -494,7 +486,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$NoteReadService,
 		$NotificationService,
 		$PollService,
-		$ProxyAccountService,
+		$SystemAccountService,
 		$PushNotificationService,
 		$QueryService,
 		$ReactionService,
@@ -618,7 +610,6 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		AchievementService,
 		AvatarDecorationService,
 		CaptchaService,
-		CreateSystemUserService,
 		CustomEmojiService,
 		DeleteAccountService,
 		DownloadService,
@@ -631,7 +622,6 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		HttpRequestService,
 		IdService,
 		ImageProcessingService,
-		InstanceActorService,
 		InternalStorageService,
 		MetaService,
 		MfmService,
@@ -644,7 +634,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		NoteReadService,
 		NotificationService,
 		PollService,
-		ProxyAccountService,
+		SystemAccountService,
 		PushNotificationService,
 		QueryService,
 		ReactionService,
@@ -766,7 +756,6 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$AchievementService,
 		$AvatarDecorationService,
 		$CaptchaService,
-		$CreateSystemUserService,
 		$CustomEmojiService,
 		$DeleteAccountService,
 		$DownloadService,
@@ -779,7 +768,6 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$HttpRequestService,
 		$IdService,
 		$ImageProcessingService,
-		$InstanceActorService,
 		$InternalStorageService,
 		$MetaService,
 		$MfmService,
@@ -792,7 +780,7 @@ const $ApQuestionService: Provider = { provide: 'ApQuestionService', useExisting
 		$NoteReadService,
 		$NotificationService,
 		$PollService,
-		$ProxyAccountService,
+		$SystemAccountService,
 		$PushNotificationService,
 		$QueryService,
 		$ReactionService,

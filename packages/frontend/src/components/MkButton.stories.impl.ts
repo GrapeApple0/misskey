@@ -5,8 +5,13 @@
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable import/no-default-export */
+<<<<<<< HEAD
 /* eslint-disable import/no-duplicates */
 import { StoryObj } from '@storybook/vue3';
+=======
+import { action } from '@storybook/addon-actions';
+import type { StoryObj } from '@storybook/vue3';
+>>>>>>> 2025.3.0-beta.0
 import MkButton from './MkButton.vue';
 export const Default = {
 	render(args) {

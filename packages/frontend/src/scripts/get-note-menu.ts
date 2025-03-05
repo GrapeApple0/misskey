@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { defineAsyncComponent, Ref, ShallowRef } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import * as Misskey from 'misskey-js';
 import { url } from '@@/js/config.js';
 import { claimAchievement } from './achievements.js';
+import type { Ref, ShallowRef } from 'vue';
 import type { MenuItem } from '@/types/menu.js';
 import { $i } from '@/account.js';
 import { i18n } from '@/i18n.js';
@@ -211,15 +212,7 @@ export function getNoteMenu(props: {
 		}).then(({ canceled }) => {
 			if (canceled) return;
 
-			misskeyApi('notes/delete', {
-				noteId: appearNote.id,
-			});
-
-			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel });
-
-			if (Date.now() - new Date(appearNote.createdAt).getTime() < 1000 * 60 && appearNote.userId === $i.id) {
-				claimAchievement('noteDeletedWithin1min');
-			}
+			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel, deleteInitialNoteAfterPost: true });
 		});
 	}
 
@@ -566,7 +559,7 @@ export function getRenoteMenu(props: {
 			icon: 'ti ti-repeat',
 			action: () => {
 				const el = props.renoteButton.value;
-				if (el) {
+				if (el && defaultStore.state.animation) {
 					const rect = el.getBoundingClientRect();
 					const x = rect.left + (el.offsetWidth / 2);
 					const y = rect.top + (el.offsetHeight / 2);
@@ -604,8 +597,8 @@ export function getRenoteMenu(props: {
 			icon: 'ti ti-repeat',
 			action: () => {
 				const defaultRenoteVisibility = defaultStore.state.defaultRenoteVisibility;
-				const el = props.renoteButton.value as HTMLElement | null | undefined;
-				if (el) {
+				const el = props.renoteButton.value;
+				if (el && defaultStore.state.animation) {
 					const rect = el.getBoundingClientRect();
 					const x = rect.left + (el.offsetWidth / 2);
 					const y = rect.top + (el.offsetHeight / 2);
@@ -656,7 +649,7 @@ export function getRenoteMenu(props: {
 					text: channel.name,
 					action: () => {
 						const el = props.renoteButton.value;
-						if (el) {
+						if (el && defaultStore.state.animation) {
 							const rect = el.getBoundingClientRect();
 							const x = rect.left + (el.offsetWidth / 2);
 							const y = rect.top + (el.offsetHeight / 2);

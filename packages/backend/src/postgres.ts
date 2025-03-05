@@ -83,6 +83,7 @@ import { Config } from '@/config.js';
 import MisskeyLogger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
 import { MiNoteHistory } from './models/NoteHistory.js';
+import { MiSystemAccount } from './models/SystemAccount.js';
 
 pg.types.setTypeParser(20, Number);
 
@@ -93,7 +94,7 @@ const sqlLogger = dbLogger.createSubLogger('sql', 'gray');
 export type LoggerProps = {
 	disableQueryTruncation?: boolean;
 	enableQueryParamLogging?: boolean;
-}
+};
 
 function highlightSql(sql: string) {
 	return highlight.highlight(sql, {
@@ -208,6 +209,7 @@ export const entities = [
 	MiEmoji,
 	MiHashtag,
 	MiSwSubscription,
+	MiSystemAccount,
 	MiAbuseUserReport,
 	MiAbuseReportNotificationRecipient,
 	MiRegistrationTicket,
