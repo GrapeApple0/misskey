@@ -27,7 +27,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 </template>
 <template v-else-if="tweetId && tweetExpanded">
-	<MkLoading v-if="!isTweetLoaded" />
+	<MkLoading v-if="!isTweetLoaded"/>
 	<div ref="twitter">
 		<iframe
 			ref="tweet"
@@ -35,7 +35,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin"
 			scrolling="no"
 			:style="{ position: 'relative', width: `${tweetWidth}px`, height: isTweetLoaded ? `${tweetHeight}px` : '0px', border: 0, borderRadius: '13px'}"
-			:src="`https://platform.twitter.com/embed/index.html?embedId=${embedId}&amp;hideCard=false&amp;hideThread=false&amp;lang=en&amp;theme=${defaultStore.state.darkMode ? 'dark' : 'light'}&amp;id=${tweetId}`"
+			:src="`https://platform.twitter.com/embed/index.html?embedId=${embedId}&amp;hideCard=false&amp;hideThread=false&amp;lang=en&amp;theme=${store.s.darkMode ? 'dark' : 'light'}&amp;id=${tweetId}`"
 		></iframe>
 	</div>
 	<div :class="$style.action">
@@ -46,7 +46,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 <div v-else>
 	<component :is="self ? 'MkA' : 'a'" :class="[$style.link, { [$style.compact]: compact }]" :[attr]="self ? url.substring(local.length) : url" rel="nofollow noopener" :target="target" :title="url">
-		<div v-if="thumbnail && !sensitive" :class="$style.thumbnail" :style="defaultStore.state.dataSaver.urlPreview ? '' : `background-image: url('${thumbnail}')`">
+		<div v-if="thumbnail && !sensitive" :class="$style.thumbnail" :style="prefer.s.dataSaver.urlPreview ? '' : `background-image: url('${thumbnail}')`">
 		</div>
 		<article :class="$style.body">
 			<header :class="$style.header">
@@ -90,11 +90,11 @@ import { versatileLang } from '@@/js/intl-const.js';
 import type { summaly } from '@misskey-dev/summaly';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
-import { deviceKind } from '@/scripts/device-kind.js';
+import { deviceKind } from '@/utility/device-kind.js';
 import MkButton from '@/components/MkButton.vue';
-import { transformPlayerUrl } from '@/scripts/player-url-transform.js';
-import { defaultStore } from '@/store.js';
-import MkLoading from '@/components/global/MkLoading.vue';
+import { transformPlayerUrl } from '@/utility/player-url-transform.js';
+import { store } from '@/store.js';
+import { prefer } from '@/preferences.js';
 
 type SummalyResult = Awaited<ReturnType<typeof summaly>>;
 
@@ -221,7 +221,6 @@ function adjustTweetWidth() {
 
 (window as any).addEventListener('message', loadMessage);
 (window as any).addEventListener('resize', adjustTweetWidth);
-
 
 onUnmounted(() => {
 	window.removeEventListener('message', loadMessage);

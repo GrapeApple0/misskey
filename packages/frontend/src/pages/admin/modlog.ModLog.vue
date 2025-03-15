@@ -207,12 +207,12 @@ import { defineProps, ref, computed } from 'vue';
 import * as Misskey from 'misskey-js';
 import { CodeDiff } from 'v-code-diff';
 import JSON5 from 'json5';
-import { deepClone } from '@/scripts/clone.js';
+import { deepClone } from '@/utility/clone.js';
 import { i18n } from '@/i18n.js';
 import MkFolder from '@/components/MkFolder.vue';
 import MkNotePreview from '@/components/MkNotePreview.vue';
 import MkMediaList from '@/components/MkMediaList.vue';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import { misskeyApi } from '@/utility/misskey-api.js';
 const props = defineProps<{
 	log: Misskey.entities.ModerationLog;
 }>();

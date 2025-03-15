@@ -80,13 +80,13 @@ import * as Misskey from 'misskey-js';
 import { v4 as uuid } from 'uuid';
 
 const props = defineProps<{
-	connection: any,
+	connection: Misskey.ChannelConnection<Misskey.Channels['serverStats']>,
 	meta: Misskey.entities.ServerInfoResponse
 }>();
 
 const viewBoxX = ref<number>(50);
 const viewBoxY = ref<number>(30);
-const stats = ref<any[]>([]);
+const stats = ref<Misskey.entities.ServerStats[]>([]);
 const cpuGradientId = uuid();
 const cpuMaskId = uuid();
 const memGradientId = uuid();
@@ -107,6 +107,7 @@ onMounted(() => {
 	props.connection.on('statsLog', onStatsLog);
 	props.connection.send('requestLog', {
 		id: Math.random().toString().substring(2, 10),
+		length: 50,
 	});
 });
 
@@ -115,7 +116,7 @@ onBeforeUnmount(() => {
 	props.connection.off('statsLog', onStatsLog);
 });
 
-function onStats(connStats) {
+function onStats(connStats: Misskey.entities.ServerStats) {
 	stats.value.push(connStats);
 	if (stats.value.length > 50) stats.value.shift();
 

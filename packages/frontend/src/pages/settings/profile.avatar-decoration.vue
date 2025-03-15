@@ -46,9 +46,9 @@ import * as Misskey from 'misskey-js';
 import XDecoration from './profile.avatar-decoration.decoration.vue';
 import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import { misskeyApi } from '@/utility/misskey-api.js';
 import { i18n } from '@/i18n.js';
-import { signinRequired } from '@/account.js';
+import { signinRequired } from '@/i.js';
 import MkInfo from '@/components/MkInfo.vue';
 
 const $i = signinRequired();

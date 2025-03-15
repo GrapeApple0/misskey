@@ -36,7 +36,7 @@ import type { MenuItem } from '@/types/menu';
 import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
-import { copyToClipboard } from '@/scripts/copy-to-clipboard';
+import { copyToClipboard } from '@/utility/copy-to-clipboard';
 import MkCwButton from '@/components/MkCwButton.vue';
 
 const showContent = ref(false);
