@@ -23029,6 +23029,8 @@ export type operations = {
           withRenotes?: boolean;
           /** @default false */
           withReplies?: boolean;
+          /** @default false */
+          localOnly?: boolean;
         };
       };
     };
@@ -24059,6 +24061,8 @@ export type operations = {
           withFiles?: boolean;
           /** @default true */
           withRenotes?: boolean;
+          /** @default false */
+          localOnly?: boolean;
         };
       };
     };

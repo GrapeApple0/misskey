@@ -106,6 +106,7 @@ export class SystemAccountService {
 
 			account = await transactionalEntityManager.insert(MiUser, {
 				id: this.idService.gen(),
+				createdAt: new Date(),
 				username: extra.username,
 				usernameLower: extra.username.toLowerCase(),
 				host: null,

@@ -17,13 +17,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<div :class="$style.tl">
 					<MkTimeline
 						ref="tlComponent"
-						:key="src + withRenotes + withReplies + onlyFiles + withSensitive"
+						:key="src + withRenotes + withReplies + onlyFiles + withSensitive + localOnly"
 						:src="src.split(':')[0]"
 						:list="src.split(':')[1]"
 						:withRenotes="withRenotes"
 						:withReplies="withReplies"
 						:withSensitive="withSensitive"
 						:onlyFiles="onlyFiles"
+						:localOnly="localOnly"
 						:sound="true"
 						@queue="queueUpdated"
 					/>
@@ -36,12 +37,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { computed, watch, provide, shallowRef, ref, onMounted, onActivated } from 'vue';
+import { scroll } from '@@/js/scroll.js';
 import type { Tab } from '@/components/global/MkPageHeader.tabs.vue';
+import type { MenuItem } from '@/types/menu.js';
+import type { BasicTimelineType } from '@/timelines.js';
 import MkTimeline from '@/components/MkTimeline.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import MkPostForm from '@/components/MkPostForm.vue';
 import MkHorizontalSwipe from '@/components/MkHorizontalSwipe.vue';
-import { scroll } from '@@/js/scroll.js';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { defaultStore } from '@/store.js';
@@ -51,10 +54,8 @@ import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { antennasCache, userListsCache, favoritedChannelsCache } from '@/cache.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import { deepMerge } from '@/scripts/merge.js';
-import type { MenuItem } from '@/types/menu.js';
 import { miLocalStorage } from '@/local-storage.js';
-import { availableBasicTimelines, hasWithReplies, isAvailableBasicTimeline, isBasicTimeline, basicTimelineIconClass } from '@/timelines.js';
-import type { BasicTimelineType } from '@/timelines.js';
+import { availableBasicTimelines, hasWithReplies, supportLocalOnly, isAvailableBasicTimeline, isBasicTimeline, basicTimelineIconClass } from '@/timelines.js';
 
 provide('shouldOmitHeaderTitle', true);
 
@@ -116,6 +117,11 @@ watch([withReplies, onlyFiles], ([withRepliesTo, onlyFilesTo]) => {
 const withSensitive = computed<boolean>({
 	get: () => defaultStore.reactiveState.tl.value.filter.withSensitive,
 	set: (x) => saveTlFilter('withSensitive', x),
+});
+
+const localOnly = computed<boolean>({
+	get: () => defaultStore.reactiveState.tl.value.filter.localOnly,
+	set: (x) => saveTlFilter('localOnly', x),
 });
 
 watch(src, () => {
@@ -280,6 +286,11 @@ const headerActions = computed(() => {
 					text: i18n.ts.fileAttachedOnly,
 					ref: onlyFiles,
 					disabled: isBasicTimeline(src.value) && hasWithReplies(src.value) ? withReplies : false,
+				}, {
+					type: 'switch',
+					text: i18n.ts.localOnly,
+					ref: localOnly,
+					disabled: isBasicTimeline(src.value) && !supportLocalOnly(src.value),
 				});
 
 				os.popupMenu(menuItems, ev.currentTarget ?? ev.target);
