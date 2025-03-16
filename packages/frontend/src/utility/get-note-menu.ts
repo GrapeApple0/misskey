@@ -606,7 +606,7 @@ export function getRenoteMenu(props: {
 			text: i18n.ts.renote,
 			icon: 'ti ti-repeat',
 			action: () => {
-				const defaultRenoteVisibility = $i.defaultRenoteVisibility;
+				const defaultRenoteVisibility = store.s.defaultRenoteVisibility;
 				const el = props.renoteButton.value;
 				if (el && prefer.s.animation) {
 					const rect = el.getBoundingClientRect();
