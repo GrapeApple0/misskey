@@ -9,7 +9,7 @@ import { url } from '@@/js/config.js';
 import { claimAchievement } from './achievements.js';
 import type { Ref, ShallowRef } from 'vue';
 import type { MenuItem } from '@/types/menu.js';
-import { signinRequired } from '@/i.js';
+import { $i } from '@/i.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import * as os from '@/os.js';
@@ -25,7 +25,6 @@ import { getAppearNote } from '@/utility/get-appear-note.js';
 import { genEmbedCode } from '@/utility/get-embed-code.js';
 import { prefer } from '@/preferences.js';
 import { getPluginHandlers } from '@/plugin.js';
-const $i = signinRequired();
 export async function getNoteClipMenu(props: {
 	note: Misskey.entities.Note;
 	isDeleted: Ref<boolean>;
