@@ -337,7 +337,7 @@ const urls = parsed ? extractUrlFromMfm(parsed).filter((url) => appearNote.value
 const showTicker = (prefer.s.instanceTicker === 'always') || (prefer.s.instanceTicker === 'remote' && appearNote.value.user.instance);
 const conversation = ref<Misskey.entities.Note[]>([]);
 const canRenote = computed(() => ['public', 'home'].includes(appearNote.value.visibility) || appearNote.value.userId === $i?.id);
-const splitRNButton = store.s.splitRNButton;
+const splitRNButton = prefer.s.splitRNButton;
 const defaultRenoteVisibility = store.s.defaultRenoteVisibility;
 const defaultRenoteLocalOnly = store.s.defaultRenoteLocalOnly;
 const ap = ref<any>(null);
@@ -489,35 +489,8 @@ if (appearNote.value.reactionAcceptance === 'likeOnly') {
 function renote() {
 	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	showMovedDialog();
-	const { menu: renoteMenu } = getRenoteMenu({ note: appearNote.value, renoteButton });
-	if (!splitRNButton) {
-		os.popupMenu(renoteMenu, renoteButton.value);
-	} else {
-		if (appearNote.value.channel) {
-			misskeyApi('notes/create', {
-				renoteId: appearNote.value.id,
-				channelId: appearNote.value.channelId,
-			}).then(() => {
-				os.toast(i18n.ts.renoted);
-			});
-		}
-
-		if (!appearNote.value.channel || appearNote.value.channel.allowRenoteToExternal) {
-			const configuredVisibility = (defaultRenoteVisibility !== 'follow' ? defaultRenoteVisibility : appearNote.value.visibility) as Visibility;
-			let visibility: Visibility = appearNote.value.visibility as Visibility;
-			visibility = smallerVisibility(visibility, configuredVisibility);
-			if (appearNote.value.channel?.isSensitive) {
-				visibility = smallerVisibility(visibility, 'home');
-			}
-			misskeyApi('notes/create', {
-				localOnly: appearNote.value.localOnly ?? defaultRenoteLocalOnly,
-				visibility,
-				renoteId: appearNote.value.id,
-			}).then(() => {
-				os.toast(i18n.ts.renoted);
-			});
-		}
-	}
+	const { menu: renoteMenu } = getRenoteMenu({ note: appearNote.value, renoteButton, simple: splitRNButton });
+	os.popupMenu(renoteMenu, renoteButton.value);
 }
 
 function quoteRenote() {

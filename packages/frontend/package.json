@@ -22,6 +22,7 @@
 		"@github/webauthn-json": "2.1.1",
 		"@mcaptcha/vanilla-glue": "0.1.0-alpha-3",
 		"@misskey-dev/browser-image-resizer": "2024.1.0",
+		"@nestjs/common": "11.0.12",
 		"@rollup/plugin-json": "6.1.0",
 		"@rollup/plugin-replace": "6.0.2",
 		"@rollup/pluginutils": "5.1.4",

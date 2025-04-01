@@ -323,6 +323,9 @@ export const PREF_DEF = {
 	confirmOnReact: {
 		default: false,
 	},
+	splitRNButton: {
+		default: false,
+	},
 	defaultFollowWithReplies: {
 		default: false,
 	},

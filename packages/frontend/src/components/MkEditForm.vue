@@ -84,7 +84,7 @@ import { selectFiles } from '@/utility/select-file.js';
 import { store } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
-import { signinRequired, notesCount, incNotesCount } from '@/i.js';
+import { ensureSignin, notesCount, incNotesCount } from '@/i.js';
 import { getAccounts, openAccountMenu as openAccountMenu_ } from '@/accounts.js';
 import { uploadFile } from '@/utility/upload.js';
 import { deepClone } from '@/utility/clone.js';
@@ -96,7 +96,7 @@ import { mfmFunctionPicker } from '@/utility/mfm-function-picker.js';
 import { getPluginHandlers } from '@/plugin';
 import { prefer } from '@/preferences.js';
 
-const $i = signinRequired();
+const $i = ensureSignin();
 
 const modal = inject('modal');
 

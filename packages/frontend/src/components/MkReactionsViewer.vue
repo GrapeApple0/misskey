@@ -4,17 +4,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<component
-	:is="prefer.s.animation ? TransitionGroup : 'div'"
-	:enterActiveClass="$style.transition_x_enterActive"
-	:leaveActiveClass="$style.transition_x_leaveActive"
-	:enterFromClass="$style.transition_x_enterFrom"
-	:leaveToClass="$style.transition_x_leaveTo"
-	:moveClass="$style.transition_x_move"
-	tag="div" :class="$style.root"
->
+<component :is="prefer.s.animation ? TransitionGroup : 'div'" :enterActiveClass="$style.transition_x_enterActive" :leaveActiveClass="$style.transition_x_leaveActive" :enterFromClass="$style.transition_x_enterFrom" :leaveToClass="$style.transition_x_leaveTo" :moveClass="$style.transition_x_move" tag="div" :class="$style.root">
 	<XReaction v-for="[reaction, count] in reactions" :key="reaction" :reaction="reaction" :count="count" :isInitial="initialReactions.has(reaction)" :note="note" @reactionToggled="onMockToggleReaction"/>
-	<slot v-if="hasMoreReactions" name="more"/>
+	<button v-if="hasMoreReactions" class="_button" :class="$style.showMore" @click="showMoreReactions">
+		<span>{{ i18n.ts.more }}</span>
+	</button>
 </component>
 </template>
 
@@ -49,10 +43,6 @@ if (props.note.myReaction && !Object.keys(reactions.value).includes(props.note.m
 	reactions.value[props.note.myReaction] = props.note.reactions[props.note.myReaction];
 }
 
-function showMoreReactions() {
-	max.value = Infinity;
-}
-
 function onMockToggleReaction(emoji: string, count: number) {
 	if (!mock) return;
 
@@ -62,11 +52,22 @@ function onMockToggleReaction(emoji: string, count: number) {
 	emit('mockUpdateMyReaction', emoji, (count - reactions.value[i][1]));
 }
 
-watch(() => props.maxNumber, () => {
-	max.value = props.maxNumber;
-}, { immediate: true, deep: true });
+function showMoreReactions() {
+	let allReactions: [string, number][] = [];
+	const keys = Object.keys(props.note.reactions);
+	const totalLength = keys.length;
 
-watch([() => props.note.reactions, () => max.value], ([newSource, maxNumber]) => {
+	for (let i = 0; i < totalLength; i++) {
+		const reaction = keys[i];
+		if (reaction in props.note.reactions && props.note.reactions[reaction] !== 0) {
+			allReactions.push([reaction, props.note.reactions[reaction]]);
+		}
+	}
+	reactions.value = allReactions;
+	hasMoreReactions.value = false;
+}
+
+watch([() => props.note.reactions, () => props.maxNumber], ([newSource, maxNumber]) => {
 	let newReactions: [string, number][] = [];
 	hasMoreReactions.value = Object.keys(newSource).length > maxNumber;
 
@@ -86,7 +87,7 @@ watch([() => props.note.reactions, () => max.value], ([newSource, maxNumber]) =>
 			.filter(([y], i) => i < maxNumber && !newReactionsNames.includes(y)),
 	];
 
-	newReactions = newReactions.slice(0, maxNumber);
+	newReactions = newReactions.slice(0, props.maxNumber);
 
 	if (props.note.myReaction && !newReactions.map(([x]) => x).includes(props.note.myReaction)) {
 		newReactions.push([props.note.myReaction, newSource[props.note.myReaction]]);
@@ -111,17 +112,6 @@ watch([() => props.note.reactions, () => max.value], ([newSource, maxNumber]) =>
 	position: absolute;
 }
 
-.root {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	margin: 4px -2px 0 -2px;
-
-	&:empty {
-		display: none;
-	}
-}
-
 .showMore {
 	display: inline-flex;
 	height: 42px;
@@ -142,6 +132,17 @@ watch([() => props.note.reactions, () => max.value], ([newSource, maxNumber]) =>
 		font-size: 0.7em;
 		line-height: 42px;
 		margin: 0 0 0 4px;
+	}
+}
+
+.root {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: 4px -2px 0 -2px;
+
+	&:empty {
+		display: none;
 	}
 }
 </style>

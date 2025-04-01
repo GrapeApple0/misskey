@@ -549,7 +549,8 @@ function smallerVisibility(a: Visibility, b: Visibility): Visibility {
 
 export function getRenoteMenu(props: {
 	note: Misskey.entities.Note;
-	renoteButton: ShallowRef<HTMLElement | undefined>;
+	renoteButton: ShallowRef<HTMLElement | null | undefined>;
+	simple?: boolean;
 	mock?: boolean;
 }) {
 	const appearNote = getAppearNote(props.note);
@@ -582,18 +583,21 @@ export function getRenoteMenu(props: {
 					});
 				}
 			},
-		}, {
-			text: i18n.ts.inChannelQuote,
-			icon: 'ti ti-quote',
-			action: () => {
-				if (!props.mock) {
-					os.post({
-						renote: appearNote,
-						channel: appearNote.channel,
-					});
-				}
-			},
 		}]);
+		if (!props.simple) {
+			channelRenoteItems.push({
+				text: i18n.ts.inChannelQuote,
+				icon: 'ti ti-quote',
+				action: () => {
+					if (!props.mock) {
+						os.post({
+							renote: appearNote,
+							channel: appearNote.channel,
+						});
+					}
+				},
+			});
+		}
 	}
 
 	if (!appearNote.channel || appearNote.channel.allowRenoteToExternal) {
@@ -631,7 +635,7 @@ export function getRenoteMenu(props: {
 					});
 				}
 			},
-		}, (props.mock) ? undefined : {
+		}, (props.mock || props.simple) ? undefined : {
 			text: i18n.ts.quote,
 			icon: 'ti ti-quote',
 			action: () => {

@@ -4,14 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div
-	v-if="!hardMuted && muted === false"
-	v-show="!isDeleted"
-	ref="rootEl"
-	v-hotkey="keymap"
-	:class="[$style.root, { [$style.showActionsOnlyHover]: prefer.s.showNoteActionsOnlyHover, [$style.skipRender]: prefer.s.skipNoteRender }]"
-	:tabindex="isDeleted ? '-1' : '0'"
->
+<div v-if="!hardMuted && muted === false" v-show="!isDeleted" ref="rootEl" v-hotkey="keymap" :class="[$style.root, { [$style.showActionsOnlyHover]: prefer.s.showNoteActionsOnlyHover, [$style.skipRender]: prefer.s.skipNoteRender }]" :tabindex="isDeleted ? '-1' : '0'">
 	<MkNoteSub v-if="appearNote.reply && !renoteCollapsed" :note="appearNote.reply" :class="$style.replyTo"/>
 	<div v-if="pinned" :class="$style.tip"><i class="ti ti-pin"></i> {{ i18n.ts.pinnedNote }}</div>
 	<div v-if="isRenote" :class="$style.renote">
@@ -51,31 +44,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<MkInstanceTicker v-if="showTicker" :host="appearNote.user.host" :instance="appearNote.user.instance"/>
 			<div style="container-type: inline-size;">
 				<p v-if="appearNote.cw != null" :class="$style.cw">
-					<Mfm
-						v-if="appearNote.cw != ''"
-						:text="appearNote.cw"
-						:author="appearNote.user"
-						:nyaize="'respect'"
-						:enableEmojiMenu="true"
-						:enableEmojiMenuReaction="true"
-					/>
+					<Mfm v-if="appearNote.cw != ''" :text="appearNote.cw" :author="appearNote.user" :nyaize="'respect'" :enableEmojiMenu="true" :enableEmojiMenuReaction="true"/>
 					<MkCwButton v-model="showContent" :text="appearNote.text" :renote="appearNote.renote" :files="appearNote.files" :poll="appearNote.poll" style="margin: 4px 0;"/>
 				</p>
 				<div v-show="appearNote.cw == null || showContent" :class="[{ [$style.contentCollapsed]: collapsed }]">
 					<div :class="$style.text">
 						<span v-if="appearNote.isHidden" style="opacity: 0.5">({{ i18n.ts.private }})</span>
 						<MkA v-if="appearNote.replyId" :class="$style.replyIcon" :to="`/notes/${appearNote.replyId}`"><i class="ti ti-arrow-back-up"></i></MkA>
-						<Mfm
-							v-if="appearNote.text"
-							:parsedNodes="parsed"
-							:text="appearNote.text"
-							:author="appearNote.user"
-							:nyaize="'respect'"
-							:emojiUrls="appearNote.emojis"
-							:enableEmojiMenu="true"
-							:enableEmojiMenuReaction="true"
-							class="_selectable"
-						/>
+						<Mfm v-if="appearNote.text" :parsedNodes="parsed" :text="appearNote.text" :author="appearNote.user" :nyaize="'respect'" :emojiUrls="appearNote.emojis" :enableEmojiMenu="true" :enableEmojiMenuReaction="true" class="_selectable"/>
 						<div v-if="translating || translation" :class="$style.translation">
 							<MkLoading v-if="translating" mini/>
 							<div v-else-if="translation">
@@ -117,14 +93,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<i class="ti ti-repeat"></i>
 					<p v-if="appearNote.renoteCount > 0" :class="$style.footerButtonCount">{{ appearNote.renoteCount }}</p>
 				</button>
-				<button v-else-if="canRenote && splitRNButton" ref="renoteButton" :class="$style.footerButton" class="_button" @click="renote()">
+				<button v-else-if="canRenote && splitRNButton" ref="renoteButton" :class="$style.footerButton" class="_button" @mousedown.prevent="renote()">
 					<i class="ti ti-repeat"></i>
 					<p v-if="appearNote.renoteCount > 0" :class="$style.footerButtonCount">{{ number(appearNote.renoteCount) }}</p>
 				</button>
 				<button v-else :class="$style.footerButton" class="_button" disabled>
 					<i class="ti ti-ban"></i>
 				</button>
-				<button v-if="canRenote && splitRNButton" ref="quoteButton" :class="$style.footerButton" class="_button" @click="quoteRenote()">
+				<button v-if="canRenote && splitRNButton" ref="quoteButton" :class="$style.footerButton" class="_button" @mousedown.prevent="quoteRenote()">
 					<i class="ti ti-quote"></i>
 				</button>
 				<button ref="reactButton" :class="$style.footerButton" class="_button" @click="toggleReact()">
@@ -243,7 +219,7 @@ const emit = defineEmits<{
 	(ev: 'reaction', emoji: string): void;
 	(ev: 'removeReaction', emoji: string): void;
 }>();
-const splitRNButton = store.s.splitRNButton;
+const splitRNButton = prefer.s.splitRNButton;
 const defaultRenoteVisibility = store.s.defaultRenoteVisibility;
 const defaultRenoteLocalOnly = store.s.defaultRenoteLocalOnly;
 const inTimeline = inject<boolean>('inTimeline', false);
@@ -450,52 +426,11 @@ if (!props.mock) {
 	}
 }
 
-function smallerVisibility(a: Visibility | string, b: Visibility | string): Visibility {
-	if (a === 'specified' || b === 'specified') return 'specified';
-	if (a === 'followers' || b === 'followers') return 'followers';
-	if (a === 'home' || b === 'home') return 'home';
-	// if (a === 'public' || b === 'public')
-	return 'public';
-}
-
-function renote(viaKeyboard = false) {
+function renote() {
 	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	showMovedDialog();
-	const { menu: renoteMenu } = getRenoteMenu({ note: appearNote.value, renoteButton });
-	if (!splitRNButton) {
-		os.popupMenu(renoteMenu, renoteButton.value, {
-			viaKeyboard,
-		});
-	} else {
-		if (appearNote.value.channel) {
-			if (!props.mock) {
-				misskeyApi('notes/create', {
-					renoteId: appearNote.value.id,
-					channelId: appearNote.value.channelId,
-				}).then(() => {
-					os.toast(i18n.ts.renoted);
-				});
-			}
-		}
-
-		if (!appearNote.value.channel || appearNote.value.channel.allowRenoteToExternal) {
-			const configuredVisibility = (defaultRenoteVisibility !== 'follow' ? defaultRenoteVisibility : appearNote.value.visibility) as Visibility;
-			let visibility: Visibility = appearNote.value.visibility as Visibility;
-			visibility = smallerVisibility(visibility, configuredVisibility);
-			if (appearNote.value.channel?.isSensitive) {
-				visibility = smallerVisibility(visibility, 'home');
-			}
-			if (!props.mock) {
-				misskeyApi('notes/create', {
-					localOnly: appearNote.value.localOnly || defaultRenoteLocalOnly,
-					visibility,
-					renoteId: appearNote.value.id,
-				}).then(() => {
-					os.toast(i18n.ts.renoted);
-				});
-			}
-		}
-	}
+	const { menu: renoteMenu } = getRenoteMenu({ note: appearNote.value, renoteButton: renoteButton, simple: splitRNButton });
+	os.popupMenu(renoteMenu, renoteButton.value);
 }
 
 function quoteRenote() {

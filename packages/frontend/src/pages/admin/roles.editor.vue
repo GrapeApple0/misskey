@@ -761,7 +761,8 @@ import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import { deepClone } from '@/utility/clone.js';
 import { rolesCache } from '@/cache.js';
-import { useRouter } from '@/router/supplier.js';
+import { useRouter } from '@/router.js';
+
 const router = useRouter();
 
 const emit = defineEmits<{
