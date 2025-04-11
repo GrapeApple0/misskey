@@ -12,6 +12,8 @@ import type { MiUser } from '@/models/User.js';
 import type { MiRole } from '@/models/Role.js';
 import { bindThis } from '@/decorators.js';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+import { IdService } from '@/core/IdService.js';
+import { Packed } from '@/misc/json-schema.js';
 
 @Injectable()
 export class RoleEntityService {
@@ -28,7 +30,7 @@ export class RoleEntityService {
 	public async pack(
 		src: MiRole['id'] | MiRole,
 		me?: { id: MiUser['id'] } | null | undefined,
-	) {
+	): Promise<Packed<'Role'>> {
 		const role = typeof src === 'object' ? src : await this.rolesRepository.findOneByOrFail({ id: src });
 
 		const assignedCount = await this.roleAssignmentsRepository.createQueryBuilder('assign')
@@ -64,6 +66,7 @@ export class RoleEntityService {
 			isModerator: role.isModerator,
 			isExplorable: role.isExplorable,
 			asBadge: role.asBadge,
+			preserveAssignmentOnMoveAccount: role.preserveAssignmentOnMoveAccount,
 			canEditMembersByModerator: role.canEditMembersByModerator,
 			displayOrder: role.displayOrder,
 			policies: policies,

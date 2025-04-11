@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { parseBigInt16 } from '@/misc/bigint.js';
+
 const CHARS = '0123456789abcdef';
 
 // same as object-id
@@ -37,6 +39,13 @@ export function genMeid(date: Date | number): string {
 export function parseMeid(id: string): { date: Date; } {
 	return {
 		date: new Date(parseInt(id.slice(0, 12), 16) - 0x800000000000),
+	};
+}
+
+export function parseMeidFull(id: string): { date: number; additional: bigint; } {
+	return {
+		date: parseInt(id.slice(0, 12), 16) - 0x800000000000,
+		additional: parseBigInt16(id.slice(12, 24)),
 	};
 }
 
