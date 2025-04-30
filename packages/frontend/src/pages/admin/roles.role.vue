@@ -14,12 +14,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<MkFolder>
 				<template #icon><i class="ti ti-info-circle"></i></template>
 				<template #label>{{ i18n.ts.info }}</template>
-				<XEditor :modelValue="role" readonly/>
+				<XEditor :modelValue="data"/>
+				<div :class="$style.footer">
+					<div class="_spacer" style="--MI_SPACER-w: 600px; --MI_SPACER-min: 16px; --MI_SPACER-max: 16px;">
+						<MkButton primary rounded @click="save"><i class="ti ti-check"></i> {{ i18n.ts.save }}</MkButton>
+					</div>
+				</div>
 			</MkFolder>
-			<MkFolder v-if="role.target === 'manual'" defaultOpen>
+			<MkFolder v-if="data.target === 'manual'" defaultOpen>
 				<template #icon><i class="ti ti-users"></i></template>
 				<template #label>{{ i18n.ts.users }}</template>
-				<template #suffix>{{ role.usersCount }}</template>
+				<template #suffix>{{ data.usersCount }}</template>
 				<div class="_gaps">
 					<MkButton primary rounded @click="assign"><i class="ti ti-plus"></i> {{ i18n.ts.assign }}</MkButton>
 
@@ -62,7 +67,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, ref } from 'vue';
+import * as Misskey from 'misskey-js';
 import XEditor from './roles.editor.vue';
 import MkFolder from '@/components/MkFolder.vue';
 import * as os from '@/os.js';
@@ -75,7 +81,7 @@ import MkInfo from '@/components/MkInfo.vue';
 import MkPagination from '@/components/MkPagination.vue';
 import { infoImageUrl } from '@/instance.js';
 import { useRouter } from '@/router.js';
-import { deepClone } from '@/utility/clone';
+import { rolesCache } from '@/cache.js';
 
 const router = useRouter();
 
@@ -93,28 +99,59 @@ const usersPagination = {
 
 const expandedItems = ref([]);
 
-const role = reactive(await misskeyApi('admin/roles/show', {
-	roleId: props.id,
-}));
+const role = ref<Misskey.entities.Role | null>(null);
+const data = ref<any>(null);
 
-let data = ref(null);
 if (props.id) {
-	data.value = role;
+	role.value = await misskeyApi('admin/roles/show', {
+		roleId: props.id,
+	});
+
+	data.value = role.value;
+} else {
+	data.value = {
+		name: 'New Role',
+		description: '',
+		isAdministrator: false,
+		isModerator: false,
+		color: null,
+		iconUrl: null,
+		target: 'manual',
+		condFormula: { id: uuid(), type: 'isRemote' },
+		isPublic: false,
+		isExplorable: false,
+		asBadge: false,
+		canEditMembersByModerator: false,
+		displayOrder: 0,
+		policies: {},
+		canEditNote: false,
+	};
+}
+
+async function save() {
+	rolesCache.delete();
+	if (props.id) {
+		os.apiWithDialog('admin/roles/update', {
+			roleId: props.id,
+			...data.value,
+		});
+		router.push('/admin/roles/' + props.id);
+	}
 }
 
 function edit() {
-	router.push('/admin/roles/' + role.id + '/edit');
+	router.push('/admin/roles/' + props.id + '/edit');
 }
 
 async function del() {
 	const { canceled } = await os.confirm({
 		type: 'warning',
-		text: i18n.tsx.deleteAreYouSure({ x: role.name }),
+		text: i18n.tsx.deleteAreYouSure({ x: data.value.name }),
 	});
 	if (canceled) return;
 
 	await os.apiWithDialog('admin/roles/delete', {
-		roleId: role.id,
+		roleId: data.value.id,
 	});
 
 	router.push('/admin/roles');
@@ -124,7 +161,7 @@ async function assign() {
 	const user = await os.selectUser({ includeSelf: true });
 
 	const { canceled: canceled2, result: period } = await os.select({
-		title: i18n.ts.period + ': ' + role.name,
+		title: i18n.ts.period + ': ' + role.value.name,
 		items: [{
 			value: 'indefinitely', text: i18n.ts.indefinitely,
 		}, {
@@ -147,7 +184,7 @@ async function assign() {
 		: period === 'oneMonth' ? Date.now() + (1000 * 60 * 60 * 24 * 30)
 		: null;
 
-	await os.apiWithDialog('admin/roles/assign', { roleId: role.id, userId: user.id, expiresAt });
+	await os.apiWithDialog('admin/roles/assign', { roleId: role.value.id, userId: user.id, expiresAt });
 	//role.users.push(user);
 }
 
@@ -157,7 +194,7 @@ async function unassign(user, ev) {
 		icon: 'ti ti-x',
 		danger: true,
 		action: async () => {
-			await os.apiWithDialog('admin/roles/unassign', { roleId: role.id, userId: user.id });
+			await os.apiWithDialog('admin/roles/unassign', { roleId: role.value.id, userId: user.id });
 			//role.users = role.users.filter(u => u.id !== user.id);
 		},
 	}], ev.currentTarget ?? ev.target);
@@ -176,9 +213,13 @@ const headerActions = computed(() => []);
 const headerTabs = computed(() => []);
 
 definePage(() => ({
-	title: `${i18n.ts.role}: ${role.name}`,
+	title: `${i18n.ts.role}: ${role.value.name}`,
 	icon: 'ti ti-badge',
 }));
+
+function uuid() {
+	throw new Error('Function not implemented.');
+}
 </script>
 
 <style lang="scss" module>
@@ -218,5 +259,10 @@ definePage(() => ({
 	.chevron {
 		transform: rotateX(180deg);
 	}
+}
+
+.footer {
+	-webkit-backdrop-filter: var(--MI-blur, blur(15px));
+	backdrop-filter: var(--MI-blur, blur(15px));
 }
 </style>

@@ -53,7 +53,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<template #label>{{ i18n.ts._role._options.canEditNote }}</template>
 						<template #suffix>{{ policies.canEditNote ? i18n.ts.yes : i18n.ts.no }}</template>
 						<MkSwitch v-model="policies.canEditNote">
-							<template #label>{{ i18n.ts.canEditNote }}</template>
+							<template #label>{{ i18n.ts._role._options.canEditNote }}</template>
 						</MkSwitch>
 					</MkFolder>
 
@@ -234,13 +234,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</MkInput>
 					</MkFolder>
 
-					<MkFolder v-if="matchQuery([i18n.ts._role._options.canEditNote, 'canEditNote'])">
-						<template #label>{{ i18n.ts._role._options.canEditNote }}</template>
-						<template #suffix>{{ policies.canEditNote ? i18n.ts.yes : i18n.ts.no }}</template>
-						<MkSwitch v-model="policies.canEditNote">
-						</mkswitch>
-					</MkFolder>
-
 					<MkFolder v-if="matchQuery([i18n.ts._role._options.canImportAntennas, 'canImportAntennas'])">
 						<template #label>{{ i18n.ts._role._options.canImportAntennas }}</template>
 						<template #suffix>{{ policies.canImportAntennas ? i18n.ts.yes : i18n.ts.no }}</template>
@@ -320,6 +313,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkSwitch v-model="policies.canPublicNote">
 						<template #label>{{ i18n.ts.enable }}</template>
 					</MkSwitch>
+				</MkFolder>
+
+				<MkFolder v-if="matchQuery([i18n.ts._role._options.canEditNote, 'canEditNote'])">
+					<template #label>{{ i18n.ts._role._options.canEditNote }}</template>
+					<template #suffix>{{ policies.canEditNote ? i18n.ts.yes : i18n.ts.no }}</template>
+					<div class="_gaps">
+						<MkSwitch v-model="policies.canEditNote.value">
+							<template #label>{{ i18n.ts.enable }}</template>
+						</MkSwitch>
+					</div>
 				</MkFolder>
 
 				<MkFolder v-if="matchQuery([i18n.ts._role._options.chatAvailability, 'chatAvailability'])">
@@ -547,19 +550,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkSwitch>
 				</MkFolder>
 			</div>
-			</MkFolder>
 			<MkButton primary rounded @click="create"><i class="ti ti-plus"></i> {{ i18n.ts._role.new }}</MkButton>
 			<div class="_gaps_s">
 				<MkFoldableSection>
 					<template #header>{{ i18n.ts._role.manualRoles }}</template>
 					<div class="_gaps_s">
-						<MkRolePreview v-for="role in roles.filter(x => x.target === 'manual')" :key="role.id" :role="role" :forModeration="true"/>
+						<MkRolePreview v-for="role in roles.filter(x => x.target === 'manual')" :key="role.id" :role="role" :forModeration="true" :detailed="false"/>
 					</div>
 				</MkFoldableSection>
 				<MkFoldableSection>
 					<template #header>{{ i18n.ts._role.conditionalRoles }}</template>
 					<div class="_gaps_s">
-						<MkRolePreview v-for="role in roles.filter(x => x.target === 'conditional')" :key="role.id" :role="role" :forModeration="true"/>
+						<MkRolePreview v-for="role in roles.filter(x => x.target === 'conditional')" :key="role.id" :role="role" :forModeration="true" :detailed="false"/>
 					</div>
 				</MkFoldableSection>
 			</div>
