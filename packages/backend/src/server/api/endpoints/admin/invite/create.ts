@@ -69,6 +69,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				ticketsPromises.push(this.registrationTicketsRepository.insertOne({
 					id: this.idService.genId(),
 					createdAt: new Date(),
+					createdBy: me,
+					createdById: me.id,
 					expiresAt: ps.expiresAt ? new Date(ps.expiresAt) : null,
 					code: generateInviteCode(),
 				}));

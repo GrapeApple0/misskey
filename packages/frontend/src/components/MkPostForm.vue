@@ -73,7 +73,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<textarea ref="textareaEl" v-model="text" :class="[$style.text]" :disabled="posting || posted" :readonly="textAreaReadOnly" :placeholder="placeholder" data-cy-post-form-text @keydown="onKeydown" @paste="onPaste" @compositionupdate="onCompositionUpdate" @compositionend="onCompositionEnd"/>
 	</div>
 	<input v-show="withHashtags" ref="hashtagsInputEl" v-model="hashtags" :class="$style.hashtags" :placeholder="i18n.ts.hashtags" list="hashtags">
-	<XPostFormAttaches v-model="files" @detach="detachFile" @changeSensitive="updateFileSensitive" @changeName="updateFileName" @replaceFile="replaceFile"/>
+	<XPostFormAttaches v-model="files" @detach="detachFile" @changeSensitive="updateFileSensitive" @changeName="updateFileName"/>
 	<MkPollEditor v-if="poll" v-model="poll" @destroyed="poll = null"/>
 	<MkNotePreview v-if="showPreview" :class="$style.preview" :text="text" :files="files" :poll="poll ?? undefined" :useCw="useCw" :cw="cw" :user="postAccount ?? $i"/>
 	<div v-if="showingOptions" style="padding: 8px 16px;">
@@ -121,14 +121,13 @@ import { formatTimeString } from '@/utility/format-time-string.js';
 import { Autocomplete } from '@/utility/autocomplete.js';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
-import { selectFiles } from '@/utility/select-file.js';
+import { selectFiles } from '@/utility/drive.js';
 import { store } from '@/store.js';
 import MkInfo from '@/components/MkInfo.vue';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import { ensureSignin, notesCount, incNotesCount } from '@/i.js';
 import { getAccounts, openAccountMenu as openAccountMenu_ } from '@/accounts.js';
-import { uploadFile } from '@/utility/upload.js';
 import { deepClone } from '@/utility/clone.js';
 import MkRippleEffect from '@/components/MkRippleEffect.vue';
 import { miLocalStorage } from '@/local-storage.js';
@@ -138,6 +137,8 @@ import { mfmFunctionPicker } from '@/utility/mfm-function-picker.js';
 import { prefer } from '@/preferences.js';
 import { getPluginHandlers } from '@/plugin.js';
 import { DI } from '@/di.js';
+import { globalEvents } from '@/events.js';
+import { checkDragDataType, getDragData } from '@/drag-and-drop.js';
 
 const $i = ensureSignin();
 
@@ -467,18 +468,6 @@ function updateFileName(file, name) {
 	files.value[files.value.findIndex(x => x.id === file.id)].name = name;
 }
 
-function replaceFile(file: Misskey.entities.DriveFile, newFile: Misskey.entities.DriveFile): void {
-	files.value[files.value.findIndex(x => x.id === file.id)] = newFile;
-}
-
-function upload(file: File, name?: string): void {
-	if (props.mock) return;
-
-	uploadFile(file, prefer.s.uploadFolder, name).then(res => {
-		files.value.push(res);
-	});
-}
-
 function setVisibility() {
 	if (props.channel) {
 		visibility.value = 'public';
@@ -489,8 +478,8 @@ function setVisibility() {
 	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkVisibilityPicker.vue')), {
 		currentVisibility: visibility.value,
 		isSilenced: $i.isSilenced,
-		currentLocalOnly: localOnly.value,
-		src: visibilityButton.value!,
+		localOnly: localOnly.value,
+		anchorElement: visibilityButton.value,
 		...(props.reply ? { isReplyVisibilitySpecified: props.reply.visibility === 'specified' } : {}),
 	}, {
 		changeVisibility: v => {
@@ -632,15 +621,24 @@ async function onPaste(ev: ClipboardEvent) {
 	if (props.mock) return;
 	if (!ev.clipboardData) return;
 
+	let pastedFiles: File[] = [];
 	for (const { item, i } of Array.from(ev.clipboardData.items, (data, x) => ({ item: data, i: x }))) {
 		if (item.kind === 'file') {
 			const file = item.getAsFile();
 			if (!file) continue;
 			const lio = file.name.lastIndexOf('.');
 			const ext = lio >= 0 ? file.name.slice(lio) : '';
-			const formatted = `${formatTimeString(new Date(file.lastModified), pastedFileName).replace(/{{number}}/g, `${i + 1}`)}${ext}`;
-			upload(file, formatted);
+			const formattedName = `${formatTimeString(new Date(file.lastModified), pastedFileName).replace(/{{number}}/g, `${i + 1}`)}${ext}`;
+			const renamedFile = new File([file], formattedName, { type: file.type });
+			pastedFiles.push(renamedFile);
 		}
+	}
+	if (pastedFiles.length > 0) {
+		ev.preventDefault();
+		os.launchUploader(pastedFiles, {}).then(driveFiles => {
+			files.value.push(...driveFiles);
+		});
+		return;
 	}
 
 	const paste = ev.clipboardData.getData('text');
@@ -674,7 +672,9 @@ async function onPaste(ev: ClipboardEvent) {
 
 			const fileName = formatTimeString(new Date(), pastedFileName).replace(/{{number}}/g, '0');
 			const file = new File([paste], `${fileName}.txt`, { type: 'text/plain' });
-			upload(file, `${fileName}.txt`);
+			os.launchUploader([file], {}).then(driveFiles => {
+				files.value.push(...driveFiles);
+			});
 		});
 	}
 }
@@ -682,8 +682,7 @@ async function onPaste(ev: ClipboardEvent) {
 function onDragover(ev) {
 	if (!ev.dataTransfer.items[0]) return;
 	const isFile = ev.dataTransfer.items[0].kind === 'file';
-	const isDriveFile = ev.dataTransfer.types[0] === _DATA_TRANSFER_DRIVE_FILE_;
-	if (isFile || isDriveFile) {
+	if (isFile || checkDragDataType(ev, ['driveFiles'])) {
 		ev.preventDefault();
 		draghover.value = true;
 		switch (ev.dataTransfer.effectAllowed) {
@@ -719,16 +718,19 @@ function onDrop(ev: DragEvent): void {
 	// ファイルだったら
 	if (ev.dataTransfer && ev.dataTransfer.files.length > 0) {
 		ev.preventDefault();
-		for (const x of Array.from(ev.dataTransfer.files)) upload(x);
+		os.launchUploader(Array.from(ev.dataTransfer.files), {}).then(driveFiles => {
+			files.value.push(...driveFiles);
+		});
 		return;
 	}
 
 	//#region ドライブのファイル
-	const driveFile = ev.dataTransfer?.getData(_DATA_TRANSFER_DRIVE_FILE_);
-	if (driveFile != null && driveFile !== '') {
-		const file = JSON.parse(driveFile);
-		files.value.push(file);
-		ev.preventDefault();
+	{
+		const droppedData = getDragData(ev, 'driveFiles');
+		if (droppedData != null) {
+			files.value.push(...droppedData);
+			ev.preventDefault();
+		}
 	}
 	//#endregion
 }
@@ -871,6 +873,9 @@ async function post(ev?: MouseEvent) {
 		} else {
 			clear();
 		}
+
+		globalEvents.emit('notePosted', res.createdNote);
+
 		nextTick(() => {
 			deleteDraft();
 			emit('posted');
