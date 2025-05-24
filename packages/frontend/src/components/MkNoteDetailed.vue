@@ -4,13 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div
-	v-if="!muted && !isDeleted"
-	ref="rootEl"
-	v-hotkey="keymap"
-	:class="$style.root"
-	tabindex="0"
->
+<div v-if="!muted && !isDeleted" ref="rootEl" v-hotkey="keymap" :class="$style.root" tabindex="0">
 	<div v-if="appearNote.reply && appearNote.reply.replyId">
 		<div v-if="!conversationLoaded" style="padding: 16px">
 			<MkButton style="margin: 0 auto;" primary rounded @click="loadConversation">{{ i18n.ts.loadConversation }}</MkButton>
@@ -75,30 +69,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</header>
 		<div :class="$style.noteContent">
 			<p v-if="appearNote.cw != null" :class="$style.cw">
-				<Mfm
-					v-if="appearNote.cw != ''"
-					:text="appearNote.cw"
-					:author="appearNote.user"
-					:nyaize="'respect'"
-					:enableEmojiMenu="true"
-					:enableEmojiMenuReaction="true"
-				/>
+				<Mfm v-if="appearNote.cw != ''" :text="appearNote.cw" :author="appearNote.user" :nyaize="'respect'" :enableEmojiMenu="true" :enableEmojiMenuReaction="true"/>
 				<MkCwButton v-model="showContent" :text="appearNote.text" :renote="appearNote.renote" :files="appearNote.files" :poll="appearNote.poll"/>
 			</p>
 			<div v-show="appearNote.cw == null || showContent">
 				<span v-if="appearNote.isHidden" style="opacity: 0.5">({{ i18n.ts.private }})</span>
 				<MkA v-if="appearNote.replyId" :class="$style.noteReplyTarget" :to="`/notes/${appearNote.replyId}`"><i class="ti ti-arrow-back-up"></i></MkA>
-				<Mfm
-					v-if="appearNote.text"
-					:parsedNodes="parsed"
-					:text="appearNote.text"
-					:author="appearNote.user"
-					:nyaize="'respect'"
-					:emojiUrls="appearNote.emojis"
-					:enableEmojiMenu="true"
-					:enableEmojiMenuReaction="true"
-					class="_selectable"
-				/>
+				<Mfm v-if="appearNote.text" :parsedNodes="parsed" :text="appearNote.text" :author="appearNote.user" :nyaize="'respect'" :emojiUrls="appearNote.emojis" :enableEmojiMenu="true" :enableEmojiMenuReaction="true" class="_selectable"/>
 				<a v-if="appearNote.renote != null" :class="$style.rn">RN:</a>
 				<div v-if="translating || translation" :class="$style.translation">
 					<MkLoading v-if="translating" mini/>
@@ -110,16 +87,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<div v-if="appearNote.files && appearNote.files.length > 0">
 					<MkMediaList ref="galleryEl" :mediaList="appearNote.files"/>
 				</div>
-				<MkPoll
-					v-if="appearNote.poll"
-					:noteId="appearNote.id"
-					:multiple="appearNote.poll.multiple"
-					:expiresAt="appearNote.poll.expiresAt"
-					:choices="$appearNote.pollChoices"
-					:author="appearNote.user"
-					:emojiUrls="appearNote.emojis"
-					:class="$style.poll"
-				/>
+				<MkPoll v-if="appearNote.poll" :noteId="appearNote.id" :multiple="appearNote.poll.multiple" :expiresAt="appearNote.poll.expiresAt" :choices="$appearNote.pollChoices" :author="appearNote.user" :emojiUrls="appearNote.emojis" :class="$style.poll"/>
 				<div v-if="isEnabledUrlPreview">
 					<MkUrlPreview v-for="url in urls" :key="url" :url="url" :compact="true" :detail="true" style="margin-top: 6px;"/>
 				</div>
@@ -140,16 +108,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkTime :time="appearNote.updatedAt" mode="detail" colored/>
 				</MkA>
 			</div>
-			<MkReactionsViewer
-				v-if="appearNote.reactionAcceptance !== 'likeOnly'"
-				style="margin-top: 6px;"
-				:reactions="$appearNote.reactions"
-				:reactionEmojis="$appearNote.reactionEmojis"
-				:myReaction="$appearNote.myReaction"
-				:noteId="appearNote.id"
-				:maxNumber="16"
-				@mockUpdateMyReaction="emitUpdReaction"
-			/>
+			<MkReactionsViewer v-if="appearNote.reactionAcceptance !== 'likeOnly'" style="margin-top: 6px;" :reactions="$appearNote.reactions" :reactionEmojis="$appearNote.reactionEmojis" :myReaction="$appearNote.myReaction" :noteId="appearNote.id" :maxNumber="16" @mockUpdateMyReaction="emitUpdReaction"/>
 			<button class="_button" :class="$style.noteFooterButton" @click="reply()">
 				<i class="ti ti-arrow-back-up"></i>
 				<p v-if="appearNote.repliesCount > 0" :class="$style.noteFooterButtonCount">{{ number(appearNote.repliesCount) }}</p>
@@ -367,82 +326,72 @@ const splitRNButton = prefer.s.splitRNButton;
 const defaultRenoteVisibility = store.s.defaultRenoteVisibility;
 const defaultRenoteLocalOnly = store.s.defaultRenoteLocalOnly;
 const ap = ref<any>(null);
+const pleaseLoginContext = computed<OpenOnRemoteOptions>(() => ({
+	type: 'lookup',
+	url: `https://${host}/notes/${appearNote.id}`,
+}));
+const replies = ref<Misskey.entities.Note[]>([]);
+
+useGlobalEvent('noteDeleted', (noteId) => {
+	if (noteId === note.id || noteId === appearNote.id) {
+		isDeleted.value = true;
+	}
+});
+
+const keymap = {
+	'r': () => reply(),
+	'e|a|plus': () => react(),
+	'q': () => renote(),
+	'm': () => showMenu(),
+	'c': () => {
+		if (!prefer.s.showClipButtonInNoteFooter) return;
+		clip();
+	},
+	'o': () => galleryEl.value?.openGallery(),
+	'v|enter': () => {
+		if (appearNote.cw != null) {
+			showContent.value = !showContent.value;
+		}
+	},
+	'esc': {
+		allowRepeat: true,
+		callback: () => blur(),
+	},
+} as const satisfies Keymap;
+
+provide(DI.mfmEmojiReactCallback, (reaction) => {
+	sound.playMisskeySfx('reaction');
+	misskeyApi('notes/reactions/create', {
+		noteId: appearNote.id,
+		reaction: reaction,
+	}).then(() => {
+		noteEvents.emit(`reacted:${appearNote.id}`, {
+			userId: $i!.id,
+			reaction: reaction,
+		});
+	});
+});
 onMounted(() => {
 	misskeyApi('ap/get', {
 		uri: appearNote.uri ?? `${url}/notes/${appearNote.id}`,
 	}).then(res => {
 		ap.value = res;
 	});
-	const replies = ref<Misskey.entities.Note[]>([]);
-	const canRenote = computed(() => ['public', 'home'].includes(appearNote.visibility) || appearNote.userId === $i?.id);
-
-	useGlobalEvent('noteDeleted', (noteId) => {
-		if (noteId === note.id || noteId === appearNote.id) {
-			isDeleted.value = true;
-		}
-	});
-
-	const pleaseLoginContext = computed<OpenOnRemoteOptions>(() => ({
-		type: 'lookup',
-		url: `https://${host}/notes/${appearNote.id}`,
-	}));
-
-	const keymap = {
-		'r': () => reply(),
-		'e|a|plus': () => react(),
-		'q': () => renote(),
-		'm': () => showMenu(),
-		'c': () => {
-			if (!prefer.s.showClipButtonInNoteFooter) return;
-			clip();
-		},
-		'o': () => galleryEl.value?.openGallery(),
-		'v|enter': () => {
-			if (appearNote.cw != null) {
-				showContent.value = !showContent.value;
-			}
-		},
-		'esc': {
-			allowRepeat: true,
-			callback: () => blur(),
-		},
-	} as const satisfies Keymap;
-
-	provide(DI.mfmEmojiReactCallback, (reaction) => {
-		sound.playMisskeySfx('reaction');
-		misskeyApi('notes/reactions/create', {
-			noteId: appearNote.id,
-			reaction: reaction,
-		}).then(() => {
-			noteEvents.emit(`reacted:${appearNote.id}`, {
-				userId: $i!.id,
-				reaction: reaction,
-			});
-		});
-	});
-
-	const tab = ref(props.initialTab);
-	const reactionTabType = ref<string | null>(null);
-
-	const renotesPagination = computed(() => ({
-		endpoint: 'notes/renotes',
-		limit: 10,
-		params: {
-			noteId: appearNote.id,
-		},
-	}));
-
-	const reactionsPagination = computed(() => ({
-		endpoint: 'notes/reactions',
-		limit: 10,
-		params: {
-			noteId: appearNote.id,
-			type: reactionTabType.value,
-		} })),;
 });
+
+const tab = ref(props.initialTab);
+const reactionTabType = ref<string | null>(null);
 
 const repliesPagination = computed(() => ({
 	endpoint: 'notes/replies',
+	limit: 10,
+	params: {
+		noteId: appearNote.id,
+	},
+}));
+
+const renotesPagination = computed(() => ({
+	endpoint: 'notes/renotes',
 	limit: 10,
 	params: {
 		noteId: appearNote.id,
@@ -454,6 +403,15 @@ const quotesPagination = computed(() => ({
 	limit: 10,
 	params: {
 		noteId: appearNote.id,
+	},
+}));
+
+const reactionsPagination = computed(() => ({
+	endpoint: 'notes/reactions',
+	limit: 10,
+	params: {
+		noteId: appearNote.id,
+		reaction: reactionTabType.value,
 	},
 }));
 

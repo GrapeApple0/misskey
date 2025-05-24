@@ -19,7 +19,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</button>
 		</div>
 		<div :class="$style.headerRight">
-			<template v-if="!(channel != null && fixed)">
+			<template v-if="!(channel != null && fixed) && updateMode != true">
 				<button v-if="channel == null" ref="visibilityButton" v-tooltip="i18n.ts.visibility" :class="['_button', $style.headerRightItem, $style.visibility]" @click="setVisibility">
 					<span v-if="visibility === 'public'"><i class="ti ti-world"></i></span>
 					<span v-if="visibility === 'home'"><i class="ti ti-home"></i></span>
@@ -34,7 +34,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</template>
 			<span :class="[$style.textCount, { [$style.textOver]: textLength > maxTextLength }]">{{ maxTextLength - textLength }}</span>
 			<span v-if="localOnly"><i class="ti ti-world-off"></i></span>
-			<button v-click-anime v-tooltip="i18n.ts.reactionAcceptance" class="_button" :class="[$style.headerRightItem, { [$style.danger]: reactionAcceptance === 'likeOnly' }]" @click="toggleReactionAcceptance">
+			<button v-if="updateMode != true" v-click-anime v-tooltip="i18n.ts.reactionAcceptance" class="_button" :class="[$style.headerRightItem, { [$style.danger]: reactionAcceptance === 'likeOnly' }]" @click="toggleReactionAcceptance">
 				<span v-if="reactionAcceptance === 'likeOnly'"><i class="ti ti-heart"></i></span>
 				<span v-else-if="reactionAcceptance === 'likeOnlyForRemote'"><i class="ti ti-heart-plus"></i></span>
 				<span v-else><i class="ti ti-icons"></i></span>
@@ -54,7 +54,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<MkNoteSimple v-if="reply" :class="$style.targetNote" :note="reply"/>
 	<MkNoteSimple v-if="renoteTargetNote" :class="$style.targetNote" :note="renoteTargetNote"/>
 	<div v-if="quoteId" :class="$style.withQuote"><i class="ti ti-quote"></i> {{ i18n.ts.quoteAttached }}<button @click="quoteId = null; renoteTargetNote = null;"><i class="ti ti-x"></i></button></div>
-	<div v-if="visibility === 'specified'" :class="$style.toSpecified">
+	<div v-if="visibility === 'specified' && updateMode != true" :class="$style.toSpecified">
 		<span style="margin-right: 8px;">{{ i18n.ts.recipient }}</span>
 		<div :class="$style.visibleUsers">
 			<span v-for="u in visibleUsers" :key="u.id" :class="$style.visibleUser">
@@ -73,17 +73,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<textarea ref="textareaEl" v-model="text" :class="[$style.text]" :disabled="posting || posted" :readonly="textAreaReadOnly" :placeholder="placeholder" data-cy-post-form-text @keydown="onKeydown" @paste="onPaste" @compositionupdate="onCompositionUpdate" @compositionend="onCompositionEnd"/>
 	</div>
 	<input v-show="withHashtags" ref="hashtagsInputEl" v-model="hashtags" :class="$style.hashtags" :placeholder="i18n.ts.hashtags" list="hashtags">
-	<XPostFormAttaches v-model="files" @detach="detachFile" @changeSensitive="updateFileSensitive" @changeName="updateFileName"/>
-	<MkPollEditor v-if="poll" v-model="poll" @destroyed="poll = null"/>
+	<XPostFormAttaches v-if="updateMode != true" v-model="files" @detach="detachFile" @changeSensitive="updateFileSensitive" @changeName="updateFileName"/>
+	<MkPollEditor v-if="poll && updateMode != true" v-model="poll" @destroyed="poll = null"/>
 	<MkNotePreview v-if="showPreview" :class="$style.preview" :text="text" :files="files" :poll="poll ?? undefined" :useCw="useCw" :cw="cw" :user="postAccount ?? $i"/>
 	<div v-if="showingOptions" style="padding: 8px 16px;">
 	</div>
 	<footer :class="$style.footer">
 		<div :class="$style.footerLeft">
-			<button v-tooltip="i18n.ts.attachFile" class="_button" :class="$style.footerButton" @click="chooseFileFrom"><i class="ti ti-photo-plus"></i></button>
-			<button v-tooltip="i18n.ts.poll" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: poll }]" @click="togglePoll"><i class="ti ti-chart-arrows"></i></button>
+			<button v-if="updateMode != true" v-tooltip="i18n.ts.attachFile" class="_button" :class="$style.footerButton" @click="chooseFileFrom"><i class="ti ti-photo-plus"></i></button>
+			<button v-if="updateMode != true" v-tooltip="i18n.ts.poll" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: poll }]" @click="togglePoll"><i class="ti ti-chart-arrows"></i></button>
 			<button v-tooltip="i18n.ts.useCw" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: useCw }]" @click="useCw = !useCw"><i class="ti ti-eye-off"></i></button>
-			<button v-tooltip="i18n.ts.mention" class="_button" :class="$style.footerButton" @click="insertMention"><i class="ti ti-at"></i></button>
+			<button v-if="updateMode != true" v-tooltip="i18n.ts.mention" class="_button" :class="$style.footerButton" @click="insertMention"><i class="ti ti-at"></i></button>
 			<button v-tooltip="i18n.ts.hashtags" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: withHashtags }]" @click="withHashtags = !withHashtags"><i class="ti ti-hash"></i></button>
 			<button v-if="postFormActions.length > 0" v-tooltip="i18n.ts.plugins" class="_button" :class="$style.footerButton" @click="showActions"><i class="ti ti-plug"></i></button>
 			<button v-tooltip="i18n.ts.emoji" :class="['_button', $style.footerButton]" @click="insertEmoji"><i class="ti ti-mood-happy"></i></button>
@@ -121,7 +121,7 @@ import { formatTimeString } from '@/utility/format-time-string.js';
 import { Autocomplete } from '@/utility/autocomplete.js';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
-selectFiles;
+import { selectFiles } from '@/utility/drive.js';
 import { store } from '@/store.js';
 import MkInfo from '@/components/MkInfo.vue';
 import { i18n } from '@/i18n.js';
@@ -542,13 +542,13 @@ function showOtherSettings() {
 		props: {
 			textLength: textLength,
 		},
-	}, { type: 'divider' }, {
+	}, { type: 'divider' }, props.updateMode !== true ? {
 		icon: reactionAcceptanceIcon,
 		text: i18n.ts.reactionAcceptance,
 		action: () => {
 			toggleReactionAcceptance();
 		},
-	}, { type: 'divider' }, {
+	} : undefined, { type: 'divider' }, {
 		icon: 'ti ti-trash',
 		text: i18n.ts.reset,
 		danger: true,
@@ -829,7 +829,7 @@ async function post(ev?: MouseEvent) {
 		visibility: visibility.value,
 		visibleUserIds: visibility.value === 'specified' ? visibleUsers.value.map(u => u.id) : undefined,
 		reactionAcceptance: reactionAcceptance.value,
-		noteId: props.updateMode ? props.initialNote?.id : undefined,
+		noteId: props.updateMode ? props.target?.id : undefined,
 	};
 
 	if (withHashtags.value && hashtags.value && hashtags.value.trim() !== '') {
@@ -867,75 +867,105 @@ async function post(ev?: MouseEvent) {
 	}
 
 	posting.value = true;
-	misskeyApi(props.updateMode ? 'notes/update' : 'notes/create', postData, token).then((res) => {
-		if (props.freezeAfterPosted) {
-			posted.value = true;
-		} else {
-			clear();
-		}
-
-		globalEvents.emit('notePosted', res.createdNote);
-
-		nextTick(() => {
-			deleteDraft();
-			emit('posted');
-			if (postData.text && postData.text !== '') {
-				const hashtags_ = mfm.parse(postData.text).map(x => x.type === 'hashtag' && x.props.hashtag).filter(x => x) as string[];
-				const history = JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]') as string[];
-				miLocalStorage.setItem('hashtags', JSON.stringify(unique(hashtags_.concat(history))));
+	if (props.updateMode) {
+		postData = {
+			...postData,
+			renoteId: undefined,
+			channelId: undefined,
+			fileIds: undefined,
+			visibleUserIds: undefined,
+		};
+		misskeyApi('notes/update', postData, token).then((res) => {
+			if (props.freezeAfterPosted) {
+				posted.value = true;
+			} else {
+				clear();
 			}
+
+			nextTick(() => {
+				deleteDraft();
+				emit('posted');
+				posting.value = false;
+				postAccount.value = null;
+			});
+		}).catch(err => {
 			posting.value = false;
-			postAccount.value = null;
-
-			incNotesCount();
-			if (notesCount === 1) {
-				claimAchievement('notes1');
-			}
-
-			const text = postData.text ?? '';
-			const lowerCase = text.toLowerCase();
-			if ((lowerCase.includes('love') || lowerCase.includes('❤')) && lowerCase.includes('misskey')) {
-				claimAchievement('iLoveMisskey');
-			}
-			if ([
-				'https://youtu.be/Efrlqw8ytg4',
-				'https://www.youtube.com/watch?v=Efrlqw8ytg4',
-				'https://m.youtube.com/watch?v=Efrlqw8ytg4',
-
-				'https://youtu.be/XVCwzwxdHuA',
-				'https://www.youtube.com/watch?v=XVCwzwxdHuA',
-				'https://m.youtube.com/watch?v=XVCwzwxdHuA',
-
-				'https://open.spotify.com/track/3Cuj0mZrlLoXx9nydNi7RB',
-				'https://open.spotify.com/track/7anfcaNPQWlWCwyCHmZqNy',
-				'https://open.spotify.com/track/5Odr16TvEN4my22K9nbH7l',
-				'https://open.spotify.com/album/5bOlxyl4igOrp2DwVQxBco',
-			].some(url => text.includes(url))) {
-				claimAchievement('brainDiver');
-			}
-
-			if (renoteTargetNote.value && (renoteTargetNote.value.userId === $i.id) && text.length > 0) {
-				claimAchievement('selfQuote');
-			}
-
-			const date = new Date();
-			const h = date.getHours();
-			const m = date.getMinutes();
-			const s = date.getSeconds();
-			if (h >= 0 && h <= 3) {
-				claimAchievement('postedAtLateNight');
-			}
-			if (m === 0 && s === 0) {
-				claimAchievement('postedAt0min0sec');
-			}
+			os.alert({
+				type: 'error',
+				text: err.message + '\n' + (err as any).id,
+			});
 		});
-	}).catch(err => {
-		posting.value = false;
-		os.alert({
-			type: 'error',
-			text: err.message + '\n' + (err as any).id,
+	} else {
+		misskeyApi('notes/create', postData, token).then((res) => {
+			if (props.freezeAfterPosted) {
+				posted.value = true;
+			} else {
+				clear();
+			}
+
+			globalEvents.emit('notePosted', res.createdNote);
+
+			nextTick(() => {
+				deleteDraft();
+				emit('posted');
+				if (postData.text && postData.text !== '') {
+					const hashtags_ = mfm.parse(postData.text).map(x => x.type === 'hashtag' && x.props.hashtag).filter(x => x) as string[];
+					const history = JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]') as string[];
+					miLocalStorage.setItem('hashtags', JSON.stringify(unique(hashtags_.concat(history))));
+				}
+				posting.value = false;
+				postAccount.value = null;
+
+				incNotesCount();
+				if (notesCount === 1) {
+					claimAchievement('notes1');
+				}
+
+				const text = postData.text ?? '';
+				const lowerCase = text.toLowerCase();
+				if ((lowerCase.includes('love') || lowerCase.includes('❤')) && lowerCase.includes('misskey')) {
+					claimAchievement('iLoveMisskey');
+				}
+				if ([
+					'https://youtu.be/Efrlqw8ytg4',
+					'https://www.youtube.com/watch?v=Efrlqw8ytg4',
+					'https://m.youtube.com/watch?v=Efrlqw8ytg4',
+
+					'https://youtu.be/XVCwzwxdHuA',
+					'https://www.youtube.com/watch?v=XVCwzwxdHuA',
+					'https://m.youtube.com/watch?v=XVCwzwxdHuA',
+
+					'https://open.spotify.com/track/3Cuj0mZrlLoXx9nydNi7RB',
+					'https://open.spotify.com/track/7anfcaNPQWlWCwyCHmZqNy',
+					'https://open.spotify.com/track/5Odr16TvEN4my22K9nbH7l',
+					'https://open.spotify.com/album/5bOlxyl4igOrp2DwVQxBco',
+				].some(url => text.includes(url))) {
+					claimAchievement('brainDiver');
+				}
+
+				if (renoteTargetNote.value && (renoteTargetNote.value.userId === $i.id) && text.length > 0) {
+					claimAchievement('selfQuote');
+				}
+
+				const date = new Date();
+				const h = date.getHours();
+				const m = date.getMinutes();
+				const s = date.getSeconds();
+				if (h >= 0 && h <= 3) {
+					claimAchievement('postedAtLateNight');
+				}
+				if (m === 0 && s === 0) {
+					claimAchievement('postedAt0min0sec');
+				}
+			});
+		}).catch(err => {
+			posting.value = false;
+			os.alert({
+				type: 'error',
+				text: err.message + '\n' + (err as any).id,
+			});
 		});
-	});
+	}
 }
 
 function cancel() {
@@ -1036,6 +1066,22 @@ onMounted(() => {
 	if (hashtagsInputEl.value) new Autocomplete(hashtagsInputEl.value, hashtags);
 
 	nextTick(() => {
+		if (props.updateMode && props.target) {
+			const init = props.target;
+			text.value = init.text ? init.text : '';
+			files.value = init.files ?? [];
+			cw.value = init.cw ?? null;
+			useCw.value = init.cw != null;
+			if (init.poll) {
+				poll.value = {
+					choices: init.poll.choices.map(x => x.text),
+					multiple: init.poll.multiple,
+					expiresAt: init.poll.expiresAt ? (new Date(init.poll.expiresAt)).getTime() : null,
+					expiredAfter: null,
+				};
+			}
+			quoteId.value = init.renote ? init.renote.id : null;
+		}
 		// 書きかけの投稿を復元
 		if (!props.instant && !props.mention && !props.specified && !props.mock) {
 			const draft = JSON.parse(miLocalStorage.getItem('drafts') ?? '{}')[draftKey.value];

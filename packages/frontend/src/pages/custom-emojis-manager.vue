@@ -73,7 +73,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { computed, defineAsyncComponent, ref, useTemplateRef } from 'vue';
 import MkButton from '@/components/MkButton.vue';
-import MkEmojiEditor from '@/components/MkEmojiEditor.vue';
 import MkInput from '@/components/MkInput.vue';
 import MkPagination from '@/components/MkPagination.vue';
 import MkRemoteEmojiEditDialog from '@/components/MkRemoteEmojiEditDialog.vue';

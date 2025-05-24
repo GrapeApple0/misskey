@@ -184,7 +184,7 @@ export function getNoteMenu(props: {
 	const cleanups = [] as (() => void)[];
 
 	function edit(): void {
-		os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel, updateMode: true });
+		os.edit({ target: appearNote });
 	}
 
 	function del(): void {

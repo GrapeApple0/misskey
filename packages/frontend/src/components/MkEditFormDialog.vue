@@ -12,23 +12,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { shallowRef } from 'vue';
 import * as Misskey from 'misskey-js';
+import type { PostFormProps } from '@/types/post-form';
 import MkModal from '@/components/MkModal.vue';
 import MkEditForm from '@/components/MkEditForm.vue';
 
-const props = withDefaults(defineProps<{
+const props = withDefaults(defineProps<PostFormProps & {
 	target: Misskey.entities.Note;
-	reply?: Misskey.entities.Note;
-	renote?: Misskey.entities.Note;
-	channel?: any; // TODO
-	mention?: Misskey.entities.User;
-	specified?: Misskey.entities.UserDetailed;
-	initialText?: string;
-	initialCw?: string;
-	initialFiles?: Misskey.entities.DriveFile[];
-	initialVisibleUsers?: Misskey.entities.UserDetailed[];
 	instant?: boolean;
 	fixed?: boolean;
 	autofocus?: boolean;
+	updateMode?: boolean;
 }>(), {
 	initialLocalOnly: undefined,
 });

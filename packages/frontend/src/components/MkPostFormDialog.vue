@@ -17,6 +17,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		v-bind="props"
 		autofocus
 		freezeAfterPosted
+		:updateMode="updateMode"
 		@posted="onPosted"
 		@cancel="modal?.close()"
 		@esc="modal?.close()"

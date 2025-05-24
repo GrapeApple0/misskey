@@ -727,19 +727,24 @@ export function post(props: PostFormProps = {}): Promise<void> {
 	});
 }
 
-export function edit(props: Record<string, any> = {}): Promise<void> {
-	pleaseLogin(undefined, (props.initialText || props.initialNote ? {
-		type: 'share',
-		params: {
-			text: props.initialText ?? props.initialNote.text,
-			visibility: props.initialVisibility ?? props.initialNote?.visibility,
-			localOnly: (props.initialLocalOnly || props.initialNote?.localOnly) ? '1' : '0',
-		},
-	} : undefined));
-
+export function edit(props: PostFormProps & { updateMode?: boolean } = {}): Promise<void> {
+	if (!props.target) {
+		return Promise.resolve();
+	}
+	pleaseLogin({
+		openOnRemote: (props.initialText || props.initialNote ? {
+			type: 'share',
+			params: {
+				text: props.initialText ?? props.initialNote?.text ?? '',
+				visibility: props.initialVisibility ?? props.initialNote?.visibility ?? 'public',
+				localOnly: (props.initialLocalOnly || props.initialNote?.localOnly) ? '1' : '0',
+			},
+		} : undefined),
+	});
+	props.updateMode = true;
 	showMovedDialog();
 	return new Promise(resolve => {
-		const { dispose } = popup(MkEditFormDialog, props, {
+		const { dispose } = popup(MkPostFormDialog, props, {
 			closed: () => {
 				resolve();
 				dispose();
