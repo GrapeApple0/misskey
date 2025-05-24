@@ -98,20 +98,48 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.noSuchList);
 			}
 
-			const timeline = await this.getFromDb(list, {
+			if (!this.serverSettings.enableFanoutTimeline) {
+				const timeline = await this.getFromDb(list, {
+					untilId,
+					sinceId,
+					limit: ps.limit,
+					includeMyRenotes: ps.includeMyRenotes,
+					includeRenotedMyNotes: ps.includeRenotedMyNotes,
+					includeLocalRenotes: ps.includeLocalRenotes,
+					withFiles: ps.withFiles,
+					withRenotes: ps.withRenotes,
+				}, me);
+
+				this.activeUsersChart.read(me);
+
+				return await this.noteEntityService.packMany(timeline, me);
+			}
+
+			const timeline = await this.fanoutTimelineEndpointService.timeline({
 				untilId,
 				sinceId,
 				limit: ps.limit,
-				includeMyRenotes: ps.includeMyRenotes,
-				includeRenotedMyNotes: ps.includeRenotedMyNotes,
-				includeLocalRenotes: ps.includeLocalRenotes,
-				withFiles: ps.withFiles,
-				withRenotes: ps.withRenotes,
-			}, me);
+				allowPartial: ps.allowPartial,
+				me,
+				useDbFallback: this.serverSettings.enableFanoutTimelineDbFallback,
+				redisTimelines: ps.withFiles ? [`userListTimelineWithFiles:${list.id}`] : [`userListTimeline:${list.id}`],
+				alwaysIncludeMyNotes: true,
+				excludePureRenotes: !ps.withRenotes,
+				dbFallback: async (untilId, sinceId, limit) => await this.getFromDb(list, {
+					untilId,
+					sinceId,
+					limit,
+					includeMyRenotes: ps.includeMyRenotes,
+					includeRenotedMyNotes: ps.includeRenotedMyNotes,
+					includeLocalRenotes: ps.includeLocalRenotes,
+					withFiles: ps.withFiles,
+					withRenotes: ps.withRenotes,
+				}, me),
+			});
 
 			this.activeUsersChart.read(me);
 
-			return await this.noteEntityService.packMany(timeline, me);
+			return timeline;
 		});
 	}
 
