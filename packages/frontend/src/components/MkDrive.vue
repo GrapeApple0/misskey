@@ -477,6 +477,7 @@ function onFileClick(ev: MouseEvent, file: Misskey.entities.DriveFile) {
 			} else {
 				selectedFiles.value.push(file);
 			}
+			emit('changeSelectedFiles', selectedFiles.value);
 		} else {
 			if (isAlreadySelected) {
 				//emit('selected', file);
