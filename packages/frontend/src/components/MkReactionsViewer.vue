@@ -34,9 +34,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 import * as Misskey from 'misskey-js';
 import { inject, watch, ref } from 'vue';
 import { TransitionGroup } from 'vue';
+import { isSupportedEmoji } from '@@/js/emojilist.js';
 import { i18n } from '@/i18n.js';
 import XReaction from '@/components/MkReactionsViewer.reaction.vue';
+import { $i } from '@/i.js';
 import { prefer } from '@/preferences.js';
+import { customEmojisMap } from '@/custom-emojis.js';
 import { DI } from '@/di.js';
 
 const props = withDefaults(defineProps<{
@@ -88,6 +91,12 @@ function showMoreReactions() {
 	hasMoreReactions.value = false;
 }
 
+function canReact(reaction: string) {
+	if (!$i) return false;
+	// TODO: CheckPermissions
+	return !reaction.match(/@\w/) && (customEmojisMap.has(reaction) || isSupportedEmoji(reaction));
+}
+
 watch([() => props.reactions, () => props.maxNumber], ([newSource, maxNumber]) => {
 	let newReactions: [string, number][] = [];
 	hasMoreReactions.value = Object.keys(newSource).length > maxNumber;
@@ -104,7 +113,15 @@ watch([() => props.reactions, () => props.maxNumber], ([newSource, maxNumber]) =
 	newReactions = [
 		...newReactions,
 		...Object.entries(newSource)
-			.sort(([, a], [, b]) => b - a)
+			.sort(([emojiA, countA], [emojiB, countB]) => {
+				if (prefer.s.showAvailableReactionsFirstInNote) {
+					if (!canReact(emojiA) && canReact(emojiB)) return 1;
+					if (canReact(emojiA) && !canReact(emojiB)) return -1;
+					return countB - countA;
+				} else {
+					return countB - countA;
+				}
+			})
 			.filter(([y], i) => i < maxNumber && !newReactionsNames.includes(y)),
 	];
 
