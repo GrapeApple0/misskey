@@ -3735,6 +3735,14 @@ export interface Locale extends ILocale {
      */
     "unmuteThread": string;
     /**
+     * フォローの公開範囲
+     */
+    "followingVisibility": string;
+    /**
+     * フォロワーの公開範囲
+     */
+    "followersVisibility": string;
+    /**
      * つながりの公開範囲
      */
     "ffVisibility": string;
