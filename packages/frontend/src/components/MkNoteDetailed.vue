@@ -152,7 +152,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<div>
 		<div v-if="tab === 'replies'" :class="$style.tab_replies">
-			<MkPagination :pagination="repliesPaginator">
+			<MkPagination :paginator="repliesPaginator">
 				<template #default="{ items }">
 					<MkNoteSub v-for="item in items" :key="item.id" :note="item" :class="$style.reply" :detail="true"/>
 				</template>
@@ -170,7 +170,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</MkPagination>
 		</div>
 		<div v-else-if="tab === 'quotes'" :class="$style.tab_quotes">
-			<MkPagination :pagination="quotesPagination">
+			<MkPagination :paginator="quotesPagination">
 				<template #default="{ items }">
 					<MkNoteSub v-for="item in items" :key="item.id" :note="item" :class="$style.reply" :detail="true"/>
 				</template>
@@ -197,7 +197,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<MkObjectView v-if="ap" tall :value="ap"/>
 		</div>
 		<div v-else-if="tab === 'histories'">
-			<MkPagination :pagination="historiesPaginator" :disableAutoLoad="true">
+			<MkPagination :paginator="historiesPaginator" :disableAutoLoad="true">
 				<template #default="{ items }">
 					<MkNoteHistory v-for="item in items" :updatedAt="new Date(item.createdAt)" :text="item.text" :cw="item.cw" :files="item.files" :poll="item.poll" :user="appearNote.user"/>
 				</template>
@@ -379,26 +379,25 @@ onMounted(() => {
 const tab = ref(props.initialTab);
 const reactionTabType = ref<string | null>(null);
 
-const repliesPaginator = computed(() => ({
-	endpoint: 'notes/replies',
+const repliesPaginator = markRaw(new Paginator('notes/replies', {
 	limit: 10,
-	computedParams: computed(() => ({
+	params: {
 		noteId: appearNote.id,
-	})),
+	},
 }));
 
 const renotesPaginator = markRaw(new Paginator('notes/renotes', {
 	limit: 10,
-	computedParams: computed(() => ({
+	params: {
 		noteId: appearNote.id,
-	})),
+	},
 }));
 
 const quotesPagination = markRaw(new Paginator('notes/quotes', {
 	limit: 10,
-	computedParams: computed(() => ({
+	params: {
 		noteId: appearNote.id,
-	})),
+	},
 }));
 
 const reactionsPaginator = markRaw(new Paginator('notes/reactions', {
@@ -411,9 +410,9 @@ const reactionsPaginator = markRaw(new Paginator('notes/reactions', {
 
 const historiesPaginator = markRaw(new Paginator('notes/histories', {
 	limit: 10,
-	computedParams: computed(() => ({
+	params: {
 		noteId: appearNote.id,
-	})),
+	},
 }));
 
 useTooltip(renoteButton, async (showing) => {
