@@ -134,7 +134,11 @@ async function save() {
 }
 
 function edit() {
-	router.push('/admin/roles/' + props.id + '/edit');
+	router.push('/admin/roles/:id/edit', {
+		params: {
+			id: role.value!.id,
+		},
+	});
 }
 
 async function del() {

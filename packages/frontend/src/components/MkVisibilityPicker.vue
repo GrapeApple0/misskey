@@ -63,7 +63,7 @@ const props = withDefaults(defineProps<{
 	currentLocalOnly: boolean;
 	isSilenced: boolean;
 	localOnly: boolean;
-	anchorElement?: HTMLElement;
+	anchorElement?: HTMLElement | null;
 	isReplyVisibilitySpecified?: boolean;
 }>(), {
 });

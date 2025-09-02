@@ -9,7 +9,14 @@ export interface PostFormProps {
 	target?: Misskey.entities.Note;
 	reply?: Misskey.entities.Note | null;
 	renote?: Misskey.entities.Note | null;
-	channel?: Misskey.entities.Channel | null; // TODO
+	channel?: {
+		id: string;
+		name: string;
+		color: string;
+		isSensitive: boolean;
+		allowRenoteToExternal: boolean;
+		userId: string | null;
+	} | null;
 	mention?: Misskey.entities.User;
 	specified?: Misskey.entities.UserDetailed;
 	initialText?: string;
