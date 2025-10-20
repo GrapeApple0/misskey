@@ -7,7 +7,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 <MkContainer :showHeader="widgetProps.showHeader" class="mkw-aiscriptApp">
 	<template #header>App</template>
 	<div :class="$style.root">
-		<MkAsUi v-if="root" :component="root" :components="components" size="small"/>
+		<div v-if="isSyntaxError">Syntax error :(</div>
+		<MkAsUi v-else-if="root" :component="root" :components="components" size="small"/>
 	</div>
 </MkContainer>
 </template>
@@ -56,8 +57,11 @@ const parser = new Parser();
 
 const root = ref<AsUiRoot>();
 const components = ref<Ref<AsUiComponent>[]>([]);
+const isSyntaxError = ref(false);
 
 async function run() {
+	isSyntaxError.value = false;
+
 	const aiscript = new Interpreter({
 		...createAiScriptEnv({
 			storageKey: 'widget',
@@ -80,10 +84,7 @@ async function run() {
 	try {
 		ast = parser.parse(widgetProps.script);
 	} catch (err) {
-		os.alert({
-			type: 'error',
-			text: 'Syntax error :(',
-		});
+		isSyntaxError.value = true;
 		return;
 	}
 	try {
