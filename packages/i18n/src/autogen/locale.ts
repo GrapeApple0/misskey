@@ -11157,10 +11157,6 @@ export interface Locale extends ILocale {
          */
         "clearQueue": string;
         /**
-         * キューのジョブを再試行
-         */
-        "promoteQueue": string;
-        /**
          * ロールを作成
          */
         "createRole": string;
