@@ -53,7 +53,7 @@ export class MiPage {
 	@Column('varchar', {
 		length: 32,
 	})
-	public font: string;
+	public font: 'serif' | 'sans-serif';
 
 	@Index()
 	@Column({

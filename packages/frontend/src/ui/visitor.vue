@@ -12,16 +12,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</svg></a>
 
 	<div v-if="!narrow && !isRoot" :class="$style.side">
-		<div :class="$style.banner" :style="{ backgroundImage: instance.backgroundImageUrl ? `url(${ instance.backgroundImageUrl })` : 'none' }"></div>
-		<div :class="$style.dashboard">
+		<div :class="$style.sideBanner" :style="{ backgroundImage: instance.backgroundImageUrl ? `url(${ instance.backgroundImageUrl })` : 'none' }"></div>
+		<div :class="$style.sideDashboard">
 			<MkVisitorDashboard/>
 		</div>
 	</div>
 
 	<div :class="$style.main">
-		<button v-if="!isRoot" :class="$style.homeButton" class="_button" @click="goHome">
-			<i class="ti ti-home"></i>
-		</button>
+		<div v-if="narrow && !isRoot" :class="$style.header">
+			<img :src="instance.iconUrl || '/favicon.ico'" alt="" :class="$style.headerIcon"/>
+			<MkA to="/" :class="$style.headerTitle">{{ instanceName }}</MkA>
+			<MkButton primary rounded :class="$style.headerButton" @click="goHome">{{ i18n.ts.signup }}</MkButton>
+		</div>
 		<div :class="$style.content">
 			<RouterView/>
 		</div>
@@ -42,6 +44,7 @@ import { i18n } from '@/i18n.js';
 import MkVisitorDashboard from '@/components/MkVisitorDashboard.vue';
 import { mainRouter } from '@/router.js';
 import { DI } from '@/di.js';
+import MkButton from '@/components/MkButton.vue';
 
 const isRoot = computed(() => mainRouter.currentRoute.value.name === 'index');
 
@@ -97,16 +100,26 @@ onMounted(() => {
 	min-width: 0;
 }
 
-.homeButton {
-	position: fixed;
-	z-index: 1000;
-	bottom: 16px;
-	right: 16px;
-	width: 60px;
-	height: 60px;
+.header {
+	padding: 16px;
+	display: flex;
+	align-items: center;
 	background: var(--MI_THEME-panel);
-	border-radius: 999px;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.headerIcon {
+	width: 48px;
+	vertical-align: bottom;
+	border-radius: 8px;
+}
+
+.headerTitle {
+	margin: 0 16px;
+	font-weight: bold;
+}
+
+.headerButton {
+	margin-left: auto;
 }
 
 .side {
@@ -116,7 +129,7 @@ onMounted(() => {
 	background: var(--MI_THEME-accent);
 }
 
-.banner {
+.sideBanner {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -128,7 +141,7 @@ onMounted(() => {
 	mask-image: linear-gradient(rgba(0, 0, 0, 1.0), transparent);
 }
 
-.dashboard {
+.sideDashboard {
 	padding: 32px;
 }
 

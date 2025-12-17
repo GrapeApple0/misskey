@@ -16,7 +16,7 @@ import { FileInfo, FileInfoService } from '@/core/FileInfoService.js';
 //import { DI } from '@/di-symbols.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import type { TestingModule } from '@nestjs/testing';
-import type { MockFunctionMetadata } from 'jest-mock';
+import type { MockMetadata } from 'jest-mock';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = dirname(_filename);
@@ -33,7 +33,7 @@ describe('FileInfoService', () => {
 		delete fi.sensitive;
 		delete fi.blurhash;
 		delete fi.porn;
-		
+
 		return fi;
 	}
 
@@ -52,7 +52,7 @@ describe('FileInfoService', () => {
 				//	return {  };
 				//}
 				if (typeof token === 'function') {
-					const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
+					const mockMetadata = moduleMocker.getMetadata(token) as MockMetadata<any, any>;
 					const Mock = moduleMocker.generateFromMetadata(mockMetadata);
 					return new Mock();
 				}
