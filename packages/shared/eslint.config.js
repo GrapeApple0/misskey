@@ -32,4 +32,14 @@ export default [
 			'@typescript-eslint/no-var-requires': 'off',
 		},
 	},
+	{
+		rules: {
+			'no-restricted-imports': ['error', {
+				paths: [{ name: 'punycode' }],
+			}],
+			// 型の情報を利用してlintする必要があるため無効化
+			// TODO: 有効化検討
+			'@typescript-eslint/no-misused-promises': 'off',
+		},
+	},
 ];

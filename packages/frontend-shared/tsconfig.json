@@ -16,7 +16,7 @@
 		"experimentalDecorators": true,
 		"noImplicitReturns": true,
 		"esModuleInterop": true,
-		"baseUrl": ".",
+		"verbatimModuleSyntax": true,
 		"paths": {
 			"@/*": ["./*"],
 			"@@/*": ["./*"]

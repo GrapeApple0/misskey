@@ -9,7 +9,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthenticationResponseJSON } from '@simplewebauthn/types';
 import { HttpHeader } from 'fastify/types/utils.js';
-import { MockFunctionMetadata, ModuleMocker } from 'jest-mock';
+import { MockMetadata, ModuleMocker } from 'jest-mock';
 import { MiUser } from '@/models/User.js';
 import { MiUserProfile, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import { IdService } from '@/core/IdService.js';
@@ -89,13 +89,13 @@ describe('SigninWithPasskeyApiService', () => {
 		app = await Test.createTestingModule({
 			imports: [GlobalModule, CoreModule],
 			providers: [
-				SigninWithPasskeyApiService, 
-				{ provide: RateLimiterService, useClass: FakeLimiter }, 
+				SigninWithPasskeyApiService,
+				{ provide: RateLimiterService, useClass: FakeLimiter },
 				{ provide: SigninService, useClass: FakeSigninService },
 			],
 		}).useMocker((token) => {
 			if (typeof token === 'function') {
-				const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
+				const mockMetadata = moduleMocker.getMetadata(token) as MockMetadata<any, any>;
 				const Mock = moduleMocker.generateFromMetadata(mockMetadata);
 				return new Mock();
 			}
@@ -115,7 +115,7 @@ describe('SigninWithPasskeyApiService', () => {
 		jest.spyOn(webAuthnService, 'verifySignInWithPasskeyAuthentication').mockImplementation(FakeWebauthnVerify);
 
 		const dummyUser = {
-			id: uid, username: uid, usernameLower: uid.toLocaleLowerCase(), uri: null, host: null,
+			id: uid, username: uid, usernameLower: uid.toLowerCase(), uri: null, host: null,
 		 };
 		const dummyProfile = {
 			userId: uid,
