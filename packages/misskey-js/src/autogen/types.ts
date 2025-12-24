@@ -30435,6 +30435,8 @@ export interface operations {
                     sinceId?: string;
                     /** Format: misskey:id */
                     untilId?: string;
+                    sinceDate?: number;
+                    untilDate?: number;
                     /** @default 10 */
                     limit?: number;
                 };
