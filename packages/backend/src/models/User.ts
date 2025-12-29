@@ -15,12 +15,6 @@ export class MiUser {
 
 	@Index()
 	@Column('timestamp with time zone', {
-		comment: 'The created date of the User.',
-	})
-	public createdAt: Date;
-
-	@Index()
-	@Column('timestamp with time zone', {
 		nullable: true,
 		comment: 'The updated date of the User.',
 	})
@@ -55,7 +49,6 @@ export class MiUser {
 	})
 	public usernameLower: string;
 
-	@Index() // USING pgroonga pgroonga_varchar_full_text_search_ops_v2
 	@Column('varchar', {
 		length: 128, nullable: true,
 		comment: 'The name of the User.',

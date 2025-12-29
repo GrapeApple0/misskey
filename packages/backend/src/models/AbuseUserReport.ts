@@ -15,12 +15,6 @@ export class MiAbuseUserReport {
 	public id: string;
 
 	@Index()
-	@Column('timestamp with time zone', {
-		comment: 'The created date of the AbuseUserReport.',
-	})
-	public createdAt: Date;
-
-	@Index()
 	@Column(id())
 	public targetUserId: MiUser['id'];
 

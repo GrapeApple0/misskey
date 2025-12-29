@@ -113,7 +113,7 @@ export class ApRendererService {
 			id: `${this.config.url}/notes/${note.id}/activity`,
 			actor: this.userEntityService.genLocalUserUri(note.userId),
 			type: 'Announce',
-			published: note.createdAt.toISOString(),
+			published: this.idService.parse(note.id).date.toISOString(),
 			to,
 			cc,
 			object,
@@ -145,7 +145,7 @@ export class ApRendererService {
 			id: `${this.config.url}/notes/${note.id}/activity`,
 			actor: this.userEntityService.genLocalUserUri(note.userId),
 			type: 'Create',
-			published: note.createdAt.toISOString(),
+			published: this.idService.parse(note.id).date.toISOString(),
 			object,
 		};
 
@@ -482,7 +482,7 @@ export class ApRendererService {
 			}),
 			_misskey_quote: quote,
 			quoteUrl: quote,
-			published: note.createdAt.toISOString(),
+			published: this.idService.parse(note.id).date.toISOString(),
 			to,
 			cc,
 			inReplyTo,

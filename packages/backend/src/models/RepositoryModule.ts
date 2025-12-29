@@ -41,7 +41,6 @@ import {
 	MiMuting,
 	MiNote,
 	MiNoteFavorite,
-	MiNoteHistory,
 	MiNoteReaction,
 	MiNoteThreadMuting,
 	MiNoteDraft,
@@ -85,6 +84,7 @@ import {
 	MiChatRoomMembership,
 	MiChatRoomInvitation,
 	MiChatApproval,
+	MiNoteHistory,
 } from './_.js';
 import type { Provider } from '@nestjs/common';
 import type { DataSource } from 'typeorm';
@@ -98,6 +98,12 @@ const $usersRepository: Provider = {
 const $notesRepository: Provider = {
 	provide: DI.notesRepository,
 	useFactory: (db: DataSource) => db.getRepository(MiNote).extend(miRepository as MiRepository<MiNote>),
+	inject: [DI.db],
+};
+
+const $noteHistoriesRepository: Provider = {
+	provide: DI.noteHistoriesRepository,
+	useFactory: (db: DataSource) => db.getRepository(MiNoteHistory).extend(miRepository as MiRepository<MiNoteHistory>),
 	inject: [DI.db],
 };
 
@@ -122,12 +128,6 @@ const $appsRepository: Provider = {
 const $avatarDecorationsRepository: Provider = {
 	provide: DI.avatarDecorationsRepository,
 	useFactory: (db: DataSource) => db.getRepository(MiAvatarDecoration).extend(miRepository as MiRepository<MiAvatarDecoration>),
-	inject: [DI.db],
-};
-
-const $noteHistoriesRepository: Provider = {
-	provide: DI.noteHistoriesRepository,
-	useFactory: (db: DataSource) => db.getRepository(MiNoteHistory).extend(miRepository as MiRepository<MiNoteHistory>),
 	inject: [DI.db],
 };
 
@@ -556,11 +556,11 @@ const $reversiGamesRepository: Provider = {
 	providers: [
 		$usersRepository,
 		$notesRepository,
+		$noteHistoriesRepository,
 		$announcementsRepository,
 		$announcementReadsRepository,
 		$appsRepository,
 		$avatarDecorationsRepository,
-		$noteHistoriesRepository,
 		$noteFavoritesRepository,
 		$noteThreadMutingsRepository,
 		$noteReactionsRepository,
@@ -635,11 +635,11 @@ const $reversiGamesRepository: Provider = {
 	exports: [
 		$usersRepository,
 		$notesRepository,
+		$noteHistoriesRepository,
 		$announcementsRepository,
 		$announcementReadsRepository,
 		$appsRepository,
 		$avatarDecorationsRepository,
-		$noteHistoriesRepository,
 		$noteFavoritesRepository,
 		$noteThreadMutingsRepository,
 		$noteReactionsRepository,

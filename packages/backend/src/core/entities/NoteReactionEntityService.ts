@@ -4,26 +4,27 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { DI } from '@/di-symbols.js';
 import type { NoteReactionsRepository } from '@/models/_.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { bindThis } from '@/decorators.js';
+import { parseAidx } from '@/misc/id/aidx.js';
+import { IdService } from '@/core/IdService.js';
+import type { MiNoteReaction } from '@/models/NoteReaction.js';
+import type { MiUser } from '@/models/User.js';
 import type { OnModuleInit } from '@nestjs/common';
 import type { } from '@/models/Blocking.js';
-import type { MiUser } from '@/models/User.js';
-import type { MiNoteReaction } from '@/models/NoteReaction.js';
 import type { ReactionService } from '../ReactionService.js';
 import type { UserEntityService } from './UserEntityService.js';
 import type { NoteEntityService } from './NoteEntityService.js';
-import { ModuleRef } from '@nestjs/core';
-import { parseAidx } from '@/misc/id/aidx.js';
 
 @Injectable()
 export class NoteReactionEntityService implements OnModuleInit {
 	private userEntityService: UserEntityService;
 	private noteEntityService: NoteEntityService;
 	private reactionService: ReactionService;
-
+	private idService: IdService;
 	constructor(
 		private moduleRef: ModuleRef,
 
@@ -40,6 +41,7 @@ export class NoteReactionEntityService implements OnModuleInit {
 		this.userEntityService = this.moduleRef.get('UserEntityService');
 		this.noteEntityService = this.moduleRef.get('NoteEntityService');
 		this.reactionService = this.moduleRef.get('ReactionService');
+		this.idService = this.moduleRef.get('IdService');
 	}
 
 	@bindThis
@@ -55,15 +57,9 @@ export class NoteReactionEntityService implements OnModuleInit {
 		}, options);
 
 		const reaction = typeof src === 'object' ? src : await this.noteReactionsRepository.findOneByOrFail({ id: src });
-		let createdAt = reaction.createdAt;
-		const diff = Math.abs(createdAt.getTime() - new Date('2000-01-01 0:0:0-0').getTime());
-		if (diff < 10) {
-			createdAt = parseAidx(reaction.id).date;
-			await this.noteReactionsRepository.update(reaction.id, { createdAt });
-		}
 		return {
 			id: reaction.id,
-			createdAt: createdAt.toISOString(),
+			createdAt: this.idService.parse(reaction.id).date.toISOString(),
 			user: hints?.packedUser ?? await this.userEntityService.pack(reaction.user ?? reaction.userId, me),
 			type: this.reactionService.convertLegacyReaction(reaction.reaction),
 		};

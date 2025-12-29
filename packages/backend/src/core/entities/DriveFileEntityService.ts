@@ -17,6 +17,7 @@ import { deepClone } from '@/misc/clone.js';
 import { bindThis } from '@/decorators.js';
 import { isMimeImage } from '@/misc/is-mime-image.js';
 import { parseAidx } from '@/misc/id/aidx.js';
+import { IdService } from '@/core/IdService.js';
 import { UtilityService } from '../UtilityService.js';
 import { VideoProcessingService } from '../VideoProcessingService.js';
 import { UserEntityService } from './UserEntityService.js';
@@ -47,6 +48,7 @@ export class DriveFileEntityService {
 		private utilityService: UtilityService,
 		private driveFolderEntityService: DriveFolderEntityService,
 		private videoProcessingService: VideoProcessingService,
+		private idService: IdService,
 	) {
 	}
 
@@ -195,17 +197,9 @@ export class DriveFileEntityService {
 			self: false,
 		}, options);
 		const file = typeof src === 'object' ? src : await this.driveFilesRepository.findOneByOrFail({ id: src });
-		let createdAt = file.createdAt;
-		const diff = Math.abs(createdAt.getTime() - new Date('2000-01-01 0:0:0-0').getTime());
-		if (diff < 10) {
-			createdAt = parseAidx(file.id).date;
-			await this.driveFilesRepository.update(file.id, {
-				createdAt,
-			});
-		}
 		return await awaitAll<Packed<'DriveFile'>>({
 			id: file.id,
-			createdAt: createdAt.toISOString(),
+			createdAt: this.idService.parse(file.id).date.toISOString(),
 			name: file.name,
 			type: file.type,
 			md5: file.md5,
@@ -240,17 +234,10 @@ export class DriveFileEntityService {
 
 		const file = typeof src === 'object' ? src : await this.driveFilesRepository.findOneBy({ id: src });
 		if (file == null) return null;
-		let createdAt = file.createdAt;
-		const diff = Math.abs(createdAt.getTime() - new Date('2000-01-01 0:0:0-0').getTime());
-		if (diff < 10) {
-			createdAt = parseAidx(file.id).date;
-			await this.driveFilesRepository.update(file.id, {
-				createdAt,
-			});
-		}
+
 		return await awaitAll<Packed<'DriveFile'>>({
 			id: file.id,
-			createdAt: createdAt.toISOString(),
+			createdAt: this.idService.parse(file.id).date.toISOString(),
 			name: file.name,
 			type: file.type,
 			md5: file.md5,

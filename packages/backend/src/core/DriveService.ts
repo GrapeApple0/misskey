@@ -519,7 +519,7 @@ export class DriveService {
 		//#region Check drive usage and mime type
 		if (user != null && !isLink) {
 			const isLocalUser = this.userEntityService.isLocalUser(user);
-			const isModerator = isLocalUser ? await this.roleService.isModerator(user) : false;
+			const isModerator = isLocalUser ? (await this.roleService.isModerator(user) || await this.roleService.isAdministrator(user)) : false;
 			if (!isModerator) {
 				const policies = await this.roleService.getUserPolicies(user.id);
 

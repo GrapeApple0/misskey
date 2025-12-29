@@ -29,12 +29,6 @@ export class MiNote {
 
 	@Column('timestamp with time zone', {
 		default: null,
-		comment: 'The created date of the Note.',
-	})
-	public createdAt: Date;
-
-	@Column('timestamp with time zone', {
-		default: null,
 		nullable: true,
 		comment: 'The updated date of the Note.',
 	})
@@ -75,7 +69,6 @@ export class MiNote {
 	public threadId: string | null;
 
 	// TODO: varcharにしたい
-	@Index() // USING pgroonga
 	@Column('text', {
 		nullable: true,
 	})
