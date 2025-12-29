@@ -182,14 +182,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'replies' }]" @click="tab = 'replies'"><i class="ti ti-arrow-back-up"></i> {{ i18n.ts.replies }}</button>
 			<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'renotes' }]" @click="tab = 'renotes'"><i class="ti ti-repeat"></i> {{ i18n.ts.renotes }}</button>
 			<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'reactions' }]" @click="tab = 'reactions'"><i class="ti ti-icons"></i> {{ i18n.ts.reactions }}</button>
-			<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'histories' }]" @click="tab = 'histories'"><i class="ti ti-history"></i> {{ i18n.ts.editHistories }}</button>
+			<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'quotes' }]" @click="tab = 'quotes'"><i class="ti ti-quote"></i> {{ i18n.ts.quotes }}</button>
+			<button class="_button" :class="[$style.tab, { [$style.tabActive]: tab === 'histories' }]" @click="tab = 'histories'"><i class="ti ti-history"></i> {{ i18n.ts.histories }}</button>
 		</div>
 		<div>
 			<div v-if="tab === 'replies'">
-				<div v-if="!repliesLoaded" style="padding: 16px">
-					<MkButton style="margin: 0 auto;" primary rounded @click="loadReplies">{{ i18n.ts.loadReplies }}</MkButton>
-				</div>
-				<MkNoteSub v-for="note in replies" :key="note.id" :note="note" :class="$style.reply" :detail="true"/>
+				<MkPagination :paginator="repliesPaginator">
+					<template #default="{ items }">
+						<MkNoteSub v-for="item in items" :key="item.id" :note="item" :class="$style.reply" :detail="true"/>
+					</template>
+				</MkPagination>
 			</div>
 			<div v-else-if="tab === 'renotes'" :class="$style.tab_renotes">
 				<MkPagination :paginator="renotesPaginator" :forceDisableInfiniteScroll="true">
@@ -216,6 +218,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<MkUserCardMini :user="item.user" :withChart="false"/>
 							</MkA>
 						</div>
+					</template>
+				</MkPagination>
+			</div>
+			<div v-else-if="tab === 'quotes'" :class="$style.tab_quotes">
+				<MkPagination :paginator="quotesPaginator">
+					<template #default="{ items }">
+						<MkNoteSub v-for="item in items" :key="item.id" :note="item" :class="$style.reply" :detail="true"/>
 					</template>
 				</MkPagination>
 			</div>
