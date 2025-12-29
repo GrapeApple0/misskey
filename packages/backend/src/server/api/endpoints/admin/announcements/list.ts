@@ -7,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { AnnouncementsRepository, AnnouncementReadsRepository } from '@/models/_.js';
 import type { MiAnnouncement } from '@/models/Announcement.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
+import { IdService } from '@/core/IdService.js';
 import { QueryService } from '@/core/QueryService.js';
 import { DI } from '@/di-symbols.js';
 
@@ -112,6 +113,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		@Inject(DI.announcementReadsRepository)
 		private announcementReadsRepository: AnnouncementReadsRepository,
 
+		private idService: IdService,
 		private queryService: QueryService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
@@ -141,7 +143,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			return announcements.map(announcement => ({
 				id: announcement.id,
-				createdAt: announcement.createdAt.toISOString(),
+				createdAt: this.idService.parse(announcement.id).date.toISOString(),
 				updatedAt: announcement.updatedAt?.toISOString() ?? null,
 				title: announcement.title,
 				text: announcement.text,

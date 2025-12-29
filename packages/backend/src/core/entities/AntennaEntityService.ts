@@ -8,6 +8,7 @@ import { DI } from '@/di-symbols.js';
 import type { AntennasRepository } from '@/models/_.js';
 import type { Packed } from '@/misc/json-schema.js';
 import type { MiAntenna } from '@/models/Antenna.js';
+import { IdService } from '@/core/IdService.js';
 import { bindThis } from '@/decorators.js';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class AntennaEntityService {
 	constructor(
 		@Inject(DI.antennasRepository)
 		private antennasRepository: AntennasRepository,
+		private idService: IdService,
 	) {
 	}
 
@@ -26,7 +28,7 @@ export class AntennaEntityService {
 
 		return {
 			id: antenna.id,
-			createdAt: antenna.createdAt.toISOString(),
+			createdAt: this.idService.parse(antenna.id).date.toISOString(),
 			name: antenna.name,
 			keywords: antenna.keywords,
 			excludeKeywords: antenna.excludeKeywords,

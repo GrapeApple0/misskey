@@ -181,7 +181,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					if (cached) {
 						cached.push({
 							...body,
-							createdAt: new Date(body.createdAt),
 							updatedAt: new Date(body.updatedAt),
 							lastUsedAt: new Date(body.lastUsedAt),
 						});
@@ -195,7 +194,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 						if (i > -1) {
 							cached[i] = {
 								...body,
-								createdAt: new Date(body.createdAt),
 								updatedAt: new Date(body.updatedAt),
 								lastUsedAt: new Date(body.lastUsedAt),
 							};
@@ -215,7 +213,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					if (cached) {
 						cached.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 							...body,
-							createdAt: new Date(body.createdAt),
 							expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
 							user: null, // joinなカラムは通常取ってこないので
 							role: null, // joinなカラムは通常取ってこないので
@@ -286,11 +283,11 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 				}
 				// ユーザが作成されてから指定期間経過した
 				case 'createdLessThan': {
-					return user.createdAt.getTime() > (Date.now() - (value.sec * 1000));
+					return this.idService.parse(user.id).date.getTime() > (Date.now() - (value.sec * 1000));
 				}
 				// ユーザが作成されてから指定期間経っていない
 				case 'createdMoreThan': {
-					return user.createdAt.getTime() < (Date.now() - (value.sec * 1000));
+					return this.idService.parse(user.id).date.getTime() < (Date.now() - (value.sec * 1000));
 				}
 				// フォロワー数が指定値以下
 				case 'followersLessThanOrEq': {

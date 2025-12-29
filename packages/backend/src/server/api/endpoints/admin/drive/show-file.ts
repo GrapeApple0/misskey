@@ -7,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { DriveFilesRepository, UsersRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
+import { IdService } from '@/core/IdService.js';
 import { RoleService } from '@/core/RoleService.js';
 import { ApiError } from '../../../error.js';
 
@@ -204,6 +205,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
 
+		private idService: IdService,
 		private roleService: RoleService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
@@ -250,7 +252,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				type: file.type,
 				name: file.name,
 				md5: file.md5,
-				createdAt: file.createdAt.toISOString(),
+				createdAt: this.idService.parse(file.id).date.toISOString(),
 				requestIp: iAmModerator ? file.requestIp : null,
 				requestHeaders: iAmModerator && !ownerIsModerator ? file.requestHeaders : null,
 			};

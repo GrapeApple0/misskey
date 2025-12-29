@@ -23,6 +23,7 @@ export class RoleEntityService {
 
 		@Inject(DI.roleAssignmentsRepository)
 		private roleAssignmentsRepository: RoleAssignmentsRepository,
+		private idService: IdService,
 	) {
 	}
 
@@ -53,7 +54,7 @@ export class RoleEntityService {
 
 		return await awaitAll({
 			id: role.id,
-			createdAt: role.createdAt.toISOString(),
+			createdAt: this.idService.parse(role.id).date.toISOString(),
 			updatedAt: role.updatedAt.toISOString(),
 			name: role.name,
 			description: role.description,

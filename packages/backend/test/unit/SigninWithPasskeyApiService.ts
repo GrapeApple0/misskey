@@ -7,7 +7,7 @@ import { IncomingHttpHeaders } from 'node:http';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { AuthenticationResponseJSON } from '@simplewebauthn/types';
+import { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { HttpHeader } from 'fastify/types/utils.js';
 import { MockMetadata, ModuleMocker } from 'jest-mock';
 import { MiUser } from '@/models/User.js';
@@ -46,7 +46,7 @@ class DummyFastifyReply {
 }
 class DummyFastifyRequest {
 	public ip: string;
-	public body: {credential: any, context: string};
+	public body: { credential: any, context: string };
 	public headers: IncomingHttpHeaders = { 'accept': 'application/json' };
 	constructor(body?: any) {
 		this.ip = '0.0.0.0';
@@ -116,7 +116,7 @@ describe('SigninWithPasskeyApiService', () => {
 
 		const dummyUser = {
 			id: uid, username: uid, usernameLower: uid.toLowerCase(), uri: null, host: null,
-		 };
+		};
 		const dummyProfile = {
 			userId: uid,
 			password: 'qwerty',

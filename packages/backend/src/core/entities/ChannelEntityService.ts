@@ -19,6 +19,7 @@ import type { Packed } from '@/misc/json-schema.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiChannel } from '@/models/Channel.js';
 import { bindThis } from '@/decorators.js';
+import { IdService } from '@/core/IdService.js';
 import { DriveFileEntityService } from './DriveFileEntityService.js';
 import { NoteEntityService } from './NoteEntityService.js';
 
@@ -39,6 +40,7 @@ export class ChannelEntityService {
 		private driveFilesRepository: DriveFilesRepository,
 		private noteEntityService: NoteEntityService,
 		private driveFileEntityService: DriveFileEntityService,
+		private idService: IdService,
 	) {
 	}
 
@@ -103,7 +105,7 @@ export class ChannelEntityService {
 
 		return {
 			id: channel.id,
-			createdAt: channel.createdAt.toISOString(),
+			createdAt: this.idService.parse(channel.id).date.toISOString(),
 			lastNotedAt: channel.lastNotedAt ? channel.lastNotedAt.toISOString() : null,
 			name: channel.name,
 			description: channel.description,

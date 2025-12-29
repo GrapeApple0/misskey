@@ -4398,8 +4398,6 @@ export type components = {
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
-            updatedAt?: string | null;
-            /** Format: date-time */
             deletedAt?: string | null;
             text: string | null;
             cw?: string | null;
@@ -5337,7 +5335,6 @@ export type components = {
             gtlAvailable: boolean;
             ltlAvailable: boolean;
             canPublicNote: boolean;
-            canEditNote: boolean;
             mentionLimit: number;
             canInvite: boolean;
             inviteLimit: number;
