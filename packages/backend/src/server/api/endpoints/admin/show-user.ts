@@ -9,6 +9,7 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
 import { RoleService } from '@/core/RoleService.js';
 import { RoleEntityService } from '@/core/entities/RoleEntityService.js';
+import { IdService } from '@/core/IdService.js';
 import { notificationRecieveConfig } from '@/models/json-schema/user.js';
 
 export const meta = {
@@ -204,6 +205,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private roleService: RoleService,
 		private roleEntityService: RoleEntityService,
+		private idService: IdService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const [user, profile] = await Promise.all([
@@ -253,7 +255,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				policies: await this.roleService.getUserPolicies(user.id),
 				roles: await this.roleEntityService.packMany(roles, me),
 				roleAssigns: roleAssigns.map(a => ({
-					createdAt: a.createdAt.toISOString(),
+					createdAt: this.idService.parse(a.id).date.toISOString(),
 					expiresAt: a.expiresAt ? a.expiresAt.toISOString() : null,
 					roleId: a.roleId,
 				})),
