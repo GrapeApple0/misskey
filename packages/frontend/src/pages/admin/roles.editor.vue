@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <div class="_gaps">
-	<MkInput v-if="readonly" :modelValue="role.id" :readonly="true">
+	<MkInput v-if="readonly && role.id != null" :modelValue="role.id" :readonly="true">
 		<template #label>ID</template>
 	</MkInput>
 
@@ -901,12 +901,18 @@ import { useRouter } from '@/router.js';
 
 const router = useRouter();
 
+type RoleLike = Pick<Misskey.entities.Role, 'name' | 'description' | 'isAdministrator' | 'isModerator' | 'color' | 'iconUrl' | 'target' | 'isPublic' | 'isExplorable' | 'asBadge' | 'canEditMembersByModerator' | 'displayOrder' | 'preserveAssignmentOnMoveAccount'> & {
+	id?: Misskey.entities.Role['id'] | null;
+	condFormula: any;
+	policies: any;
+};
+
 const emit = defineEmits<{
-	(ev: 'update:modelValue', v: any): void;
+	(ev: 'update:modelValue', v: RoleLike): void;
 }>();
 
 const props = defineProps<{
-	modelValue: any;
+	modelValue: RoleLike;
 	readonly?: boolean;
 }>();
 
@@ -945,7 +951,7 @@ const rolePermission = computed<GetMkSelectValueTypesFromDef<typeof rolePermissi
 
 const q = ref('');
 
-function getPriorityIcon(option) {
+function getPriorityIcon(option: { priority: number }): string {
 	if (option.priority === 2) return 'ti ti-arrows-up';
 	if (option.priority === 1) return 'ti ti-arrow-narrow-up';
 	return 'ti ti-point';
@@ -986,6 +992,7 @@ const save = throttle(100, () => {
 		isExplorable: role.value.isExplorable,
 		asBadge: role.value.asBadge,
 		canEditMembersByModerator: role.value.canEditMembersByModerator,
+		preserveAssignmentOnMoveAccount: role.value.preserveAssignmentOnMoveAccount,
 		policies: role.value.policies,
 		canEditNote: role.value.canEditNote,
 	};
