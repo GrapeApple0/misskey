@@ -229,7 +229,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<div v-else-if="tab === 'histories'">
 				<MkPagination :paginator="historiesPaginator" :disableAutoLoad="true">
 					<template #default="{ items }">
-						<MkNoteHistory v-for="item in items" :key="item.id" :updatedAt="new Date(item.createdAt)" :text="item.text" :cw="item.cw" :files="item.files" :poll="item.poll" :user="appearNote.user"/>
+						<MkNoteHistory v-for="item in items" :key="item.id" :updatedAt="new Date(item.createdAt)" :text="item.text ?? ''" :cw="item.cw" :files="item.files" :poll="item.poll" :user="appearNote.user"/>
 					</template>
 				</MkPagination>
 			</div>
@@ -248,7 +248,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, markRaw, provide, ref, useTemplateRef } from 'vue';
+import { computed, inject, markRaw, provide, ref, useTemplateRef, onMounted } from 'vue';
 import * as mfm from 'mfm-js';
 import * as Misskey from 'misskey-js';
 import { isLink } from '@@/js/is-link.js';
@@ -446,6 +446,13 @@ const reactionsPaginator = markRaw(new Paginator('notes/reactions', {
 }));
 
 const historiesPaginator = markRaw(new Paginator('notes/histories', {
+	limit: 10,
+	params: {
+		noteId: appearNote.id,
+	},
+}));
+
+const quotesPaginator = markRaw(new Paginator('notes/quotes', {
 	limit: 10,
 	params: {
 		noteId: appearNote.id,
