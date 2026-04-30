@@ -10,25 +10,44 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<div :class="$style.passkeyIcon">
 				<i class="ti ti-fingerprint"></i>
 			</div>
-			<div :class="$style.passkeyDescription">{{ i18n.ts.useSecurityKey }}</div>
+			<div :class="$style.passkeyDescription">
+				{{ i18n.ts.useSecurityKey }}
+			</div>
 		</div>
 
-		<MkButton large primary rounded :disabled="queryingKey" style="margin: 0 auto;" @click="queryKey">{{ i18n.ts.retry }}</MkButton>
+		<MkButton
+			large
+			primary
+			rounded
+			:disabled="queryingKey"
+			style="margin: 0 auto"
+			@click="queryKey"
+		>
+			{{ i18n.ts.retry }}
+		</MkButton>
 
-		<MkButton v-if="isPerformingPasswordlessLogin !== true" transparent rounded :disabled="queryingKey" style="margin: 0 auto;" @click="emit('useTotp')">{{ i18n.ts.useTotp }}</MkButton>
+		<MkButton
+			v-if="isPerformingPasswordlessLogin !== true"
+			transparent
+			rounded
+			:disabled="queryingKey"
+			style="margin: 0 auto"
+			@click="emit('useTotp')"
+		>
+			{{ i18n.ts.useTotp }}
+		</MkButton>
 	</div>
 </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { get as webAuthnRequest } from '@github/webauthn-json/browser-ponyfill';
+import { ref, onMounted } from "vue";
+import { get as webAuthnRequest } from "@github/webauthn-json/browser-ponyfill";
 
-import { i18n } from '@/i18n.js';
+import type { AuthenticationPublicKeyCredential } from "@github/webauthn-json/browser-ponyfill";
+import { i18n } from "@/i18n.js";
 
-import MkButton from '@/components/MkButton.vue';
-
-import type { AuthenticationPublicKeyCredential } from '@github/webauthn-json/browser-ponyfill';
+import MkButton from "@/components/MkButton.vue";
 
 const props = defineProps<{
 	credentialRequest: CredentialRequestOptions;
@@ -36,8 +55,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(ev: 'done', credential: AuthenticationPublicKeyCredential): void;
-	(ev: 'useTotp'): void;
+	(ev: "done", credential: AuthenticationPublicKeyCredential): void;
+	(ev: "useTotp"): void;
 }>();
 
 const queryingKey = ref(true);
@@ -49,7 +68,7 @@ async function queryKey() {
 			return Promise.reject(null);
 		})
 		.then((credential) => {
-			emit('done', credential);
+			emit("done", credential);
 		})
 		.finally(() => {
 			queryingKey.value = false;
