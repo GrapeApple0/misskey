@@ -4,13 +4,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
+import { IsNull } from 'typeorm';
 import { MiFlash } from '@/models/Flash.js';
 import type { FlashsRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { FlashEntityService } from '@/core/entities/FlashEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '../../error.js';
-import { IsNull } from 'typeorm';
 
 export const meta = {
 	tags: ['flashs'],
@@ -46,7 +46,7 @@ export const paramDef = {
 
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> {
-	usersRepository: any; // eslint-disable-line import/no-default-export
+	usersRepository: any;
 	constructor(
 		@Inject(DI.flashsRepository)
 		private flashsRepository: FlashsRepository,
@@ -57,8 +57,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			let flash: MiFlash | null = null;
 			if (ps.flashId) {
 				flash = await this.flashsRepository.findOneBy({ id: ps.flashId });
-			}
-			else if (ps.username) {
+			} else if (ps.username) {
 				const author = await this.usersRepository.findOneBy({
 					host: IsNull(),
 					usernameLower: ps.username.toLowerCase(),

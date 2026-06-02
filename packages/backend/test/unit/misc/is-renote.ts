@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { describe, expect, test } from 'vitest';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 import { MiNote } from '@/models/Note.js';
 
 const base: MiNote = {
 	id: 'some-note-id',
-	updatedAt: null,
 	replyId: null,
 	reply: null,
 	renoteId: null,

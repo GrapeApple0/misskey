@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { beforeAll, describe, test, expect } from 'vitest';
 import { Test } from '@nestjs/testing';
 
 import { CoreModule } from '@/core/CoreModule.js';
@@ -25,7 +26,6 @@ describe('NoteCreateService', () => {
 	describe('is-renote', () => {
 		const base: MiNote = {
 			id: 'some-note-id',
-			updatedAt: null,
 			replyId: null,
 			reply: null,
 			renoteId: null,

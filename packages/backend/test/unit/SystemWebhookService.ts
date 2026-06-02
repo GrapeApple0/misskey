@@ -5,7 +5,8 @@
  */
 
 import { setTimeout } from 'node:timers/promises';
-import { afterEach, beforeEach, describe, expect, jest } from '@jest/globals';
+import { afterEach, beforeEach, afterAll, beforeAll, describe, test, expect, vi } from 'vitest';
+import type { Mocked } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { randomString } from '../utils.js';
 import { MiUser } from '@/models/User.js';
@@ -29,7 +30,7 @@ describe('SystemWebhookService', () => {
 	let usersRepository: UsersRepository;
 	let systemWebhooksRepository: SystemWebhooksRepository;
 	let idService: IdService;
-	let queueService: jest.Mocked<QueueService>;
+	let queueService: Mocked<QueueService>;
 
 	// --------------------------------------------------------------------------------------
 
@@ -40,7 +41,7 @@ describe('SystemWebhookService', () => {
 	async function createUser(data: Partial<MiUser> = {}) {
 		return await usersRepository
 			.insert({
-				id: idService.genId(),
+				id: idService.gen(),
 				...data,
 			})
 			.then(x => usersRepository.findOneByOrFail(x.identifiers[0]));
@@ -49,7 +50,7 @@ describe('SystemWebhookService', () => {
 	async function createWebhook(data: Partial<MiSystemWebhook> = {}) {
 		return systemWebhooksRepository
 			.insert({
-				id: idService.genId(),
+				id: idService.gen(),
 				name: randomString(),
 				on: ['abuseReport'],
 				url: 'https://example.com',
@@ -73,7 +74,7 @@ describe('SystemWebhookService', () => {
 					LoggerService,
 					GlobalEventService,
 					{
-						provide: QueueService, useFactory: () => ({ systemWebhookDeliver: jest.fn() }),
+						provide: QueueService, useFactory: () => ({ systemWebhookDeliver: vi.fn() }),
 					},
 					{
 						provide: ModerationLogService, useFactory: () => ({ log: () => Promise.resolve() }),
@@ -87,7 +88,7 @@ describe('SystemWebhookService', () => {
 
 		service = app.get(SystemWebhookService);
 		idService = app.get(IdService);
-		queueService = app.get(QueueService) as jest.Mocked<QueueService>;
+		queueService = app.get(QueueService) as Mocked<QueueService>;
 
 		app.enableShutdownHooks();
 	}
@@ -427,7 +428,7 @@ describe('SystemWebhookService', () => {
 
 			describe('systemWebhookUpdated', () => {
 				test('ActiveなWebhookが編集された時、キャッシュに反映されている', async () => {
-					const id = idService.genId();
+					const id = idService.gen();
 					await createWebhook({ id });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();
@@ -455,7 +456,7 @@ describe('SystemWebhookService', () => {
 				});
 
 				test('NotActiveなWebhookが編集された時、キャッシュに追加されない', async () => {
-					const id = idService.genId();
+					const id = idService.gen();
 					await createWebhook({ id, isActive: false });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();
@@ -482,7 +483,7 @@ describe('SystemWebhookService', () => {
 				});
 
 				test('NotActiveなWebhookがActiveにされた時、キャッシュに追加されている', async () => {
-					const id = idService.genId();
+					const id = idService.gen();
 					const baseWebhook = await createWebhook({ id, isActive: false });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();
@@ -505,7 +506,7 @@ describe('SystemWebhookService', () => {
 				});
 
 				test('ActiveなWebhookがNotActiveにされた時、キャッシュから削除されている', async () => {
-					const id = idService.genId();
+					const id = idService.gen();
 					const baseWebhook = await createWebhook({ id, isActive: true });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();
@@ -531,7 +532,7 @@ describe('SystemWebhookService', () => {
 
 			describe('systemWebhookDeleted', () => {
 				test('キャッシュから削除されている', async () => {
-					const id = idService.genId();
+					const id = idService.gen();
 					const baseWebhook = await createWebhook({ id, isActive: true });
 					// キャッシュ作成
 					const webhook1 = await service.fetchActiveSystemWebhooks();

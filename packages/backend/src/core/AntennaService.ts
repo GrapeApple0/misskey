@@ -60,18 +60,17 @@ export class AntennaService implements OnApplicationShutdown {
 				case 'antennaCreated':
 					this.antennas.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 						...body,
-						createdAt: new Date(body.createdAt),
 						lastUsedAt: new Date(body.lastUsedAt),
 						user: null, // joinなカラムは通常取ってこないので
 						userList: null, // joinなカラムは通常取ってこないので
 					});
 					break;
 				case 'antennaUpdated':
+				{
 					const idx = this.antennas.findIndex(a => a.id === body.id);
 					if (idx >= 0) {
 						this.antennas[idx] = { // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 							...body,
-							createdAt: new Date(body.createdAt),
 							lastUsedAt: new Date(body.lastUsedAt),
 							user: null, // joinなカラムは通常取ってこないので
 							userList: null, // joinなカラムは通常取ってこないので
@@ -80,13 +79,13 @@ export class AntennaService implements OnApplicationShutdown {
 						// サーバ起動時にactiveじゃなかった場合、リストに持っていないので追加する必要あり
 						this.antennas.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 							...body,
-							createdAt: new Date(body.createdAt),
 							lastUsedAt: new Date(body.lastUsedAt),
 							user: null, // joinなカラムは通常取ってこないので
 							userList: null, // joinなカラムは通常取ってこないので
 						});
 					}
 					break;
+				}
 				case 'antennaDeleted':
 					this.antennas = this.antennas.filter(a => a.id !== body.id);
 					break;

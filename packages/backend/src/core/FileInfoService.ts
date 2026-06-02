@@ -15,12 +15,9 @@ import isSvg from 'is-svg';
 import probeImageSize from 'probe-image-size';
 import { sharpBmp } from '@misskey-dev/sharp-read-bmp';
 import * as blurhash from 'blurhash';
-import { createTempDir } from '@/misc/create-temp.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
-import { isMimeImage } from '@/misc/is-mime-image.js';
-import type { PredictionType } from 'nsfwjs';
 
 export type FileInfo = {
 	size: number;

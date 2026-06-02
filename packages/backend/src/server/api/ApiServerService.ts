@@ -7,9 +7,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import { ModuleRef } from '@nestjs/core';
-import { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import type { Config } from '@/config.js';
-import type { InstancesRepository, AccessTokensRepository } from '@/models/_.js';
+import type {
+	InstancesRepository,
+	AccessTokensRepository,
+} from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
@@ -18,6 +20,7 @@ import { ApiCallService } from './ApiCallService.js';
 import { SignupApiService } from './SignupApiService.js';
 import { SigninApiService } from './SigninApiService.js';
 import { SigninWithPasskeyApiService } from './SigninWithPasskeyApiService.js';
+import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
 @Injectable()
@@ -44,7 +47,11 @@ export class ApiServerService {
 	}
 
 	@bindThis
-	public createServer(fastify: FastifyInstance, options: FastifyPluginOptions, done: (err?: Error) => void) {
+	public createServer(
+		fastify: FastifyInstance,
+		options: FastifyPluginOptions,
+		done: (err?: Error) => void,
+	) {
 		fastify.register(cors, {
 			origin: '*',
 		});
@@ -72,9 +79,9 @@ export class ApiServerService {
 
 			if (endpoint.meta.requireFile) {
 				fastify.all<{
-					Params: { endpoint: string; },
-					Body: Record<string, unknown>,
-					Querystring: Record<string, unknown>,
+					Params: { endpoint: string };
+					Body: Record<string, unknown>;
+					Querystring: Record<string, unknown>;
 				}>('/' + endpoint.name, async (request, reply) => {
 					if (request.method === 'GET' && !endpoint.meta.allowGet) {
 						reply.code(405);
@@ -88,20 +95,24 @@ export class ApiServerService {
 				});
 			} else {
 				fastify.all<{
-					Params: { endpoint: string; },
-					Body: Record<string, unknown>,
-					Querystring: Record<string, unknown>,
-				}>('/' + endpoint.name, { bodyLimit: 1024 * 1024 }, async (request, reply) => {
-					if (request.method === 'GET' && !endpoint.meta.allowGet) {
-						reply.code(405);
-						reply.send();
-						return;
-					}
+					Params: { endpoint: string };
+					Body: Record<string, unknown>;
+					Querystring: Record<string, unknown>;
+				}>(
+					'/' + endpoint.name,
+					{ bodyLimit: 1024 * 1024 },
+					async (request, reply) => {
+						if (request.method === 'GET' && !endpoint.meta.allowGet) {
+							reply.code(405);
+							reply.send();
+							return;
+						}
 
-					// Await so that any error can automatically be translated to HTTP 500
-					await this.apiCallService.handleRequest(ep, request, reply);
-					return reply;
-				});
+						// Await so that any error can automatically be translated to HTTP 500
+						await this.apiCallService.handleRequest(ep, request, reply);
+						return reply;
+					},
+				);
 			}
 		}
 
@@ -117,8 +128,10 @@ export class ApiServerService {
 				'turnstile-response'?: string;
 				'm-captcha-response'?: string;
 				'testcaptcha-response'?: string;
-			}
-		}>('/signup', (request, reply) => this.signupApiService.signup(request, reply));
+			};
+		}>('/signup', (request, reply) =>
+			this.signupApiService.signup(request, reply),
+		);
 
 		fastify.post<{
 			Body: {
@@ -132,16 +145,23 @@ export class ApiServerService {
 				'm-captcha-response'?: string;
 				'testcaptcha-response'?: string;
 			};
-		}>('/signin-flow', (request, reply) => this.signinApiService.signin(request, reply));
+		}>('/signin-flow', (request, reply) =>
+			this.signinApiService.signin(request, reply),
+		);
 
 		fastify.post<{
 			Body: {
 				credential?: AuthenticationResponseJSON;
 				context?: string;
 			};
-		}>('/signin-with-passkey', (request, reply) => this.signinWithPasskeyApiService.signin(request, reply));
+		}>('/signin-with-passkey', (request, reply) =>
+			this.signinWithPasskeyApiService.signin(request, reply),
+		);
 
-		fastify.post<{ Body: { code: string; } }>('/signup-pending', (request, reply) => this.signupApiService.signupPending(request, reply));
+		fastify.post<{ Body: { code: string } }>(
+			'/signup-pending',
+			(request, reply) => this.signupApiService.signupPending(request, reply),
+		);
 
 		fastify.get('/v1/instance/peers', async (request, reply) => {
 			const instances = await this.instancesRepository.find({
@@ -151,34 +171,42 @@ export class ApiServerService {
 				},
 			});
 
-			return instances.map(instance => instance.host);
+			return instances.map((instance) => instance.host);
 		});
 
-		fastify.post<{ Params: { session: string; } }>('/miauth/:session/check', async (request, reply) => {
-			const token = await this.accessTokensRepository.findOneBy({
-				session: request.params.session,
-			});
-
-			if (token && token.session != null && !token.fetched) {
-				this.accessTokensRepository.update(token.id, {
-					fetched: true,
+		fastify.post<{ Params: { session: string } }>(
+			'/miauth/:session/check',
+			async (request, reply) => {
+				const token = await this.accessTokensRepository.findOneBy({
+					session: request.params.session,
 				});
 
-				return {
-					ok: true,
-					token: token.token,
-					user: await this.userEntityService.pack(token.userId, null, { schema: 'UserDetailedNotMe' }),
-				};
-			} else {
-				return {
-					ok: false,
-				};
-			}
-		});
+				if (token && token.session != null && !token.fetched) {
+					this.accessTokensRepository.update(token.id, {
+						fetched: true,
+					});
+
+					return {
+						ok: true,
+						token: token.token,
+						user: await this.userEntityService.pack(token.userId, null, {
+							schema: 'UserDetailedNotMe',
+						}),
+					};
+				} else {
+					return {
+						ok: false,
+					};
+				}
+			},
+		);
 
 		fastify.all('/clear-browser-cache', (request, reply) => {
 			if (['GET', 'POST'].includes(request.method)) {
-				reply.header('Clear-Site-Data', '"cache", "prefetchCache", "prerenderCache", "executionContexts"');
+				reply.header(
+					'Clear-Site-Data',
+					'"cache", "prefetchCache", "prerenderCache", "executionContexts"',
+				);
 				reply.code(204);
 				reply.send();
 			} else {
