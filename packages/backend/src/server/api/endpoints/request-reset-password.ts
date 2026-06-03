@@ -85,7 +85,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			await this.passwordResetRequestsRepository.insert({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				userId: profile.userId,
 				token,
 			});

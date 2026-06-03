@@ -576,7 +576,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 
 		const created = await this.roleAssignmentsRepository.insertOne({
 			id: this.idService.genId(now),
-			createdAt: now,
 			expiresAt: expiresAt,
 			roleId: roleId,
 			userId: userId,
@@ -665,7 +664,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		const date = new Date();
 		const created = await this.rolesRepository.insertOne({
 			id: this.idService.genId(date),
-			createdAt: date,
 			updatedAt: date,
 			lastUsedAt: date,
 			name: values.name,

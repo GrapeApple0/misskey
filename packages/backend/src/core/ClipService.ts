@@ -47,7 +47,6 @@ export class ClipService {
 
 		const clip = await this.clipsRepository.insertOne({
 			id: this.idService.genId(),
-			createdAt: new Date(),
 			userId: me.id,
 			name: name,
 			isPublic: isPublic,

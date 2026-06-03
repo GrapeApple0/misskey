@@ -62,7 +62,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const flash = await this.flashsRepository.insertOne({
 				id: this.idService.genId(),
 				userId: me.id,
-				createdAt: new Date(),
 				updatedAt: new Date(),
 				title: ps.title,
 				summary: ps.summary,

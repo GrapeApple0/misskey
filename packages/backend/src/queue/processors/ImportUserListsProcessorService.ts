@@ -92,7 +92,6 @@ export class ImportUserListsProcessorService {
 				if (list == null) {
 					list = await this.userListsRepository.insertOne({
 						id: this.idService.genId(),
-						createdAt: new Date(),
 						userId: user.id,
 						name: listName,
 					});

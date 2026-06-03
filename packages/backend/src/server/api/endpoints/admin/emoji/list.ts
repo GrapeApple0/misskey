@@ -66,24 +66,14 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				const queryarry = ps.query.match(/\:([a-z0-9_]*)\:/g);
 
 				if (queryarry) {
-					if (ps.exactMode) {
-						emojis = emojis.filter(emoji =>
-							queryarry.every(q => q === `:${emoji.name}:`),
-						);
-					} else {
-						emojis = emojis.filter(emoji =>
-							queryarry.includes(`:${emoji.name}:`),
-						);
-					}
+					emojis = emojis.filter(emoji =>
+						queryarry.includes(`:${emoji.name}:`),
+					);
 				} else {
-					if (ps.exactMode) {
-						emojis = emojis.filter(emoji => ps.query === emoji.name);
-					} else {
-						emojis = emojis.filter(emoji =>
-							emoji.name.includes(ps.query!) ||
+					emojis = emojis.filter(emoji =>
+						emoji.name.includes(ps.query!) ||
 							emoji.aliases.some(a => a.includes(ps.query!)) ||
 							emoji.category?.includes(ps.query!));
-					}
 				}
 				emojis.splice(ps.limit + 1);
 			} else {

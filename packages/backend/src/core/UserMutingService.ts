@@ -27,7 +27,6 @@ export class UserMutingService {
 	public async mute(user: MiUser, target: MiUser, expiresAt: Date | null = null): Promise<void> {
 		await this.mutingsRepository.insert({
 			id: this.idService.genId(),
-			createdAt: new Date(),
 			expiresAt: expiresAt ?? null,
 			muterId: user.id,
 			muteeId: target.id,

@@ -54,14 +54,14 @@ export class FeedService {
 				renoteId: IsNull(),
 				visibility: In(['public', 'home']),
 			},
-			order: { createdAt: -1 },
+			order: { id: -1 },
 			take: 20,
 		});
 
 		const feed = new Feed({
 			id: author.link,
 			title: `${author.name} (@${user.username}@${this.config.host})`,
-			updated: notes[0].createdAt,
+			updated: notes.length !== 0 ? this.idService.parse(notes[0].id).date : undefined,
 			generator: 'Misskey',
 			description: `${user.notesCount} Notes, ${profile.followingVisibility === 'public' ? user.followingCount : '?'} Following, ${profile.followersVisibility === 'public' ? user.followersCount : '?'} Followers${profile.description ? ` · ${profile.description}` : ''}`,
 			link: author.link,
@@ -84,7 +84,7 @@ export class FeedService {
 			feed.addItem({
 				title: `New note by ${author.name}`,
 				link: `${this.config.url}/notes/${note.id}`,
-				date: note.createdAt,
+				date: this.idService.parse(note.id).date,
 				description: note.cw ?? undefined,
 				content: text ? this.mfmService.toHtml(mfmParse(text), JSON.parse(note.mentionedRemoteUsers)) ?? undefined : undefined,
 				image: file ? this.driveFileEntityService.getPublicUrl(file) : undefined,

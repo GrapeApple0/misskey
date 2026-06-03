@@ -33,11 +33,10 @@ export const meta = {
 			type: 'object',
 			properties: {
 				id: { type: 'string', format: 'misskey:id' },
-				createdAt: { type: 'string', format: 'date-time' },
 				user: { ref: 'UserDetailed' },
 				expiresAt: { type: 'string', format: 'date-time', nullable: true },
 			},
-			required: ['id', 'createdAt', 'user'],
+			required: ['id', 'user'],
 		},
 	},
 } as const;
@@ -94,7 +93,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				.then(users => new Map(users.map(u => [u.id, u])));
 			return await Promise.all(assigns.map(async assign => ({
 				id: assign.id,
-				createdAt: assign.createdAt,
 				user: _userMap.get(assign.userId) ?? await this.userEntityService.pack(assign.user!, me, { schema: 'UserDetailed' }),
 				expiresAt: assign.expiresAt?.toISOString() ?? null,
 			})));

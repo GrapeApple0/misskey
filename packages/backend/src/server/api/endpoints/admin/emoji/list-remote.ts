@@ -68,11 +68,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			if (ps.query) {
-				if (ps.exactMode) {
-					q.andWhere('emoji.name = :query', { query: ps.query });
-				} else {
-					q.andWhere('emoji.name like :query', { query: '%' + sqlLikeEscape(ps.query) + '%' });
-				}
+				q.andWhere('emoji.name like :query', { query: '%' + sqlLikeEscape(ps.query) + '%' });
 			}
 
 			const emojis = await q

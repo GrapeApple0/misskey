@@ -121,7 +121,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			const antenna = await this.antennasRepository.insertOne({
 				id: this.idService.genId(now),
-				createdAt: now,
 				lastUsedAt: now,
 				userId: me.id,
 				name: ps.name,

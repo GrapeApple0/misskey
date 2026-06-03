@@ -75,7 +75,6 @@ export class PollService {
 		// Create vote
 		await this.pollVotesRepository.insert({
 			id: this.idService.genId(),
-			createdAt: new Date(),
 			noteId: note.id,
 			userId: user.id,
 			choice: choice,

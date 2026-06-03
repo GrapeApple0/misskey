@@ -71,7 +71,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 			await this.userListFavoritesRepository.insert({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				userId: me.id,
 				userListId: ps.listId,
 			});

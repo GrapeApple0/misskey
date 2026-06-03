@@ -241,7 +241,6 @@ export class UserFollowingService implements OnModuleInit {
 
 		await this.followingsRepository.insert({
 			id: this.idService.genId(),
-			createdAt: new Date(),
 			followerId: follower.id,
 			followeeId: followee.id,
 			withReplies: withReplies,
@@ -509,7 +508,6 @@ export class UserFollowingService implements OnModuleInit {
 
 		const followRequest = await this.followRequestsRepository.insertOne({
 			id: this.idService.genId(),
-			createdAt: new Date(),
 			followerId: follower.id,
 			followeeId: followee.id,
 			requestId,

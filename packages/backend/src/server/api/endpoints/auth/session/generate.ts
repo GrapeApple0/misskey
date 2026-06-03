@@ -80,7 +80,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			// Create session token document
 			const doc = await this.authSessionsRepository.insertOne({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				appId: app.id,
 				token: token,
 			});

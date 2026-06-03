@@ -26,7 +26,6 @@ export class ModerationLogService {
 	public async log<T extends typeof moderationLogTypes[number]>(moderator: { id: MiUser['id'] }, type: T, info?: ModerationLogPayloads[T]) {
 		await this.moderationLogsRepository.insert({
 			id: this.idService.genId(),
-			createdAt: new Date(),
 			userId: moderator.id,
 			type: type,
 			info: (info as any) ?? {},

@@ -40,7 +40,6 @@ export class SigninService {
 
 			const record = await this.signinsRepository.insertOne({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				userId: user.id,
 				ip: request.ip,
 				headers: request.headers as any,

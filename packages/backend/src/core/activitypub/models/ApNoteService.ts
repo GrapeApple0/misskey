@@ -348,7 +348,7 @@ export class ApNoteService {
 	}
 
 	@bindThis
-	public async updateNote(value: string | IObject, resolver?: Resolver, silent = false) {
+	public async updateNote(value: string | IObject, resolver: Resolver, silent = false) {
 		const uri = typeof value === 'string' ? value : value.id;
 		if (uri == null) throw new Error('uri is null');
 
@@ -358,9 +358,6 @@ export class ApNoteService {
 		const targetNote = await this.notesRepository.findOneBy({ uri });
 		if (targetNote === null) return;
 		//#endregion
-
-		// eslint-disable-next-line no-param-reassign
-		if (resolver == null) resolver = this.apResolverService.createResolver();
 
 		const object = await resolver.resolve(value);
 
@@ -415,7 +412,7 @@ export class ApNoteService {
 			}
 		}
 
-		const apMentions = await this.apMentionService.extractApMentions(note.tag, resolver);
+		const apMentions = await this.apMentionService.extractApMentions(note.tag, resolver!);
 		const apHashtags = extractApHashtags(note.tag);
 
 		// 添付ファイル

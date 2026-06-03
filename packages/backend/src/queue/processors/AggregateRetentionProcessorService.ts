@@ -41,13 +41,13 @@ export class AggregateRetentionProcessorService {
 
 		// 過去(だいたい)30日分のレコードを取得
 		const pastRecords = await this.retentionAggregationsRepository.findBy({
-			createdAt: MoreThan(new Date(Date.now() - (1000 * 60 * 60 * 24 * 31))),
+			id: MoreThan(this.idService.genId(new Date(Date.now() - (1000 * 60 * 60 * 24 * 31)))),
 		});
 
 		// 今日登録したユーザーを全て取得
 		const targetUsers = await this.usersRepository.findBy({
 			host: IsNull(),
-			createdAt: MoreThan(new Date(Date.now() - (1000 * 60 * 60 * 24))),
+			id: MoreThan(this.idService.genId(new Date(Date.now() - (1000 * 60 * 60 * 24)))),
 		});
 		const targetUserIds = targetUsers.map(u => u.id);
 

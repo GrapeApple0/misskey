@@ -142,11 +142,11 @@ export class FileServerProxyHandler {
 		}
 
 		if ('static' in query) {
-			return this.imageProcessingService.convertSharpToWebpStream(await sharpBmp(file.path, file.mime), 498, 422);
+			return this.imageProcessingService.convertSharpToWebpStream(await sharpBmp(file.path, file.mime) as sharp.Sharp, 498, 422);
 		}
 
 		if ('preview' in query) {
-			return this.imageProcessingService.convertSharpToWebpStream(await sharpBmp(file.path, file.mime), 200, 200);
+			return this.imageProcessingService.convertSharpToWebpStream(await sharpBmp(file.path, file.mime) as sharp.Sharp, 200, 200);
 		}
 
 		if ('badge' in query) {

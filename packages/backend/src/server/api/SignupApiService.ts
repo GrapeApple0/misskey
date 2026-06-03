@@ -192,7 +192,6 @@ export class SignupApiService {
 
 			const pendingUser = await this.userPendingsRepository.insertOne({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				code,
 				email: emailAddress!,
 				username: username,

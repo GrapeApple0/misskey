@@ -146,7 +146,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			// Create vote
 			const vote = await this.pollVotesRepository.insertOne({
 				id: this.idService.genId(),
-				createdAt,
 				noteId: note.id,
 				userId: me.id,
 				choice: ps.choice,

@@ -91,7 +91,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			await this.swSubscriptionsRepository.insert({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				userId: me.id,
 				endpoint: ps.endpoint,
 				auth: ps.auth,

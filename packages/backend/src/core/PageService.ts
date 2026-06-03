@@ -71,7 +71,6 @@ export class PageService {
 
 		const page = await this.pagesRepository.insertOne(new MiPage({
 			id: this.idService.gen(),
-			createdAt: new Date(),
 			updatedAt: new Date(),
 			title: body.title,
 			name: body.name,

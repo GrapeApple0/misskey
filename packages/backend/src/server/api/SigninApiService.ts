@@ -171,7 +171,6 @@ export class SigninApiService {
 			// Append signin history
 			await this.signinsRepository.insert({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				userId: user.id,
 				ip: request.ip,
 				headers: request.headers as any,

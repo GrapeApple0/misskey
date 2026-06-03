@@ -371,7 +371,6 @@ export class ApPersonService implements OnModuleInit {
 					id: this.idService.genId(),
 					avatarId: null,
 					bannerId: null,
-					createdAt: new Date(),
 					lastFetchedAt: new Date(),
 					name: truncate(person.name, nameLength),
 					isLocked: person.manuallyApprovesFollowers,
@@ -737,7 +736,6 @@ export class ApPersonService implements OnModuleInit {
 				td -= 1000;
 				transactionalEntityManager.insert(MiUserNotePining, {
 					id: this.idService.genId(new Date(Date.now() + td)),
-					createdAt: new Date(),
 					userId: user.id,
 					noteId: note.id,
 				});

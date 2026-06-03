@@ -221,14 +221,6 @@ export type ModerationLogPayloads = {
 		noteUserHost: string | null;
 		note: any;
 	};
-	editNote: {
-		noteId: string;
-		noteUserId: string;
-		noteUserUsername: string;
-		noteUserHost: string | null;
-		note: any;
-		oldNote: any;
-	};
 	createGlobalAnnouncement: {
 		announcementId: string;
 		announcement: any;

@@ -130,7 +130,6 @@ export class SignupService {
 
 			account = await transactionalEntityManager.save(new MiUser({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				username: username,
 				usernameLower: username.toLowerCase(),
 				host: this.utilityService.toPunyNullable(host),

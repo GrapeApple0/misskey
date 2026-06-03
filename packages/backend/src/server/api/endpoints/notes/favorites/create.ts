@@ -81,7 +81,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			// Create favorite
 			await this.noteFavoritesRepository.insert({
 				id: this.idService.genId(),
-				createdAt: new Date(),
 				noteId: note.id,
 				userId: me.id,
 			});

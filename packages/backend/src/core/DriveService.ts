@@ -305,7 +305,7 @@ export class DriveService {
 		let isAnimated: boolean;
 
 		try {
-			img = await sharpBmp(path, type);
+			img = await sharpBmp(path, type) as sharp.Sharp;
 			const metadata = await img.metadata();
 			isAnimated = !!(metadata.pages && metadata.pages > 1);
 
@@ -593,7 +593,6 @@ export class DriveService {
 
 		let file = new MiDriveFile();
 		file.id = this.idService.genId();
-		file.createdAt = new Date();
 		file.userId = user ? user.id : null;
 		file.userHost = user ? user.host : null;
 		file.folderId = folder !== null ? folder.id : null;
