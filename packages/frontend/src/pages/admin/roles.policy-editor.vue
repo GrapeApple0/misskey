@@ -181,12 +181,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</template>
 	</XFolder>
 
-	<XFolder v-if="matchQuery([i18n.ts._role._options.driveCapacity, 'driveCapacityMb'])" v-model:policyMeta="policyMetaModel.driveCapacityMb" :isBaseRole="isBaseRole" :readonly="readonly">
-		<template #label>{{ i18n.ts._role._options.driveCapacity }}</template>
-		<template #valueText>{{ valuesModel.driveCapacityMb }}MB</template>
+	<XFolder v-if="matchQuery([i18n.ts._role._options.maxFileSize, 'maxFileSizeMb'])" v-model:policyMeta="policyMetaModel.maxFileSizeMb" :isBaseRole="isBaseRole" :readonly="readonly">
+		<template #label>{{ i18n.ts._role._options.maxFileSize }}</template>
+		<template #valueText>{{ valuesModel.maxFileSizeMb }}MB</template>
 		<template #default="{ disabled }">
-			<MkInput v-model="valuesModel.driveCapacityMb" type="number" :disabled="disabled">
+			<MkInput v-model="valuesModel.maxFileSizeMb" type="number" :disabled="disabled">
 				<template #suffix>MB</template>
+				<template #caption>
+					<div>{{ i18n.tsx._role._options.maxFileSize_caption2({ max: `${Math.floor(instance.maxFileSize / (1024 * 1024))}MB` }) }}</div>
+					<div><i class="ti ti-alert-triangle" style="color: var(--MI_THEME-warn);"></i> {{ i18n.ts._role._options.maxFileSize_caption }}</div>
+				</template>
 			</MkInput>
 		</template>
 	</XFolder>
@@ -411,6 +415,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts">
 import * as Misskey from 'misskey-js';
+import { instance } from '@/instance.js';
 
 export type PolicyMeta = {
 	useDefault: boolean;

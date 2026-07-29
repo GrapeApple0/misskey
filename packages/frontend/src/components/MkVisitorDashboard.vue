@@ -24,8 +24,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<MkInfo v-else-if="instance.federation === 'none'" warn>{{ i18n.ts.federationDisabled }}</MkInfo>
 			</div>
 			<div class="_gaps_s" :class="$style.mainActions">
-				<MkButton :class="$style.mainAction" full rounded gradate data-cy-signup style="margin-right: 12px;" @click="signup()">{{ i18n.ts.joinThisServer }}</MkButton>
-				<MkButton :class="$style.mainAction" full rounded data-cy-signin @click="signin()">{{ i18n.ts.login }}</MkButton>
+				<MkButton :class="$style.mainAction" full rounded gradate data-testid="signup" style="margin-right: 12px;" @click="signup()">{{ i18n.ts.joinThisServer }}</MkButton>
+				<MkButton :class="$style.mainAction" full rounded data-testid="signin" @click="signin()">{{ i18n.ts.login }}</MkButton>
 			</div>
 		</div>
 	</div>

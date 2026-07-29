@@ -165,6 +165,49 @@ export class FileInfoService {
 		};
 	}
 
+	private async *asyncIterateFrames(cwd: string, command: FFmpeg.FfmpegCommand): AsyncGenerator<string, void> {
+		const watcher = new FSWatcher({
+			cwd,
+		});
+		let finished = false;
+		command.once('end', () => {
+			finished = true;
+			watcher.close();
+		});
+		command.run();
+		for (let i = 1; true; i++) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+			const current = `${i}.png`;
+			const next = `${i + 1}.png`;
+			const framePath = join(cwd, current);
+			if (await this.exists(join(cwd, next))) {
+				yield framePath;
+			} else if (!finished) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+				watcher.add(next);
+				await new Promise<void>((resolve, reject) => {
+					watcher.on('add', function onAdd(path) {
+						if (path === next) { // 次フレームの書き出しが始まっているなら、現在フレームの書き出しは終わっている
+							watcher.unwatch(current);
+							watcher.off('add', onAdd);
+							resolve();
+						}
+					});
+					command.once('end', resolve); // 全てのフレームを処理し終わったなら、最終フレームである現在フレームの書き出しは終わっている
+					command.once('error', reject);
+				});
+				yield framePath;
+			} else if (await this.exists(framePath)) {
+				yield framePath;
+			} else {
+				return;
+			}
+		}
+	}
+
+	@bindThis
+	private exists(path: string): Promise<boolean> {
+		return fs.promises.access(path).then(() => true, () => false);
+	}
+
 	@bindThis
 	public fixMime(mime: string): string {
 		// see https://github.com/misskey-dev/misskey/pull/10686

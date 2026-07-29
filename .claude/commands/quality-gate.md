@@ -12,16 +12,16 @@ upstream path: commands/quality-gate.md
 upstream license: MIT — https://github.com/affaan-m/everything-claude-code/blob/main/LICENSE
 project-level notice: see .claude/THIRD_PARTY_LICENSES.md (Misskey 内サードパーティ一覧 + MIT 全文)
 
-Imported into Misskey .claude/ on 2026-05-10. Pipeline 概念 (lint → typecheck → test) は upstream ECC 版から借用 (MIT)。実コマンド層は Misskey の pnpm + tsgo + ESLint + Vitest に固定し、formatter (Prettier/Biome) フェーズは削除した。
+Imported into Misskey .claude/ on 2026-05-10. Pipeline 概念 (lint → typecheck → test) は upstream ECC 版から借用 (MIT)。実コマンド層は Misskey の pnpm + tsc + ESLint + Vitest に固定し、formatter (Prettier/Biome) フェーズは削除した。
 
-note: 元 ECC 版は言語自動判定 + format/lint/type のジェネリック版だったが、Misskey 専用に pnpm + tsgo + ESLint + Vitest の組み合わせに固定。重い test:e2e / test:fed は含まない (CI 側で実行される)。
+note: 元 ECC 版は言語自動判定 + format/lint/type のジェネリック版だったが、Misskey 専用に pnpm + tsc + ESLint + Vitest の組み合わせに固定。重い test:e2e / test:fed は含まない (CI 側で実行される)。
 -->
 
 # /quality-gate — Misskey 軽量品質ゲート
 
 `/quality-gate [scope]`
 
-完了前の **軽量** 品質チェック。重い E2E / 連合テスト (test:e2e / test:fed / Cypress) は CI 側で実行されるため、本コマンドには含めない。
+完了前の **軽量** 品質チェック。重い E2E / 連合テスト (test:e2e / test:fed / Playwright) は CI 側で実行されるため、本コマンドには含めない。
 
 ## Scope
 
@@ -50,7 +50,7 @@ pnpm --filter frontend test
 lint がまとめて失敗していて typecheck の結果だけ単独で見たい場合は、以下を個別に回す。**通常は不要** (lint の出力を読めば足りる):
 
 ```bash
-pnpm --filter backend typecheck    # tsgo 単体
+pnpm --filter backend typecheck    # tsc 単体
 pnpm --filter frontend typecheck   # vue-tsc 単体 (Vue SFC の型を見るため)
 ```
 
@@ -63,7 +63,7 @@ pnpm --filter backend lint
 pnpm --filter backend test
 ```
 
-`tsgo` の出力を単独で見たい時のみ optional で `pnpm --filter backend typecheck` を別途回す。
+`tsc` の出力を単独で見たい時のみ optional で `pnpm --filter backend typecheck` を別途回す。
 
 ### Frontend scope
 
@@ -112,11 +112,12 @@ Frontend ut: PASS  (87/87)
 
 ## 関連 skill / コマンド
 
-- `/check-misskey-js` コマンド — API 変更時の misskey-js 再生成
-- [AGENTS.md §必須コマンド](../../AGENTS.md#必須コマンド) — pnpm コマンド一覧の正典
+- [`shipping-misskey-change` スキル](../skills/shipping-misskey-change/SKILL.md) — commit / PR 直前の最終チェックリスト (misskey-js 再生成 / SPDX / CHANGELOG 等)
+- [`shipping-misskey-change/references/tasks/regenerate-misskey-js.md`](../skills/shipping-misskey-change/references/tasks/regenerate-misskey-js.md) — API 変更時の `pnpm build-misskey-js-with-types` 実行手順
+- [.github/copilot-instructions.md §Validation コマンド](../../.github/copilot-instructions.md) — pnpm コマンド一覧 (Copilot / Codex 向けに再掲)
 
 ## 元 ECC 版との差分
 
 - ジェネリックな言語自動判定を排除し、Misskey 固定 pipeline に。
 - formatter フェーズなし (Misskey は ESLint --fix のみ採用)。
-- e2e / federation / Cypress は重いため除外し CI 側に委譲。
+- e2e / federation / Playwright は重いため除外し CI 側に委譲。
