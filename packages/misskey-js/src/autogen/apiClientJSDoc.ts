@@ -2396,7 +2396,7 @@ declare module '../api.js' {
     /**
      * No description provided.
      * 
-     * **Credential required**: *Yes*
+     * **Credential required**: *No*
      */
     request<E extends 'federation/instances', P extends Endpoints[E]['req']>(
       endpoint: E,

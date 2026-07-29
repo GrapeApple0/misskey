@@ -1965,7 +1965,7 @@ export type paths = {
          * federation/instances
          * @description No description provided.
          *
-         *     **Credential required**: *Yes*
+         *     **Credential required**: *No*
          */
         post: operations['federation___instances'];
     };
@@ -11591,8 +11591,6 @@ export interface operations {
                     'application/json': {
                         /** Format: misskey:id */
                         id: string;
-                        /** Format: date-time */
-                        createdAt: string;
                         user: components['schemas']['UserDetailed'];
                         /** Format: date-time */
                         expiresAt: string | null;
