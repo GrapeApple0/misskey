@@ -11,6 +11,7 @@ import { describe, expect, test, beforeAll, afterAll, afterEach } from 'vitest';
 import sharp from 'sharp';
 import { DataSource, type Repository } from 'typeorm';
 import { initTestDb, randomString } from '../../utils.js';
+import type { AiService } from '@/core/AiService.js';
 import { DownloadService } from '@/core/DownloadService.js';
 import { FileInfoService } from '@/core/FileInfoService.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
@@ -146,7 +147,11 @@ describe('FileServerService', () => {
 		driveFilesRepository = db.getRepository(MiDriveFile);
 
 		const loggerService = new LoggerService();
-		const fileInfoService = new FileInfoService(loggerService);
+		const aiService = {
+			detectSensitive: async () => null,
+			detectSensitiveMany: async (sources: Buffer[]) => sources.map(() => null),
+		} as unknown as AiService;
+		const fileInfoService = new FileInfoService(aiService, loggerService);
 		const httpRequestService = new HttpRequestService(config);
 		const downloadService = new DownloadService(config, httpRequestService, loggerService);
 		const imageProcessingService = new ImageProcessingService();

@@ -15,9 +15,13 @@ import isSvg from 'is-svg';
 import probeImageSize from 'probe-image-size';
 import { sharpBmp } from '@misskey-dev/sharp-read-bmp';
 import * as blurhash from 'blurhash';
+import { createTempDir } from '@/misc/create-temp.js';
+import { AiService } from '@/core/AiService.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
+import { isMimeImage } from '@/misc/is-mime-image.js';
+import type { Prediction } from '@/core/AiService.js';
 
 export type FileInfo = {
 	size: number;
@@ -50,6 +54,7 @@ export class FileInfoService {
 	private logger: Logger;
 
 	constructor(
+		private aiService: AiService,
 		private loggerService: LoggerService,
 	) {
 		this.logger = this.loggerService.getLogger('file-info');
@@ -151,6 +156,23 @@ export class FileInfoService {
 			});
 		}
 
+		let sensitive = false;
+		let porn = false;
+
+		if (!opts.skipSensitiveDetection) {
+			await this.detectSensitivity(
+				path,
+				type.mime,
+				opts.sensitiveThreshold ?? 0.5,
+				opts.sensitiveThresholdForPorn ?? 0.75,
+				opts.enableSensitiveMediaDetectionForVideos ?? false,
+			).then(value => {
+				[sensitive, porn] = value;
+			}, error => {
+				warnings.push(`detectSensitivity failed: ${error}`);
+			});
+		}
+
 		return {
 			size,
 			md5,
@@ -159,10 +181,123 @@ export class FileInfoService {
 			height,
 			orientation,
 			blurhash,
-			sensitive: false,
-			porn: false,
+			sensitive,
+			porn,
 			warnings,
 		};
+	}
+
+	@bindThis
+	private async detectSensitivity(source: string, mime: string, sensitiveThreshold: number, sensitiveThresholdForPorn: number, analyzeVideo: boolean): Promise<[sensitive: boolean, porn: boolean]> {
+		let sensitive = false;
+		let porn = false;
+
+		function judgePrediction(result: readonly Prediction[]): [sensitive: boolean, porn: boolean] {
+			let sensitive = false;
+			let porn = false;
+
+			if ((result.find(x => x.className === 'Sexy')?.probability ?? 0) > sensitiveThreshold) sensitive = true;
+			if ((result.find(x => x.className === 'Hentai')?.probability ?? 0) > sensitiveThreshold) sensitive = true;
+			if ((result.find(x => x.className === 'Porn')?.probability ?? 0) > sensitiveThreshold) sensitive = true;
+
+			if ((result.find(x => x.className === 'Porn')?.probability ?? 0) > sensitiveThresholdForPorn) porn = true;
+
+			return [sensitive, porn];
+		}
+
+		if (analyzeVideo && (mime === 'image/apng' || mime.startsWith('video/'))) {
+			const [outDir, disposeOutDir] = await createTempDir();
+			try {
+				const command = FFmpeg()
+					.input(source)
+					.inputOptions([
+						'-skip_frame', 'nokey', // 可能ならキーフレームのみを取得してほしいとする（そうなるとは限らない）
+						'-lowres', '3', // 元の画質でデコードする必要はないので 1/8 画質でデコードしてもよいとする（そうなるとは限らない）
+					])
+					.noAudio()
+					.videoFilters([
+						{
+							filter: 'select', // フレームのフィルタリング
+							options: {
+								e: 'eq(pict_type,PICT_TYPE_I)', // I-Frame のみをフィルタする（VP9 とかはデコードしてみないとわからないっぽい）
+							},
+						},
+						{
+							filter: 'blackframe', // 暗いフレームの検出
+							options: {
+								amount: '0', // 暗さに関わらず全てのフレームで測定値を取る
+							},
+						},
+						{
+							filter: 'metadata',
+							options: {
+								mode: 'select', // フレーム選択モード
+								key: 'lavfi.blackframe.pblack', // フレームにおける暗部の百分率（前のフィルタからのメタデータを参照する）
+								value: '50',
+								function: 'less', // 50% 未満のフレームを選択する（50% 以上暗部があるフレームだと誤検知を招くかもしれないので）
+							},
+						},
+						{
+							filter: 'scale',
+							options: {
+								w: 299,
+								h: 299,
+							},
+						},
+					])
+					.format('image2')
+					.output(join(outDir, '%d.png'))
+					.outputOptions(['-vsync', '0']); // 可変フレームレートにすることで穴埋めをさせない
+				// 判定対象フレームを選定して正規化済みバッファとして集め、外部サービスへまとめて送る。
+				const frameBuffers: Buffer[] = [];
+				let frameIndex = 0;
+				let targetIndex = 0;
+				let nextIndex = 1;
+				for await (const path of this.asyncIterateFrames(outDir, command)) {
+					try {
+						const index = frameIndex++;
+						if (index !== targetIndex) {
+							continue;
+						}
+						targetIndex = nextIndex;
+						nextIndex += index; // fibonacci sequence によってフレーム数制限を掛ける
+						frameBuffers.push(await fs.promises.readFile(path));
+					} finally {
+						fs.promises.unlink(path);
+					}
+				}
+				const predictions = await this.aiService.detectSensitiveMany(frameBuffers);
+				const results = predictions.filter((x): x is Prediction[] => x != null).map(x => judgePrediction(x));
+				// 判定に成功したフレームが 0 件のとき（接続先未設定・通信失敗等）は、
+				// Math.ceil(0) との比較が 0 >= 0 で真になり全動画がセンシティブ扱いになってしまうため、
+				// 1 件以上判定できたときのみ集約する（失敗時は非センシティブ扱い: misskey-dev/misskey#16804）。
+				if (results.length > 0) {
+					sensitive = results.filter(x => x[0]).length >= Math.ceil(results.length * sensitiveThreshold);
+					porn = results.filter(x => x[1]).length >= Math.ceil(results.length * sensitiveThresholdForPorn);
+				}
+			} finally {
+				disposeOutDir();
+			}
+		} else if (isMimeImage(mime, 'sharp-convertible-image-with-bmp')) {
+			/*
+			 * 判定サービス側のデコーダは限られた画像形式しか受け付けないため、sharp で PNG に変換する
+			 * せっかくなので内部処理で使われる最大サイズの299x299に事前にリサイズする
+			 */
+			const png = await (await sharpBmp(source, mime))
+				.resize(299, 299, {
+					withoutEnlargement: false,
+				})
+				.rotate()
+				.flatten({ background: { r: 119, g: 119, b: 119 } }) // 透過部分を18%グレーで塗りつぶす
+				.png()
+				.toBuffer();
+			const result = await this.aiService.detectSensitive(png);
+			if (result) {
+				[sensitive, porn] = judgePrediction(result);
+			}
+		}
+
+		return [sensitive, porn];
 	}
 
 	private async *asyncIterateFrames(cwd: string, command: FFmpeg.FfmpegCommand): AsyncGenerator<string, void> {

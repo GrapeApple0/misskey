@@ -11,11 +11,12 @@ import { dirname } from 'node:path';
 import { Test } from '@nestjs/testing';
 import { afterAll, beforeAll, describe, test } from 'vitest';
 import { mockDeep } from 'vitest-mock-extended';
-import type { TestingModule } from '@nestjs/testing';
 import { GlobalModule } from '@/GlobalModule.js';
 import { FileInfo, FileInfoService } from '@/core/FileInfoService.js';
 //import { DI } from '@/di-symbols.js';
+import { AiService } from '@/core/AiService.js';
 import { LoggerService } from '@/core/LoggerService.js';
+import type { TestingModule } from '@nestjs/testing';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = dirname(_filename);
@@ -32,7 +33,7 @@ describe('FileInfoService', () => {
 		delete fi.porn;
 
 		return fi;
-	};
+	}
 
 	beforeAll(async () => {
 		app = await Test.createTestingModule({
@@ -40,6 +41,7 @@ describe('FileInfoService', () => {
 				GlobalModule,
 			],
 			providers: [
+				AiService,
 				LoggerService,
 				FileInfoService,
 			],

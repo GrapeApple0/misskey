@@ -1,12 +1,12 @@
 {
 	"name": "misskey",
-	"version": "2026.7.0-beta.6-pie-3.6.8",
+	"version": "2026.7.0-pie-3.6.9",
 	"codename": "nasubi",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/grapeapple0/misskey.git"
 	},
-	"packageManager": "pnpm@11.11.0",
+	"packageManager": "pnpm@11.18.0",
 	"workspaces": [
 		"packages/backend",
 		"packages/frontend-shared",
@@ -57,7 +57,7 @@
 		"esbuild": "0.28.1",
 		"execa": "9.6.1",
 		"ignore-walk": "9.0.0",
-		"js-yaml": "5.2.1",
+		"js-yaml": "5.2.2",
 		"tar": "7.5.21"
 	},
 	"devDependencies": {
