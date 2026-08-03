@@ -32,16 +32,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 						<SearchMarker :keywords="['device', 'type', 'kind', 'smartphone', 'tablet', 'desktop']">
 							<MkRadios
-								v-model="overridedDeviceKind" :options="[
+								v-model="overridedDeviceKind"
+								:options="[
 									{ value: null, label: i18n.ts.auto },
 									{ value: 'smartphone', label: i18n.ts.smartphone, icon: 'ti ti-device-mobile' },
 									{ value: 'tablet', label: i18n.ts.tablet, icon: 'ti ti-device-tablet' },
 									{ value: 'desktop', label: i18n.ts.desktop, icon: 'ti ti-device-desktop' },
 								]"
 							>
-								<template #label>
-									<SearchLabel>{{ i18n.ts.overridedDeviceKind }}</SearchLabel>
-								</template>
+								<template #label><SearchLabel>{{ i18n.ts.overridedDeviceKind }}</SearchLabel></template>
 							</MkRadios>
 						</SearchMarker>
 
@@ -77,9 +76,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['avatar', 'icon', 'decoration', 'show']">
 								<MkPreferenceContainer k="showAvatarDecorations">
 									<MkSwitch v-model="showAvatarDecorations">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.showAvatarDecorations }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.showAvatarDecorations }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -87,9 +84,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['follow', 'confirm', 'always']">
 								<MkPreferenceContainer k="alwaysConfirmFollow">
 									<MkSwitch v-model="alwaysConfirmFollow">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.alwaysConfirmFollow }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.alwaysConfirmFollow }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -97,9 +92,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['highlight', 'sensitive', 'nsfw', 'image', 'photo', 'picture', 'media', 'thumbnail']">
 								<MkPreferenceContainer k="highlightSensitiveMedia">
 									<MkSwitch v-model="highlightSensitiveMedia">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.highlightSensitiveMedia }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.highlightSensitiveMedia }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -107,9 +100,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['sensitive', 'nsfw', 'media', 'image', 'photo', 'picture', 'attachment', 'confirm']">
 								<MkPreferenceContainer k="confirmWhenRevealingSensitiveMedia">
 									<MkSwitch v-model="confirmWhenRevealingSensitiveMedia">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.confirmWhenRevealingSensitiveMedia }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.confirmWhenRevealingSensitiveMedia }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -117,9 +108,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['mfm', 'enable', 'show', 'advanced']">
 								<MkPreferenceContainer k="advancedMfm">
 									<MkSwitch v-model="advancedMfm">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.enableAdvancedMfm }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.enableAdvancedMfm }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -127,9 +116,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['auto', 'load', 'auto', 'more', 'scroll']">
 								<MkPreferenceContainer k="enableInfiniteScroll">
 									<MkSwitch v-model="enableInfiniteScroll">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.enableInfiniteScroll }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.enableInfiniteScroll }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -139,19 +126,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<MkPreferenceContainer k="emojiStyle">
 								<div>
 									<MkRadios
-										v-model="emojiStyle" :options="[
+										v-model="emojiStyle"
+										:options="[
 											{ value: 'native', label: i18n.ts.native },
 											{ value: 'fluentEmoji', label: 'Fluent Emoji' },
 											{ value: 'twemoji', label: 'Twemoji' },
 										]"
 									>
-										<template #label>
-											<SearchLabel>{{ i18n.ts.emojiStyle }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.emojiStyle }}</SearchLabel></template>
 									</MkRadios>
-									<div style="margin: 8px 0 0 0; font-size: 1.5em;">
-										<Mfm :key="emojiStyle" text="🍮🍦🍭🍩🍰🍫🍬🥞🍪"/>
-									</div>
+									<div style="margin: 8px 0 0 0; font-size: 1.5em;"><Mfm :key="emojiStyle" text="🍮🍦🍭🍩🍰🍫🍬🥞🍪"/></div>
 								</div>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -169,9 +153,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['post', 'form', 'timeline']">
 								<MkPreferenceContainer k="showFixedPostForm">
 									<MkSwitch v-model="showFixedPostForm">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.showFixedPostForm }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.showFixedPostForm }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -179,9 +161,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['post', 'form', 'timeline', 'channel']">
 								<MkPreferenceContainer k="showFixedPostFormInChannel">
 									<MkSwitch v-model="showFixedPostFormInChannel">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.showFixedPostFormInChannel }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.showFixedPostFormInChannel }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -197,9 +177,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 							<SearchMarker :keywords="['pinned', 'list']">
 								<MkFolder>
-									<template #label>
-										<SearchLabel>{{ i18n.ts.pinnedList }}</SearchLabel>
-									</template>
+									<template #label><SearchLabel>{{ i18n.ts.pinnedList }}</SearchLabel></template>
 									<!-- 複数ピン止め管理できるようにしたいけどめんどいので一旦ひとつのみ -->
 									<MkButton v-if="prefer.r.pinnedUserLists.value.length === 0" @click="setPinnedList()">{{ i18n.ts.add }}</MkButton>
 									<MkButton v-else danger @click="removePinnedList()"><i class="ti ti-trash"></i> {{ i18n.ts.remove }}</MkButton>
@@ -214,9 +192,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['hover', 'show', 'footer', 'action']">
 									<MkPreferenceContainer k="showNoteActionsOnlyHover">
 										<MkSwitch v-model="showNoteActionsOnlyHover">
-											<template #label>
-												<SearchLabel>{{ i18n.ts.showNoteActionsOnlyHover }}</SearchLabel>
-											</template>
+											<template #label><SearchLabel>{{ i18n.ts.showNoteActionsOnlyHover }}</SearchLabel></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -224,9 +200,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['footer', 'action', 'clip', 'show']">
 									<MkPreferenceContainer k="showClipButtonInNoteFooter">
 										<MkSwitch v-model="showClipButtonInNoteFooter">
-											<template #label>
-												<SearchLabel>{{ i18n.ts.showClipButtonInNoteFooter }}</SearchLabel>
-											</template>
+											<template #label><SearchLabel>{{ i18n.ts.showClipButtonInNoteFooter }}</SearchLabel></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -234,9 +208,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['reaction', 'count', 'show']">
 									<MkPreferenceContainer k="showReactionsCount">
 										<MkSwitch v-model="showReactionsCount">
-											<template #label>
-												<SearchLabel>{{ i18n.ts.showReactionsCount }}</SearchLabel>
-											</template>
+											<template #label><SearchLabel>{{ i18n.ts.showReactionsCount }}</SearchLabel></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -244,20 +216,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['reaction', 'confirm']">
 									<MkPreferenceContainer k="confirmOnReact">
 										<MkSwitch v-model="confirmOnReact">
-											<template #label>
-												<SearchLabel>{{ i18n.ts.confirmOnReact }}</SearchLabel>
-											</template>
-										</MkSwitch>
-									</MkPreferenceContainer>
-								</SearchMarker>
-
-								<SearchMarker :keywords="['reaction', 'picker', 'show']">
-									<MkPreferenceContainer k="splitRNButton">
-										<MkSwitch v-model="splitRNButton">
-											<template #label>
-												<SearchLabel>{{ i18n.ts.splitRNButton }}</SearchLabel>
-												<Mfm :key="emojiStyle" text="🥧"/>
-											</template>
+											<template #label><SearchLabel>{{ i18n.ts.confirmOnReact }}</SearchLabel></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -265,9 +224,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['image', 'photo', 'picture', 'media', 'thumbnail', 'quality', 'raw', 'attachment']">
 									<MkPreferenceContainer k="loadRawImages">
 										<MkSwitch v-model="loadRawImages">
-											<template #label>
-												<SearchLabel>{{ i18n.ts.loadRawImages }}</SearchLabel>
-											</template>
+											<template #label><SearchLabel>{{ i18n.ts.loadRawImages }}</SearchLabel></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -275,9 +232,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['reaction', 'picker', 'contextmenu', 'open']">
 									<MkPreferenceContainer k="useReactionPickerForContextMenu">
 										<MkSwitch v-model="useReactionPickerForContextMenu">
-											<template #label>
-												<SearchLabel>{{ i18n.ts.useReactionPickerForContextMenu }}</SearchLabel>
-											</template>
+											<template #label><SearchLabel>{{ i18n.ts.useReactionPickerForContextMenu }}</SearchLabel></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -309,9 +264,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['reaction', 'size', 'scale', 'display', 'width', 'limit']">
 								<MkPreferenceContainer k="limitWidthOfReaction">
 									<MkSwitch v-model="limitWidthOfReaction">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.limitWidthOfReaction }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.limitWidthOfReaction }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -319,16 +272,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['attachment', 'image', 'photo', 'picture', 'media', 'thumbnail', 'list', 'size', 'height']">
 								<MkPreferenceContainer k="mediaListWithOneImageAppearance">
 									<MkRadios
-										v-model="mediaListWithOneImageAppearance" :options="[
+										v-model="mediaListWithOneImageAppearance"
+										:options="[
 											{ value: 'expand', label: i18n.ts.default },
 											{ value: '16_9', label: i18n.tsx.limitTo({ x: '16:9' }) },
 											{ value: '1_1', label: i18n.tsx.limitTo({ x: '1:1' }) },
 											{ value: '2_3', label: i18n.tsx.limitTo({ x: '2:3' }) },
 										]"
 									>
-										<template #label>
-											<SearchLabel>{{ i18n.ts.mediaListWithOneImageAppearance }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.mediaListWithOneImageAppearance }}</SearchLabel></template>
 									</MkRadios>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -387,9 +339,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['remember', 'keep', 'note', 'cw']">
 								<MkPreferenceContainer k="keepCw">
 									<MkSwitch v-model="keepCw">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.keepCw }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.keepCw }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -397,9 +347,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['remember', 'keep', 'note', 'visibility']">
 								<MkPreferenceContainer k="rememberNoteVisibility">
 									<MkSwitch v-model="rememberNoteVisibility">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.rememberNoteVisibility }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.rememberNoteVisibility }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -407,9 +355,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['mfm', 'enable', 'show', 'advanced', 'picker', 'form', 'function', 'fn']">
 								<MkPreferenceContainer k="enableQuickAddMfmFunction">
 									<MkSwitch v-model="enableQuickAddMfmFunction">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.enableQuickAddMfmFunction }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.enableQuickAddMfmFunction }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -418,9 +364,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<SearchMarker :keywords="['default', 'note', 'visibility']">
 							<MkDisableSection :disabled="rememberNoteVisibility">
 								<MkFolder>
-									<template #label>
-										<SearchLabel>{{ i18n.ts.defaultNoteVisibility }}</SearchLabel>
-									</template>
+									<template #label><SearchLabel>{{ i18n.ts.defaultNoteVisibility }}</SearchLabel></template>
 									<template v-if="defaultNoteVisibility === 'public'" #suffix>{{ i18n.ts._visibility.public }}</template>
 									<template v-else-if="defaultNoteVisibility === 'home'" #suffix>{{ i18n.ts._visibility.home }}</template>
 									<template v-else-if="defaultNoteVisibility === 'followers'" #suffix>{{ i18n.ts._visibility.followers }}</template>
@@ -451,18 +395,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</MkFolder>
 			</SearchMarker>
 
-			<SearchMarker :keywords="['notification']">
-				<MkFolder>
+			<SearchMarker v-slot="slotProps" :keywords="['notification']">
+				<MkFolder :defaultOpen="slotProps.isParentOfTarget">
 					<template #label><SearchLabel>{{ i18n.ts.notifications }}</SearchLabel></template>
-					<template #icon><i class="ti ti-bell"></i></template>
+					<template #icon><SearchIcon><i class="ti ti-bell"></i></SearchIcon></template>
 
 					<div class="_gaps_m">
 						<SearchMarker :keywords="['group']">
 							<MkPreferenceContainer k="useGroupedNotifications">
 								<MkSwitch v-model="useGroupedNotifications">
-									<template #label>
-										<SearchLabel>{{ i18n.ts.useGroupedNotifications }}</SearchLabel>
-									</template>
+									<template #label><SearchLabel>{{ i18n.ts.useGroupedNotifications }}</SearchLabel></template>
 								</MkSwitch>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -470,16 +412,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<SearchMarker :keywords="['position']">
 							<MkPreferenceContainer k="notificationPosition">
 								<MkRadios
-									v-model="notificationPosition" :options="[
+									v-model="notificationPosition"
+									:options="[
 										{ value: 'leftTop', label: i18n.ts.leftTop, icon: 'ti ti-align-box-left-top' },
 										{ value: 'rightTop', label: i18n.ts.rightTop, icon: 'ti ti-align-box-right-top' },
 										{ value: 'leftBottom', label: i18n.ts.leftBottom, icon: 'ti ti-align-box-left-bottom' },
 										{ value: 'rightBottom', label: i18n.ts.rightBottom, icon: 'ti ti-align-box-right-bottom' },
 									]"
 								>
-									<template #label>
-										<SearchLabel>{{ i18n.ts.position }}</SearchLabel>
-									</template>
+									<template #label><SearchLabel>{{ i18n.ts.position }}</SearchLabel></template>
 								</MkRadios>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -487,14 +428,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<SearchMarker :keywords="['stack', 'axis', 'direction']">
 							<MkPreferenceContainer k="notificationStackAxis">
 								<MkRadios
-									v-model="notificationStackAxis" :options="[
+									v-model="notificationStackAxis"
+									:options="[
 										{ value: 'vertical', label: i18n.ts.vertical, icon: 'ti ti-carousel-vertical' },
 										{ value: 'horizontal', label: i18n.ts.horizontal, icon: 'ti ti-carousel-horizontal' },
 									]"
 								>
-									<template #label>
-										<SearchLabel>{{ i18n.ts.stackAxis }}</SearchLabel>
-									</template>
+									<template #label><SearchLabel>{{ i18n.ts.stackAxis }}</SearchLabel></template>
 								</MkRadios>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -559,9 +499,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['animation', 'motion', 'reduce']">
 								<MkPreferenceContainer k="animation">
 									<MkSwitch v-model="reduceAnimation">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.reduceUiAnimation }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.reduceUiAnimation }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -578,9 +516,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['mfm', 'enable', 'show', 'animated']">
 								<MkPreferenceContainer k="animatedMfm">
 									<MkSwitch v-model="animatedMfm">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.enableAnimatedMfm }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.enableAnimatedMfm }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -596,9 +532,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['swipe', 'horizontal', 'tab']">
 								<MkPreferenceContainer k="enableHorizontalSwipe">
 									<MkSwitch v-model="enableHorizontalSwipe">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.enableHorizontalSwipe }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.enableHorizontalSwipe }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -615,9 +549,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['keep', 'screen', 'display', 'on']">
 								<MkPreferenceContainer k="keepScreenOn">
 									<MkSwitch v-model="keepScreenOn">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.keepScreenOn }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.keepScreenOn }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -625,9 +557,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['native', 'system', 'video', 'audio', 'player', 'media']">
 								<MkPreferenceContainer k="useNativeUiForVideoAudioPlayer">
 									<MkSwitch v-model="useNativeUiForVideoAudioPlayer">
-										<template #label>
-											<SearchLabel>{{ i18n.ts.useNativeUIForVideoAudioPlayer }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts.useNativeUIForVideoAudioPlayer }}</SearchLabel></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -635,9 +565,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['text', 'selectable']">
 								<MkPreferenceContainer k="makeEveryTextElementsSelectable">
 									<MkSwitch v-model="makeEveryTextElementsSelectable">
-										<template #label>
-											<SearchLabel>{{ i18n.ts._settings.makeEveryTextElementsSelectable }}</SearchLabel>
-										</template>
+										<template #label><SearchLabel>{{ i18n.ts._settings.makeEveryTextElementsSelectable }}</SearchLabel></template>
 										<template #caption>{{ i18n.ts._settings.makeEveryTextElementsSelectable_description }}</template>
 									</MkSwitch>
 								</MkPreferenceContainer>
@@ -676,24 +604,21 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 						<SearchMarker :keywords="['font', 'size']">
 							<MkRadios
-								v-model="fontSize" :options="[
+								v-model="fontSize"
+								:options="[
 									{ value: null, label: 'Aa', labelStyle: 'font-size: 14px;' },
 									{ value: '1', label: 'Aa', labelStyle: 'font-size: 15px;' },
 									{ value: '2', label: 'Aa', labelStyle: 'font-size: 16px;' },
 									{ value: '3', label: 'Aa', labelStyle: 'font-size: 17px;' },
 								]"
 							>
-								<template #label>
-									<SearchLabel>{{ i18n.ts.fontSize }}</SearchLabel>
-								</template>
+								<template #label><SearchLabel>{{ i18n.ts.fontSize }}</SearchLabel></template>
 							</MkRadios>
 						</SearchMarker>
 
 						<SearchMarker :keywords="['font', 'system', 'native']">
 							<MkSwitch v-model="useSystemFont">
-								<template #label>
-									<SearchLabel>{{ i18n.ts.useSystemFont }}</SearchLabel>
-								</template>
+								<template #label><SearchLabel>{{ i18n.ts.useSystemFont }}</SearchLabel></template>
 							</MkSwitch>
 						</SearchMarker>
 					</div>
@@ -998,7 +923,6 @@ const useGroupedNotifications = prefer.model('useGroupedNotifications');
 const alwaysConfirmFollow = prefer.model('alwaysConfirmFollow');
 const confirmWhenRevealingSensitiveMedia = prefer.model('confirmWhenRevealingSensitiveMedia');
 const confirmOnReact = prefer.model('confirmOnReact');
-const splitRNButton = prefer.model('splitRNButton');
 const defaultNoteVisibility = prefer.model('defaultNoteVisibility');
 const defaultNoteLocalOnly = prefer.model('defaultNoteLocalOnly');
 const rememberNoteVisibility = prefer.model('rememberNoteVisibility');
@@ -1085,7 +1009,6 @@ watch([
 	fontSize,
 	useSystemFont,
 	makeEveryTextElementsSelectable,
-	splitRNButton,
 	enableHorizontalSwipe,
 	showPageTabBarBottom,
 	enablePullToRefresh,
