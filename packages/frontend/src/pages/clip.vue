@@ -106,10 +106,10 @@ async function unfavorite() {
 	});
 }
 
-const headerActions = computed<PageHeaderItem[] | null>(() => clip.value && isOwned.value ? [{
+const headerActions = computed(() => clip.value && isOwned.value ? [{
 	icon: 'ti ti-pencil',
 	text: i18n.ts.edit,
-	handler: async (): Promise<void> => {
+	handler: async () => {
 		if (clip.value == null) return;
 
 		const { canceled, result } = await os.form(clip.value.name, {
@@ -145,7 +145,7 @@ const headerActions = computed<PageHeaderItem[] | null>(() => clip.value && isOw
 }, ...(clip.value.isPublic ? [{
 	icon: 'ti ti-share',
 	text: i18n.ts.share,
-	handler: (ev): void => {
+	handler: (ev) => {
 		const menuItems: MenuItem[] = [];
 
 		menuItems.push({
@@ -182,7 +182,7 @@ const headerActions = computed<PageHeaderItem[] | null>(() => clip.value && isOw
 	icon: 'ti ti-trash',
 	text: i18n.ts.delete,
 	danger: true,
-	handler: async (): Promise<void> => {
+		handler: async () => {
 		if (clip.value == null) return;
 
 		const { canceled } = await os.confirm({
